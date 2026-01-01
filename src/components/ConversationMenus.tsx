@@ -119,7 +119,9 @@ interface MenuButtonProps {
 }
 
 export const MenuButton: React.FC<MenuButtonProps> = ({ onClick, danger, children }) => (
-  <button onClick={onClick} style={danger ? { color: "#ef4444" } : undefined}>
+  <button
+    onClick={onClick}
+    style={danger ? { color: "var(--gh-text-danger, #ef4444)" } : undefined}>
     {children}
   </button>
 )

@@ -34,7 +34,7 @@ const DIALOG_STYLES = `
   }
   .conversations-dialog-message {
     font-size: 14px;
-    color: #4b5563;
+    color: var(--gh-text-secondary, #4b5563);
     margin-bottom: 20px;
     line-height: 1.5;
     white-space: pre-line;
@@ -85,8 +85,8 @@ const DIALOG_STYLES = `
     background: var(--gh-hover, #f3f4f6);
   }
   .conversations-dialog-btn.confirm {
-    border: 1px solid rgba(255,255,255,0.2);
-    background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+    border: 1px solid var(--gh-border, rgba(255,255,255,0.2));
+    background: var(--gh-primary-gradient, linear-gradient(135deg, #4285f4 0%, #1a73e8 100%));
     color: white;
   }
   .conversations-dialog-btn.confirm:hover {
@@ -754,7 +754,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             cursor: "pointer",
             padding: "4px",
             fontSize: "20px",
-            color: "#9ca3af",
+            color: "var(--gh-text-secondary, #9ca3af)",
             lineHeight: 1,
             width: "24px",
             height: "24px",
@@ -772,7 +772,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
       {/* === 标签列表区域 === */}
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--gh-border, #e5e7eb)",
           borderRadius: "8px",
           marginBottom: "16px",
           background: "var(--gh-bg-secondary, #fafafa)",
@@ -781,16 +781,18 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
         <div
           style={{
             padding: "8px 12px",
-            borderBottom: "1px solid #e5e7eb",
+            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
             fontSize: "12px",
-            color: "#6b7280",
+            color: "var(--gh-text-secondary, #6b7280)",
             fontWeight: 500,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}>
           <span>{conv ? "选择标签" : "已有标签"}</span>
-          <span style={{ fontSize: "11px", color: "#9ca3af" }}>{tags.length} 个</span>
+          <span style={{ fontSize: "11px", color: "var(--gh-text-secondary, #9ca3af)" }}>
+            {tags.length} 个
+          </span>
         </div>
 
         {/* 标签列表 */}
@@ -802,7 +804,12 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             msOverflowStyle: "none",
           }}>
           {tags.length === 0 ? (
-            <div style={{ padding: "24px 16px", textAlign: "center", color: "#9ca3af" }}>
+            <div
+              style={{
+                padding: "24px 16px",
+                textAlign: "center",
+                color: "var(--gh-text-secondary, #9ca3af)",
+              }}>
               {t("conversationsNoTags") || "暂无标签，在下方创建"}
             </div>
           ) : (
@@ -818,9 +825,13 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "10px 12px",
-                    borderBottom: "1px solid #f3f4f6",
+                    borderBottom: "1px solid var(--gh-border, #f3f4f6)",
                     cursor: conv ? "pointer" : "default",
-                    background: isEditing ? "#fff7ed" : isSelected ? "#f0f9ff" : "transparent",
+                    background: isEditing
+                      ? "var(--gh-bg-warning-light, #fffbeb)"
+                      : isSelected
+                        ? "var(--gh-folder-bg-default)" // 使用主题色变体
+                        : "transparent",
                     transition: "background 0.15s",
                   }}
                   onClick={() => {
@@ -830,7 +841,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                   }}
                   onMouseEnter={(e) => {
                     if (!isEditing && !isSelected) {
-                      e.currentTarget.style.background = "#f9fafb"
+                      e.currentTarget.style.background = "var(--gh-hover, #f9fafb)"
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -941,17 +952,19 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
       {/* === 新建/编辑区域 === */}
       <div
         style={{
-          border: "1px solid #e5e7eb",
+          border: "1px solid var(--gh-border, #e5e7eb)",
           borderRadius: "8px",
           padding: "12px",
-          background: editingId ? "#fffbeb" : "#ffffff",
+          background: editingId ? "var(--gh-bg-warning-light, #fffbeb)" : "var(--gh-bg, #ffffff)",
           transition: "background 0.2s",
         }}>
         {/* 区域标题 */}
         <div
           style={{
             fontSize: "12px",
-            color: editingId ? "#b45309" : "#6b7280",
+            color: editingId
+              ? "var(--gh-text-warning, #b45309)"
+              : "var(--gh-text-secondary, #6b7280)",
             fontWeight: 500,
             marginBottom: "10px",
             display: "flex",
@@ -1159,7 +1172,9 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           className="conversations-dialog-btn confirm"
           style={{
             width: "100%",
-            background: editingId ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" : undefined,
+            background: editingId
+              ? "var(--gh-warning-gradient, linear-gradient(135deg, #f59e0b 0%, #d97706 100%))"
+              : undefined,
           }}
           disabled={!tagName.trim() || loading}
           onClick={handleSubmit}>

@@ -594,7 +594,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                 bgVar = `var(--gh-folder-bg-${index % 8})`
               } else if (isExpanded) {
                 // 展开状态下的背景色 (淡蓝色 / 暗黑模式适配)
-                bgVar = "rgba(59, 130, 246, 0.08)"
+                bgVar = "var(--gh-folder-bg-expanded, rgba(59, 130, 246, 0.08))"
               }
 
               return (

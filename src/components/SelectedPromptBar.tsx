@@ -113,8 +113,8 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         left: "50%",
         transform: "translateX(-50%)",
         // 使用渐变背景
-        background: "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
-        color: "white",
+        background: "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
+        color: "var(--gh-glass-text, white)",
         padding: "8px 16px",
         borderRadius: "20px",
         boxShadow: "0 4px 12px rgba(66,133,244,0.3)",
@@ -142,7 +142,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       <span
         style={{
           fontSize: "12px",
-          color: "rgba(255,255,255,0.8)",
+          color: "var(--gh-glass-text, rgba(255,255,255,0.8))",
           whiteSpace: "nowrap",
           userSelect: "none",
         }}>
@@ -153,7 +153,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         style={{
           fontSize: "13px",
           fontWeight: 500,
-          color: "white",
+          color: "var(--gh-glass-text, white)",
           maxWidth: "300px",
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -168,9 +168,9 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         onClick={onClear}
         title={t("clear") || "清除"}
         style={{
-          background: "rgba(255,255,255,0.2)",
+          background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
           border: "none",
-          color: "white",
+          color: "var(--gh-glass-text, white)",
           width: "20px",
           height: "20px",
           borderRadius: "50%",
@@ -185,11 +185,11 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
           transition: "all 0.2s",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.3)"
+          e.currentTarget.style.background = "var(--gh-glass-bg-hover, rgba(255,255,255,0.3))"
           e.currentTarget.style.transform = "scale(1.1)"
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.2)"
+          e.currentTarget.style.background = "var(--gh-glass-bg, rgba(255,255,255,0.2))"
           e.currentTarget.style.transform = "scale(1)"
         }}>
         ×

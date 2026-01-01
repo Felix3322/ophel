@@ -44,6 +44,43 @@ export interface ThemeVariables {
 
   // 选中项渐变背景
   "--gh-selected-gradient": string
+
+  // 文件夹预设背景色
+  "--gh-folder-bg-default": string
+  "--gh-folder-bg-expanded": string
+  "--gh-folder-bg-0": string
+  "--gh-folder-bg-1": string
+  "--gh-folder-bg-2": string
+  "--gh-folder-bg-3": string
+  "--gh-folder-bg-4": string
+  "--gh-folder-bg-5": string
+  "--gh-folder-bg-6": string
+  "--gh-folder-bg-7": string
+
+  // 大纲高亮色
+  "--gh-outline-locate-bg": string
+  "--gh-outline-locate-border": string
+  "--gh-outline-locate-shadow": string
+  "--gh-outline-sync-bg": string
+  "--gh-outline-sync-border": string
+
+  // 用户提问节点
+  "--gh-user-query-bg": string
+  "--gh-user-query-hover-bg": string
+
+  // 危险操作
+  "--gh-bg-danger": string
+  "--gh-text-danger": string
+  "--gh-bg-danger-hover": string
+
+  // 品牌色渐变（用于重要按钮/提示条）
+  "--gh-brand-gradient": string
+  "--gh-brand-border": string
+
+  // 玻璃拟态（用于品牌色或深色背景上的按钮）
+  "--gh-glass-bg": string
+  "--gh-glass-bg-hover": string
+  "--gh-glass-text": string
 }
 
 // 主题预置定义
@@ -83,6 +120,31 @@ export const lightPresets: ThemePreset[] = [
       "--gh-badge-shadow": "#ffffff",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(66, 133, 244, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%)",
+      "--gh-folder-bg-default": "#e0f2fe",
+      "--gh-folder-bg-expanded": "#c7d2fe",
+      "--gh-folder-bg-0": "#fef9e7",
+      "--gh-folder-bg-1": "#fdf2f8",
+      "--gh-folder-bg-2": "#eff6ff",
+      "--gh-folder-bg-3": "#ecfdf5",
+      "--gh-folder-bg-4": "#faf5ff",
+      "--gh-folder-bg-5": "#fefce8",
+      "--gh-folder-bg-6": "#ecfeff",
+      "--gh-folder-bg-7": "#fdf4ff",
+      "--gh-outline-locate-bg": "rgba(16, 185, 129, 0.25)",
+      "--gh-outline-locate-border": "#10b981",
+      "--gh-outline-locate-shadow": "rgba(16, 185, 129, 0.5)",
+      "--gh-outline-sync-bg": "rgba(52, 211, 153, 0.1)",
+      "--gh-outline-sync-border": "#34d399",
+      "--gh-user-query-bg": "rgba(66, 133, 244, 0.08)",
+      "--gh-user-query-hover-bg": "rgba(66, 133, 244, 0.15)",
+      "--gh-bg-danger": "#fef2f2",
+      "--gh-text-danger": "#ef4444",
+      "--gh-bg-danger-hover": "#fee2e2",
+      "--gh-brand-gradient": "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+      "--gh-brand-border": "transparent",
+      "--gh-glass-bg": "rgba(255, 255, 255, 0.2)",
+      "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
+      "--gh-glass-text": "#ffffff",
     },
   },
   {
@@ -111,6 +173,31 @@ export const lightPresets: ThemePreset[] = [
       "--gh-badge-shadow": "#ffffff",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)",
+      "--gh-folder-bg-default": "#f3e8ff", // specific for purple
+      "--gh-folder-bg-expanded": "#e9d5ff",
+      "--gh-folder-bg-0": "#fef9e7",
+      "--gh-folder-bg-1": "#fdf2f8",
+      "--gh-folder-bg-2": "#eff6ff",
+      "--gh-folder-bg-3": "#ecfdf5",
+      "--gh-folder-bg-4": "#faf5ff",
+      "--gh-folder-bg-5": "#fefce8",
+      "--gh-folder-bg-6": "#ecfeff",
+      "--gh-folder-bg-7": "#fdf4ff",
+      "--gh-outline-locate-bg": "rgba(139, 92, 246, 0.25)",
+      "--gh-outline-locate-border": "#8b5cf6",
+      "--gh-outline-locate-shadow": "rgba(139, 92, 246, 0.5)",
+      "--gh-outline-sync-bg": "rgba(167, 139, 250, 0.1)",
+      "--gh-outline-sync-border": "#a78bfa",
+      "--gh-user-query-bg": "rgba(139, 92, 246, 0.08)",
+      "--gh-user-query-hover-bg": "rgba(139, 92, 246, 0.15)",
+      "--gh-bg-danger": "#fef2f2",
+      "--gh-text-danger": "#ef4444",
+      "--gh-bg-danger-hover": "#fee2e2",
+      "--gh-brand-gradient": "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
+      "--gh-brand-border": "transparent",
+      "--gh-glass-bg": "rgba(255, 255, 255, 0.2)",
+      "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
+      "--gh-glass-text": "#ffffff",
     },
   },
   {
@@ -139,6 +226,31 @@ export const lightPresets: ThemePreset[] = [
       "--gh-badge-shadow": "#ffffff",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)",
+      "--gh-folder-bg-default": "#e0f2fe", // specific for ocean
+      "--gh-folder-bg-expanded": "#bae6fd",
+      "--gh-folder-bg-0": "#fef9e7",
+      "--gh-folder-bg-1": "#fdf2f8",
+      "--gh-folder-bg-2": "#eff6ff",
+      "--gh-folder-bg-3": "#ecfdf5",
+      "--gh-folder-bg-4": "#faf5ff",
+      "--gh-folder-bg-5": "#fefce8",
+      "--gh-folder-bg-6": "#ecfeff",
+      "--gh-folder-bg-7": "#fdf4ff",
+      "--gh-outline-locate-bg": "rgba(14, 165, 233, 0.25)",
+      "--gh-outline-locate-border": "#0ea5e9",
+      "--gh-outline-locate-shadow": "rgba(14, 165, 233, 0.5)",
+      "--gh-outline-sync-bg": "rgba(6, 182, 212, 0.1)",
+      "--gh-outline-sync-border": "#06b6d4",
+      "--gh-user-query-bg": "rgba(14, 165, 233, 0.08)",
+      "--gh-user-query-hover-bg": "rgba(14, 165, 233, 0.15)",
+      "--gh-bg-danger": "#fef2f2",
+      "--gh-text-danger": "#ef4444",
+      "--gh-bg-danger-hover": "#fee2e2",
+      "--gh-brand-gradient": "linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)",
+      "--gh-brand-border": "transparent",
+      "--gh-glass-bg": "rgba(255, 255, 255, 0.2)",
+      "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
+      "--gh-glass-text": "#ffffff",
     },
   },
 ]
@@ -172,6 +284,31 @@ export const darkPresets: ThemePreset[] = [
       "--gh-badge-shadow": "#1f2937",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(129, 140, 248, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%)",
+      "--gh-folder-bg-default": "rgba(66, 133, 244, 0.15)",
+      "--gh-folder-bg-expanded": "rgba(66, 133, 244, 0.3)",
+      "--gh-folder-bg-0": "rgba(253, 224, 71, 0.15)",
+      "--gh-folder-bg-1": "rgba(244, 114, 182, 0.15)",
+      "--gh-folder-bg-2": "rgba(96, 165, 250, 0.15)",
+      "--gh-folder-bg-3": "rgba(52, 211, 153, 0.15)",
+      "--gh-folder-bg-4": "rgba(167, 139, 250, 0.15)",
+      "--gh-folder-bg-5": "rgba(253, 224, 71, 0.1)",
+      "--gh-folder-bg-6": "rgba(34, 211, 238, 0.15)",
+      "--gh-folder-bg-7": "rgba(232, 121, 249, 0.15)",
+      "--gh-outline-locate-bg": "rgba(52, 211, 153, 0.3)",
+      "--gh-outline-locate-border": "#34d399",
+      "--gh-outline-locate-shadow": "rgba(52, 211, 153, 0.6)",
+      "--gh-outline-sync-bg": "rgba(16, 185, 129, 0.15)",
+      "--gh-outline-sync-border": "#10b981",
+      "--gh-user-query-bg": "rgba(66, 133, 244, 0.15)",
+      "--gh-user-query-hover-bg": "rgba(66, 133, 244, 0.25)",
+      "--gh-bg-danger": "rgba(239, 68, 68, 0.15)",
+      "--gh-text-danger": "#fca5a5",
+      "--gh-bg-danger-hover": "rgba(239, 68, 68, 0.25)",
+      "--gh-brand-gradient": "#1a1a1a",
+      "--gh-brand-border": "#333333",
+      "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
+      "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
+      "--gh-glass-text": "#e3e3e3",
     },
   },
   {
@@ -200,6 +337,31 @@ export const darkPresets: ThemePreset[] = [
       "--gh-badge-shadow": "#1e293b",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(96, 165, 250, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%)",
+      "--gh-folder-bg-default": "rgba(96, 165, 250, 0.15)",
+      "--gh-folder-bg-expanded": "rgba(59, 130, 246, 0.3)",
+      "--gh-folder-bg-0": "rgba(253, 224, 71, 0.15)",
+      "--gh-folder-bg-1": "rgba(244, 114, 182, 0.15)",
+      "--gh-folder-bg-2": "rgba(96, 165, 250, 0.15)",
+      "--gh-folder-bg-3": "rgba(52, 211, 153, 0.15)",
+      "--gh-folder-bg-4": "rgba(167, 139, 250, 0.15)",
+      "--gh-folder-bg-5": "rgba(253, 224, 71, 0.1)",
+      "--gh-folder-bg-6": "rgba(34, 211, 238, 0.15)",
+      "--gh-folder-bg-7": "rgba(232, 121, 249, 0.15)",
+      "--gh-outline-locate-bg": "rgba(96, 165, 250, 0.3)",
+      "--gh-outline-locate-border": "#60a5fa",
+      "--gh-outline-locate-shadow": "rgba(96, 165, 250, 0.6)",
+      "--gh-outline-sync-bg": "rgba(59, 130, 246, 0.15)",
+      "--gh-outline-sync-border": "#3b82f6",
+      "--gh-user-query-bg": "rgba(96, 165, 250, 0.15)",
+      "--gh-user-query-hover-bg": "rgba(96, 165, 250, 0.25)",
+      "--gh-bg-danger": "rgba(239, 68, 68, 0.15)",
+      "--gh-text-danger": "#fca5a5",
+      "--gh-bg-danger-hover": "rgba(239, 68, 68, 0.25)",
+      "--gh-brand-gradient": "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+      "--gh-brand-border": "transparent",
+      "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
+      "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
+      "--gh-glass-text": "#e2e8f0",
     },
   },
   {
@@ -228,6 +390,31 @@ export const darkPresets: ThemePreset[] = [
       "--gh-badge-shadow": "#14261c",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)",
+      "--gh-folder-bg-default": "rgba(52, 211, 153, 0.15)",
+      "--gh-folder-bg-expanded": "rgba(16, 185, 129, 0.3)",
+      "--gh-folder-bg-0": "rgba(253, 224, 71, 0.15)",
+      "--gh-folder-bg-1": "rgba(244, 114, 182, 0.15)",
+      "--gh-folder-bg-2": "rgba(96, 165, 250, 0.15)",
+      "--gh-folder-bg-3": "rgba(52, 211, 153, 0.15)",
+      "--gh-folder-bg-4": "rgba(167, 139, 250, 0.15)",
+      "--gh-folder-bg-5": "rgba(253, 224, 71, 0.1)",
+      "--gh-folder-bg-6": "rgba(34, 211, 238, 0.15)",
+      "--gh-folder-bg-7": "rgba(232, 121, 249, 0.15)",
+      "--gh-outline-locate-bg": "rgba(52, 211, 153, 0.3)",
+      "--gh-outline-locate-border": "#34d399",
+      "--gh-outline-locate-shadow": "rgba(52, 211, 153, 0.6)",
+      "--gh-outline-sync-bg": "rgba(16, 185, 129, 0.15)",
+      "--gh-outline-sync-border": "#10b981",
+      "--gh-user-query-bg": "rgba(52, 211, 153, 0.15)",
+      "--gh-user-query-hover-bg": "rgba(52, 211, 153, 0.25)",
+      "--gh-bg-danger": "rgba(239, 68, 68, 0.15)",
+      "--gh-text-danger": "#fca5a5",
+      "--gh-bg-danger-hover": "rgba(239, 68, 68, 0.25)",
+      "--gh-brand-gradient": "linear-gradient(135deg, #065f46 0%, #10b981 100%)",
+      "--gh-brand-border": "transparent",
+      "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
+      "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
+      "--gh-glass-text": "#d1fae5",
     },
   },
 ]

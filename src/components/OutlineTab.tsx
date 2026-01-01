@@ -8,7 +8,7 @@ interface OutlineTabProps {
   onJumpBefore?: () => void
 }
 
-// 递归渲染大纲树节点 (Legacy 1:1 Parity)
+// 递归渲染大纲树节点
 // 关键差异: 使用 outline-hidden 类而非条件渲染
 const OutlineNodeView: React.FC<{
   node: OutlineNode
@@ -561,7 +561,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
           onJumpBefore()
         }
         // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截
-        targetElement.scrollIntoView({ behavior: "smooth", block: "start" })
+        targetElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+          __bypassLock: true,
+        } as any)
         // 高亮效果
         targetElement.classList.add("outline-highlight")
         setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
@@ -729,11 +733,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         className="outline-fixed-toolbar"
         style={{
           padding: "8px",
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           display: "flex",
           flexDirection: "column",
           gap: "8px",
-          backgroundColor: "#fff",
+          backgroundColor: "var(--gh-bg, #fff)",
         }}>
         {/* Row 1: Buttons & Search */}
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
@@ -758,10 +762,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 width: "26px",
                 height: "26px",
                 padding: 0,
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
                 borderRadius: "4px",
-                backgroundColor: "#fff",
-                color: "#374151",
+                backgroundColor: "var(--gh-bg, #fff)",
+                color: "var(--gh-text, #374151)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -778,10 +782,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 width: "26px",
                 height: "26px",
                 padding: 0,
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
                 borderRadius: "4px",
-                backgroundColor: "#fff",
-                color: "#374151",
+                backgroundColor: "var(--gh-bg, #fff)",
+                color: "var(--gh-text, #374151)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -802,10 +806,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 width: "26px",
                 height: "26px",
                 padding: 0,
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
                 borderRadius: "4px",
-                backgroundColor: "#fff",
-                color: "#374151",
+                backgroundColor: "var(--gh-bg, #fff)",
+                color: "var(--gh-text, #374151)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -835,10 +839,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 width: "100%",
                 padding: "4px 24px 4px 8px",
                 borderRadius: "4px",
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
                 fontSize: "12px",
                 boxSizing: "border-box",
                 height: "26px",
+                backgroundColor: "var(--gh-input-bg, #fff)",
+                color: "var(--gh-text, #374151)",
               }}
             />
             {searchQuery && (
@@ -883,10 +889,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 top: "50%",
                 left: "4px",
                 right: "4px",
-                height: "2px",
-                background: "#e5e7eb",
+                height: "4px",
+                background: "var(--gh-border, #e5e7eb)",
                 zIndex: 0,
                 transform: "translateY(-50%)",
+                borderRadius: "2px",
               }}></div>
             {/* Progress Line */}
             <div
@@ -895,10 +902,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 position: "absolute",
                 top: "50%",
                 left: "4px",
-                height: "2px",
-                background: "#3b82f6",
+                height: "4px",
+                background: "var(--gh-primary, #3b82f6)",
                 zIndex: 0,
                 transform: "translateY(-50%)",
+                borderRadius: "2px",
                 width: `calc((${expandLevel} / 6) * (100% - 8px))`,
                 transition: "width 0.2s ease",
               }}></div>
@@ -915,24 +923,28 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 title = `H${lvl}: ${levelCounts[lvl] || 0}`
               }
 
+              const isActive = lvl <= expandLevel
               return (
                 <div
                   key={lvl}
-                  className={`outline-level-dot ${lvl <= expandLevel ? "active" : ""}`}
+                  className={`outline-level-dot ${isActive ? "active" : ""}`}
                   data-level={lvl}
                   onClick={() => handleLevelClick(lvl)}
                   title={title}
                   style={{
-                    width: "10px",
-                    height: "10px",
+                    width: "14px",
+                    height: "14px",
                     borderRadius: "50%",
-                    backgroundColor: lvl <= expandLevel ? "#3b82f6" : "#fff",
-                    border: `2px solid ${lvl <= expandLevel ? "#3b82f6" : "#d1d5db"}`,
+                    backgroundColor: isActive
+                      ? "var(--gh-primary, #3b82f6)"
+                      : "var(--gh-bg-tertiary, #4b5563)", // Inactive dark grey
+                    border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
                     zIndex: 1,
                     cursor: "pointer",
                     position: "relative",
                     transition: "all 0.2s ease",
                     boxSizing: "border-box",
+                    boxShadow: isActive ? "0 0 0 1px var(--gh-primary, #3b82f6)" : "none",
                   }}
                 />
               )

@@ -171,7 +171,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           height="20px"
           viewBox="0 -960 960 960"
           width="20px"
-          fill="#FFFFFF">
+          fill="currentColor">
           <path d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z" />
         </svg>
       )
@@ -183,7 +183,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         height="20px"
         viewBox="0 -960 960 960"
         width="20px"
-        fill="#FFFFFF">
+        fill="currentColor">
         <path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z" />
       </svg>
     )
@@ -236,9 +236,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               onClick={onThemeToggle}
               title={t("toggleTheme")}
               style={{
-                background: "rgba(255,255,255,0.2)",
+                background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
                 border: "none",
-                color: "white",
+                color: "var(--gh-glass-text, white)",
                 width: "28px",
                 height: "28px",
                 borderRadius: "6px",
@@ -258,9 +258,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             onClick={() => window.open(window.location.origin, "_blank")}
             title={t("newTabTooltip") || "新标签页打开"}
             style={{
-              background: "rgba(255,255,255,0.2)",
+              background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
-              color: "white",
+              color: "var(--gh-glass-text, white)",
               width: "28px",
               height: "28px",
               borderRadius: "6px",
@@ -280,9 +280,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             title={t("tabSettings")}
             style={{
               background:
-                activeTab === "settings" ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)",
+                activeTab === "settings"
+                  ? "var(--gh-glass-bg-hover, rgba(255,255,255,0.4))"
+                  : "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
-              color: "white",
+              color: "var(--gh-glass-text, white)",
               width: "28px",
               height: "28px",
               borderRadius: "6px",
@@ -304,9 +306,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             }}
             title={t("refresh")}
             style={{
-              background: "rgba(255,255,255,0.2)",
+              background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
-              color: "white",
+              color: "var(--gh-glass-text, white)",
               width: "28px",
               height: "28px",
               borderRadius: "6px",
@@ -325,9 +327,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             onClick={onClose}
             title={t("collapse")}
             style={{
-              background: "rgba(255,255,255,0.2)",
+              background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
-              color: "white",
+              color: "var(--gh-glass-text, white)",
               width: "28px",
               height: "28px",
               borderRadius: "6px",
@@ -431,17 +433,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           onClick={scrollToTop}
           title={t("scrollTop")}
           style={{
+            flex: 1,
+            maxWidth: "120px",
+            height: "32px",
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: "4px",
-            padding: "8px 16px",
-            background: "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+            background: "var(--gh-header-bg)",
             color: "white",
             border: "none",
-            borderRadius: "20px",
+            borderRadius: "8px",
             cursor: "pointer",
-            fontSize: "13px",
-            fontWeight: 500,
+            fontSize: "14px",
             transition: "transform 0.2s, box-shadow 0.2s",
             boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
           }}
@@ -464,19 +468,21 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           title={hasAnchor ? t("jumpToAnchor") : "暂无锚点"}
           disabled={!hasAnchor}
           style={{
+            flex: "0 0 32px",
             width: "32px",
             height: "32px",
-            background: hasAnchor ? "linear-gradient(135deg, #4285f4 0%, #34a853 100%)" : "#d1d5db",
+            background: "var(--gh-header-bg)",
             color: "white",
             border: "none",
             borderRadius: "50%",
+            padding: 0,
             cursor: hasAnchor ? "pointer" : "default",
             fontSize: "14px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             transition: "transform 0.2s, box-shadow 0.2s",
-            boxShadow: hasAnchor ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
             opacity: hasAnchor ? 1 : 0.4,
           }}
           onMouseEnter={(e) => {
@@ -510,17 +516,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           onClick={scrollToBottom}
           title={t("scrollBottom")}
           style={{
+            flex: 1,
+            maxWidth: "120px",
+            height: "32px",
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: "4px",
-            padding: "8px 16px",
-            background: "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+            background: "var(--gh-header-bg)",
             color: "white",
             border: "none",
-            borderRadius: "20px",
+            borderRadius: "8px",
             cursor: "pointer",
-            fontSize: "13px",
-            fontWeight: 500,
+            fontSize: "14px",
             transition: "transform 0.2s, box-shadow 0.2s",
             boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
           }}
