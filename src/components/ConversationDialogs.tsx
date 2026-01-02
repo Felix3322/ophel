@@ -13,7 +13,7 @@ const DIALOG_STYLES = `
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: var(--gh-overlay-bg, rgba(0,0,0,0.5));
     z-index: 1000003;
     display: flex;
     align-items: center;
@@ -24,7 +24,7 @@ const DIALOG_STYLES = `
     border-radius: 12px;
     padding: 20px;
     min-width: 320px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.2));
   }
   .conversations-dialog-title {
     font-size: 16px;
@@ -60,8 +60,8 @@ const DIALOG_STYLES = `
   }
   .conversations-dialog-input:focus {
     outline: none;
-    border-color: #4285f4;
-    box-shadow: 0 0 0 2px rgba(66,133,244,0.1);
+    border-color: var(--gh-input-focus-border, #4285f4);
+    box-shadow: var(--gh-input-focus-shadow, 0 0 0 2px rgba(66,133,244,0.1));
   }
   .conversations-dialog-buttons {
     display: flex;
@@ -98,7 +98,7 @@ const DIALOG_STYLES = `
     height: 0;
   }
   @keyframes gh-highlight-fade {
-    0% { background-color: rgba(59, 130, 246, 0.3); }
+    0% { background-color: var(--gh-highlight-pulse, rgba(59, 130, 246, 0.3)); }
     100% { background-color: transparent; }
   }
   .conversations-folder-select-highlight {
@@ -1047,8 +1047,12 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               userSelect: "none",
             }}
             onClick={() => setColorExpanded(!colorExpanded)}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fafafa")}>
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "var(--gh-hover, #f3f4f6)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "var(--gh-bg-secondary, #fafafa)")
+            }>
             {/* 当前选中颜色预览 */}
             <div
               style={{

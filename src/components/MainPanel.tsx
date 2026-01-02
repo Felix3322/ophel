@@ -472,15 +472,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             cursor: "pointer",
             fontSize: "14px",
             transition: "transform 0.2s, box-shadow 0.2s",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            boxShadow: "var(--gh-btn-shadow)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-1px)"
-            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"
+            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)"
+            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
           <span>↑</span>
           <span>{t("scrollTop")}</span>
@@ -507,13 +507,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             alignItems: "center",
             justifyContent: "center",
             transition: "transform 0.2s, box-shadow 0.2s",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            boxShadow: "var(--gh-btn-shadow)",
             opacity: hasAnchor ? 1 : 0.4,
           }}
           onMouseEnter={(e) => {
             if (hasAnchor) {
               e.currentTarget.style.transform = "scale(1.1)"
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"
+              e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
               // 旋转特效
               const span = e.currentTarget.querySelector("span")
               if (span) span.style.transform = "rotate(360deg)"
@@ -521,7 +521,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)"
-            e.currentTarget.style.boxShadow = hasAnchor ? "0 2px 6px rgba(0,0,0,0.15)" : "none"
+            e.currentTarget.style.boxShadow = hasAnchor ? "var(--gh-btn-shadow)" : "none"
             // 恢复旋转
             const span = e.currentTarget.querySelector("span")
             if (span) span.style.transform = "rotate(0deg)"
@@ -555,15 +555,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             cursor: "pointer",
             fontSize: "14px",
             transition: "transform 0.2s, box-shadow 0.2s",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            boxShadow: "var(--gh-btn-shadow)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-1px)"
-            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"
+            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)"
+            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
           <span>↓</span>
           <span>{t("scrollBottom")}</span>

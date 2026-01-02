@@ -11,7 +11,7 @@ const MENU_STYLES = `
     background: var(--gh-bg, white);
     border: 1px solid var(--gh-border, #e5e7eb);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: var(--gh-shadow, 0 4px 12px rgba(0,0,0,0.15));
     z-index: 10000000;
     padding: 4px;
     min-width: 120px;

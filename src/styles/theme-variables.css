@@ -42,6 +42,8 @@
   --gh-primary: #4285f4;
   --gh-secondary: #34a853;
   --gh-danger: #ef4444;
+  --gh-brand-gradient: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  --gh-shadow-brand: 0 4px 12px rgba(66, 133, 244, 0.3);
 
   /* === 语义化组件变量 === */
   --gh-header-bg: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
@@ -83,6 +85,34 @@
     rgba(66, 133, 244, 0.1) 0%,
     rgba(52, 211, 153, 0.1) 100%
   );
+
+  /* === 遮罩层 === */
+  --gh-overlay-bg: rgba(0, 0, 0, 0.5);
+
+  /* === 按钮阴影 === */
+  --gh-btn-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --gh-btn-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  /* === 搜索高亮 === */
+  --gh-search-highlight-bg: rgba(255, 235, 59, 0.5);
+
+  /* === 玻璃效果（用于 header 按钮） === */
+  --gh-glass-bg: rgba(255, 255, 255, 0.2);
+  --gh-glass-bg-hover: rgba(255, 255, 255, 0.3);
+  --gh-glass-text: #ffffff;
+
+  /* === Emoji 选中背景 === */
+  --gh-emoji-selected-bg: #dbeafe;
+
+  /* === 输入框聚焦 === */
+  --gh-input-focus-border: #4285f4;
+  --gh-input-focus-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+
+  /* === 动画高亮色 === */
+  --gh-highlight-pulse: rgba(59, 130, 246, 0.3);
+
+  /* === 滑块圆点颜色 === */
+  --gh-slider-dot-bg: #d1d5db;
 }
 
 /* ==================== 深色模式 ==================== */
@@ -159,4 +189,32 @@ body[data-gh-mode="dark"] {
     rgba(66, 133, 244, 0.25) 0%,
     rgba(52, 211, 153, 0.15) 100%
   );
+
+  /* === 遮罩层（深色模式） === */
+  --gh-overlay-bg: rgba(0, 0, 0, 0.7);
+
+  /* === 按钮阴影（深色模式） === */
+  --gh-btn-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --gh-btn-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+  /* === 搜索高亮（深色模式） === */
+  --gh-search-highlight-bg: rgba(255, 235, 59, 0.4);
+
+  /* === 玻璃效果（深色模式） === */
+  --gh-glass-bg: rgba(255, 255, 255, 0.08);
+  --gh-glass-bg-hover: rgba(255, 255, 255, 0.12);
+  --gh-glass-text: #e5e7eb;
+
+  /* === Emoji 选中背景（深色模式） === */
+  --gh-emoji-selected-bg: rgba(59, 130, 246, 0.3);
+
+  /* === 输入框聚焦（深色模式） === */
+  --gh-input-focus-border: #60a5fa;
+  --gh-input-focus-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+
+  /* === 动画高亮色（深色模式） === */
+  --gh-highlight-pulse: rgba(96, 165, 250, 0.4);
+
+  /* === 滑块圆点颜色（深色模式） === */
+  --gh-slider-dot-bg: #4b5563;
 }

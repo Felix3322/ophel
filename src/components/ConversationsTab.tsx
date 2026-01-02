@@ -526,7 +526,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                   {tags.length === 0 ? (
                     <div
                       className="conversations-tag-filter-item"
-                      style={{ color: "#9ca3af", cursor: "default" }}>
+                      style={{ color: "var(--gh-text-tertiary, #9ca3af)", cursor: "default" }}>
                       {t("conversationsNoTags") || "暂无标签"}
                     </div>
                   ) : (

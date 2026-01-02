@@ -8,7 +8,8 @@ import {
   MSG_SHOW_NOTIFICATION,
   sendToBackground,
 } from "~utils/messaging"
-import type { Settings } from "~utils/storage"
+import { type Settings } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 // 通知声音文件（本地 assets）
 const NOTIFICATION_SOUND_PATH = "assets/streaming-complete-v2.mp3"
@@ -280,9 +281,9 @@ export class TabManager {
       // 切换隐私模式
       const isPrivacy = this.togglePrivacyMode()
       // 动态导入 toast 显示提示
-      import("~utils/toast").then(({ showToast }) => {
+      setTimeout(() => {
         showToast(isPrivacy ? "隐私模式已开启" : "隐私模式已关闭", 2000)
-      })
+      }, 0)
     }
   }
 

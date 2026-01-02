@@ -302,7 +302,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          background: "rgba(0,0,0,0.5)",
+          background: "var(--gh-overlay-bg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -386,7 +386,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          background: "rgba(0,0,0,0.5)",
+          background: "var(--gh-overlay-bg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -491,7 +491,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          background: "rgba(0,0,0,0.5)",
+          background: "var(--gh-overlay-bg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -696,7 +696,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          background: "rgba(0,0,0,0.5)",
+          background: "var(--gh-overlay-bg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -712,7 +712,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             maxWidth: "400px",
             padding: "24px",
             animation: "slideUp 0.3s",
-            boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+            boxShadow: "var(--gh-shadow-lg, 0 20px 50px rgba(0,0,0,0.3))",
           }}>
           <div
             style={{
@@ -726,7 +726,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
           <div style={{ maxHeight: "300px", overflowY: "auto" }}>
             {categories.length === 0 ? (
-              <div style={{ textAlign: "center", color: "#9ca3af", padding: "20px" }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--gh-text-tertiary, #9ca3af)",
+                  padding: "20px",
+                }}>
                 {t("categoryEmpty") || "暂无分类"}
               </div>
             ) : (
@@ -744,7 +749,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     }}>
                     <div>
                       <div style={{ fontWeight: 500, color: "var(--gh-text, #374151)" }}>{cat}</div>
-                      <div style={{ fontSize: "12px", color: "#9ca3af" }}>{count} 个提示词</div>
+                      <div style={{ fontSize: "12px", color: "var(--gh-text-tertiary, #9ca3af)" }}>
+                        {count} 个提示词
+                      </div>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
                       <button
@@ -791,7 +798,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 cursor: "pointer",
                 border: "none",
                 background: "var(--gh-hover, #f3f4f6)",
-                color: "#4b5563",
+                color: "var(--gh-text-secondary, #4b5563)",
               }}>
               {t("close") || "关闭"}
             </button>

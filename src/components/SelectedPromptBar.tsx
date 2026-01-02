@@ -113,11 +113,11 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         left: "50%",
         transform: "translateX(-50%)",
         // 使用渐变背景
-        background: "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
+        background: "var(--gh-brand-gradient)",
         color: "var(--gh-glass-text, white)",
         padding: "8px 16px",
         borderRadius: "20px",
-        boxShadow: "0 4px 12px rgba(66,133,244,0.3)",
+        boxShadow: "var(--gh-shadow-brand)",
         display: "flex",
         alignItems: "center",
         gap: "8px",

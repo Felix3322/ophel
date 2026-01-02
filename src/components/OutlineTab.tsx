@@ -107,7 +107,7 @@ const OutlineNodeView: React.FC<{
                 <mark
                   key={i}
                   style={{
-                    backgroundColor: "rgba(255, 235, 59, 0.5)",
+                    backgroundColor: "var(--gh-search-highlight-bg)",
                     color: "inherit",
                     padding: 0,
                     borderRadius: "2px",
@@ -936,7 +936,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                     borderRadius: "50%",
                     backgroundColor: isActive
                       ? "var(--gh-primary, #3b82f6)"
-                      : "var(--gh-bg-tertiary, #4b5563)", // Inactive dark grey
+                      : "var(--gh-slider-dot-bg, #d1d5db)",
                     border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
                     zIndex: 1,
                     cursor: "pointer",
@@ -959,7 +959,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
         {/* 搜索结果条 */}
         {searchQuery && matchCount > 0 && (
-          <div className="outline-result-bar">
+          <div
+            className="outline-result-bar"
+            style={{
+              textAlign: "center",
+              padding: "6px",
+              color: "var(--gh-border-active)",
+              fontSize: "13px",
+              background: "var(--gh-folder-bg-default)",
+              borderRadius: "4px",
+              marginBottom: "8px",
+            }}>
             {matchCount} {t("outlineSearchResult") || "个结果"}
           </div>
         )}
