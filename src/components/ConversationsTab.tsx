@@ -73,7 +73,7 @@ type DialogType =
       convIds?: string[]
       activeFolderId?: string
     }
-  | { type: "tagManager"; conv: Conversation }
+  | { type: "tagManager"; conv?: Conversation }
   | null
 
 type MenuType =
@@ -554,14 +554,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                     className="conversations-tag-filter-item conversations-tag-filter-action"
                     onClick={() => {
                       setShowTagFilterMenu(false)
-                      // 打开标签管理对话框（需要一个当前会话作为上下文）
+                      // 打开标签管理对话框（如果有当前会话则带入，否则作为全局管理）
                       const sessionId = manager.siteAdapter?.getSessionId?.()
+                      let conv: Conversation | undefined
                       if (sessionId && sessionId !== "default" && sessionId !== "app") {
-                        const conv = manager.getConversation(sessionId)
-                        if (conv) {
-                          setDialog({ type: "tagManager", conv })
-                        }
+                        conv = manager.getConversation(sessionId)
                       }
+                      setDialog({ type: "tagManager", conv })
                     }}>
                     {t("conversationsManageTags") || "管理标签"}
                   </div>
