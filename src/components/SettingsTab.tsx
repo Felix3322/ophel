@@ -504,7 +504,15 @@ export const SettingsTab = () => {
       style={{
         padding: "12px",
         fontSize: "13px",
+        userSelect: "none",
       }}>
+      <style>{`
+        .gh-settings-tab input,
+        .gh-settings-tab textarea {
+          user-select: text !important;
+          cursor: text !important;
+        }
+      `}</style>
       {/* ========== 通用设置 ========== */}
       <div
         style={{
