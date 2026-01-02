@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
@@ -36,13 +36,27 @@ const ToggleRow: React.FC<{
       alignItems: "center",
       justifyContent: "space-between",
       marginBottom: "10px",
-      padding: "6px 0",
+      padding: "14px 16px",
+      backgroundColor: "var(--gh-card-bg, #ffffff)",
+      border: "1px solid var(--gh-card-border, #e5e7eb)",
+      borderRadius: "8px",
       opacity: disabled ? 0.5 : 1,
       pointerEvents: disabled ? "none" : "auto",
     }}>
     <div style={{ flex: 1 }}>
-      <div style={{ fontWeight: 500, fontSize: "13px" }}>{label}</div>
-      {desc && <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>{desc}</div>}
+      <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+        {label}
+      </div>
+      {desc && (
+        <div
+          style={{
+            fontSize: "11px",
+            color: "var(--gh-text-secondary, #6b7280)",
+            marginTop: "2px",
+          }}>
+          {desc}
+        </div>
+      )}
     </div>
     <label style={{ position: "relative", display: "inline-block", width: "36px", height: "20px" }}>
       <input
@@ -60,7 +74,9 @@ const ToggleRow: React.FC<{
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: checked ? "#4285f4" : "#ccc",
+          backgroundColor: checked
+            ? "var(--gh-primary, #4285f4)"
+            : "var(--gh-input-border, #d1d5db)",
           borderRadius: "20px",
           transition: "0.3s",
         }}>
@@ -71,7 +87,7 @@ const ToggleRow: React.FC<{
             width: "16px",
             left: checked ? "18px" : "2px",
             bottom: "2px",
-            backgroundColor: "white",
+            backgroundColor: "var(--gh-bg, #ffffff)",
             borderRadius: "50%",
             transition: "0.3s",
           }}
@@ -96,13 +112,18 @@ const CollapsibleSection: React.FC<{
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
+          gap: "8px",
           cursor: "pointer",
           padding: "8px 0",
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
         }}>
-        <span style={{ fontWeight: 600, fontSize: "13px", color: "#374151" }}>{title}</span>
-        <span style={{ fontSize: "12px", color: "#9ca3af" }}>{expanded ? "▲" : "▼"}</span>
+        <span style={{ fontSize: "12px", color: "var(--gh-text-secondary, #9ca3af)" }}>
+          {expanded ? "▼" : "▶"}
+        </span>
+        <span style={{ fontWeight: 600, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+          {title}
+        </span>
       </div>
       {expanded && <div style={{ paddingTop: "8px" }}>{children}</div>}
     </div>
@@ -146,10 +167,10 @@ const ModelKeywordInput: React.FC<{
         width: "80px",
         padding: "4px 8px",
         borderRadius: "4px",
-        border: "1px solid #d1d5db",
+        border: "1px solid var(--gh-input-border, #d1d5db)",
         fontSize: "12px",
-        backgroundColor: disabled ? "#f3f4f6" : "white",
-        color: disabled ? "#9ca3af" : "inherit",
+        backgroundColor: disabled ? "var(--gh-bg-tertiary, #f3f4f6)" : "var(--gh-input-bg, white)",
+        color: disabled ? "var(--gh-text-secondary, #9ca3af)" : "inherit",
         cursor: disabled ? "not-allowed" : "text",
       }}
     />
@@ -170,7 +191,10 @@ const ModelLockSiteRow: React.FC<{
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: "10px",
-        padding: "6px 0",
+        padding: "14px 16px",
+        backgroundColor: "var(--gh-card-bg, #ffffff)",
+        border: "1px solid var(--gh-card-border, #e5e7eb)",
+        borderRadius: "8px",
       }}>
       {/* 站点名称 */}
       <span style={{ fontWeight: 500, fontSize: "13px", minWidth: "80px" }}>{siteName}</span>
@@ -198,7 +222,9 @@ const ModelLockSiteRow: React.FC<{
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: config.enabled ? "#4285f4" : "#ccc",
+            backgroundColor: config.enabled
+              ? "var(--gh-primary, #4285f4)"
+              : "var(--gh-input-border, #ccc)",
             borderRadius: "20px",
             transition: "0.3s",
           }}>
@@ -209,7 +235,7 @@ const ModelLockSiteRow: React.FC<{
               width: "16px",
               left: config.enabled ? "18px" : "2px",
               bottom: "2px",
-              backgroundColor: "white",
+              backgroundColor: "var(--gh-bg, white)",
               borderRadius: "50%",
               transition: "0.3s",
             }}
@@ -286,7 +312,9 @@ const SortableItem: React.FC<{
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: enabled ? "#4285f4" : "#ccc",
+              backgroundColor: enabled
+                ? "var(--gh-primary, #4285f4)"
+                : "var(--gh-input-border, #ccc)",
               borderRadius: "18px",
               transition: "0.3s",
             }}>
@@ -297,7 +325,7 @@ const SortableItem: React.FC<{
                 width: "14px",
                 left: enabled ? "16px" : "2px",
                 bottom: "2px",
-                backgroundColor: "white",
+                backgroundColor: "var(--gh-bg, white)",
                 borderRadius: "50%",
                 transition: "0.3s",
               }}
@@ -311,12 +339,16 @@ const SortableItem: React.FC<{
         style={{
           width: "28px",
           height: "28px",
-          border: "1px solid #d1d5db",
+          border: "1px solid var(--gh-input-border, #d1d5db)",
           borderRadius: "4px",
-          background: "#f9fafb",
+          background: "var(--gh-bg-secondary, #f9fafb)",
+          color: "var(--gh-text, #374151)",
           cursor: index === 0 ? "not-allowed" : "pointer",
           opacity: index === 0 ? 0.4 : 1,
           fontSize: "12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}>
         ⬆
       </button>
@@ -326,12 +358,16 @@ const SortableItem: React.FC<{
         style={{
           width: "28px",
           height: "28px",
-          border: "1px solid #d1d5db",
+          border: "1px solid var(--gh-input-border, #d1d5db)",
           borderRadius: "4px",
-          background: "#f9fafb",
+          background: "var(--gh-bg-secondary, #f9fafb)",
+          color: "var(--gh-text, #374151)",
           cursor: index === total - 1 ? "not-allowed" : "pointer",
           opacity: index === total - 1 ? 0.4 : 1,
           fontSize: "12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}>
         ⬇
       </button>
@@ -362,10 +398,62 @@ export const SettingsTab = () => {
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     if (settings) {
-      setSettings({ ...settings, language: lang })
+      const newSettings = { ...settings, language: lang }
+      // ... save
+      setSettings(newSettings)
     }
   }
 
+  // 页面宽度逻辑
+  const [tempWidth, setTempWidth] = useState(settings?.pageWidth?.value || "100")
+
+  useEffect(() => {
+    if (settings?.pageWidth?.value) {
+      setTempWidth(settings.pageWidth.value)
+    }
+  }, [settings?.pageWidth?.value])
+
+  const handleWidthBlur = () => {
+    let val = parseInt(tempWidth)
+    const unit = settings?.pageWidth?.unit || "%"
+
+    if (isNaN(val)) {
+      val = unit === "%" ? 81 : 1280
+    }
+
+    if (unit === "%") {
+      if (val < 40) val = 40
+      if (val > 100) val = 100
+    } else {
+      if (val <= 0) val = 1200
+    }
+
+    const finalVal = val.toString()
+    setTempWidth(finalVal)
+    if (finalVal !== settings?.pageWidth?.value) {
+      updateNestedSetting("pageWidth", "value", finalVal)
+    }
+  }
+
+  const handleUnitChange = (newUnit: string) => {
+    let newValue = "81"
+    if (newUnit === "px") {
+      newValue = "1280"
+    }
+    setTempWidth(newValue)
+
+    if (settings) {
+      setSettings({
+        ...settings,
+        pageWidth: {
+          ...settings.pageWidth,
+          unit: newUnit,
+          value: newValue,
+          enabled: settings.pageWidth?.enabled ?? false,
+        },
+      })
+    }
+  }
   // Tab 排序
   const moveTab = useCallback(
     (index: number, direction: number) => {
@@ -412,26 +500,52 @@ export const SettingsTab = () => {
       style={{
         padding: "12px",
         fontSize: "13px",
-        maxHeight: "calc(100vh - 150px)",
-        overflowY: "auto",
       }}>
       {/* ========== 通用设置 ========== */}
-      <CollapsibleSection title={t("settingsTitle")}>
+      <div
+        style={{
+          marginBottom: "8px",
+          fontWeight: 600,
+          fontSize: "13px",
+          color: "var(--gh-text, #374151)",
+        }}>
+        {t("settingsTitle") || "通用设置"}
+      </div>
+      <div
+        style={{
+          backgroundColor: "var(--gh-card-bg, #ffffff)",
+          border: "1px solid var(--gh-card-border, #e5e7eb)",
+          borderRadius: "8px",
+          padding: "14px 16px",
+          marginBottom: "16px",
+        }}>
         {/* 语言 */}
-        <div style={{ marginBottom: "12px" }}>
-          <label
-            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
-            {t("languageLabel")}
-          </label>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+              {t("languageLabel")}
+            </div>
+            <div
+              style={{
+                fontSize: "11px",
+                color: "var(--gh-text-secondary, #6b7280)",
+                marginTop: "2px",
+              }}>
+              {t("languageDesc") || "设置面板显示语言，即时生效"}
+            </div>
+          </div>
           <select
             value={settings.language || "auto"}
             onChange={(e) => handleLanguageChange(e.target.value)}
             style={{
-              width: "100%",
-              padding: "6px 8px",
+              width: "auto",
+              minWidth: "120px",
+              padding: "4px 8px",
               borderRadius: "4px",
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
               fontSize: "12px",
+              backgroundColor: "var(--gh-input-bg, white)",
+              color: "var(--gh-text, #374151)",
             }}>
             <option value="auto">{t("languageAuto")}</option>
             <option value="zh-CN">{t("languageZhCN")}</option>
@@ -439,7 +553,7 @@ export const SettingsTab = () => {
             <option value="en">{t("languageEn")}</option>
           </select>
         </div>
-      </CollapsibleSection>
+      </div>
 
       {/* ========== 面板设置 ========== */}
       <CollapsibleSection title={t("panelSettingsTitle") || "面板设置"} defaultExpanded={false}>
@@ -465,7 +579,13 @@ export const SettingsTab = () => {
         />
 
         {/* 快捷按钮组排序 */}
-        <div style={{ marginTop: "12px", marginBottom: "8px", fontSize: "12px", color: "#6b7280" }}>
+        <div
+          style={{
+            marginTop: "12px",
+            marginBottom: "8px",
+            fontSize: "12px",
+            color: "var(--gh-text-secondary, #6b7280)",
+          }}>
           {t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用"}
         </div>
         {settings.collapsedButtonsOrder?.map((btn, index) => {
@@ -490,7 +610,12 @@ export const SettingsTab = () => {
 
       {/* ========== 界面排版 ========== */}
       <CollapsibleSection title={t("tabOrderSettings") || "界面排版"} defaultExpanded={false}>
-        <div style={{ marginBottom: "8px", fontSize: "12px", color: "#6b7280" }}>
+        <div
+          style={{
+            marginBottom: "8px",
+            fontSize: "12px",
+            color: "var(--gh-text-secondary, #6b7280)",
+          }}>
           {t("tabOrderDesc") || "调整面板标签页的显示顺序"}
         </div>
         {settings.tabOrder
@@ -539,34 +664,64 @@ export const SettingsTab = () => {
           checked={settings.pageWidth?.enabled ?? false}
           onChange={() => updateNestedSetting("pageWidth", "enabled", !settings.pageWidth?.enabled)}
         />
-        {settings.pageWidth?.enabled && (
-          <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+            opacity: settings.pageWidth?.enabled ? 1 : 0.5,
+            pointerEvents: settings.pageWidth?.enabled ? "auto" : "none",
+          }}>
+          <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+            {t("pageWidthValueLabel") || "宽度值"}
+          </div>
+          <div style={{ display: "flex", gap: "6px" }}>
             <input
-              type="number"
-              value={settings.pageWidth?.value || "100"}
-              onChange={(e) => updateNestedSetting("pageWidth", "value", e.target.value)}
+              type="text"
+              value={tempWidth}
+              onChange={(e) => setTempWidth(e.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={handleWidthBlur}
+              disabled={!settings.pageWidth?.enabled}
               style={{
-                flex: 1,
+                width: "60px",
                 padding: "4px 8px",
                 borderRadius: "4px",
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
                 fontSize: "12px",
+                backgroundColor: settings.pageWidth?.enabled
+                  ? "var(--gh-input-bg, white)"
+                  : "var(--gh-bg-tertiary, #f3f4f6)",
+                color: settings.pageWidth?.enabled
+                  ? "var(--gh-text, #374151)"
+                  : "var(--gh-text-secondary, #9ca3af)",
               }}
             />
             <select
               value={settings.pageWidth?.unit || "%"}
-              onChange={(e) => updateNestedSetting("pageWidth", "unit", e.target.value)}
+              onChange={(e) => handleUnitChange(e.target.value)}
+              disabled={!settings.pageWidth?.enabled}
               style={{
                 padding: "4px 8px",
                 borderRadius: "4px",
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
                 fontSize: "12px",
+                backgroundColor: settings.pageWidth?.enabled
+                  ? "var(--gh-input-bg, white)"
+                  : "var(--gh-bg-tertiary, #f3f4f6)",
+                color: settings.pageWidth?.enabled
+                  ? "var(--gh-text, #374151)"
+                  : "var(--gh-text-secondary, #9ca3af)",
               }}>
               <option value="%">%</option>
               <option value="px">px</option>
             </select>
           </div>
-        )}
+        </div>
         <ToggleRow
           label={t("preventAutoScrollLabel") || "防止自动滚动"}
           desc={t("preventAutoScrollDesc") || "阻止页面自动滚动到底部"}
@@ -587,10 +742,19 @@ export const SettingsTab = () => {
             updateNestedSetting("outline", "autoUpdate", !settings.outline?.autoUpdate)
           }
         />
-        <div style={{ marginBottom: "12px" }}>
-          <label
-            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
-            {t("outlineUpdateIntervalLabel") || "更新间隔 (秒)"}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+          }}>
+          <label style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+            {t("outlineUpdateIntervalLabel") || "更新检测间隔 (秒)"}
           </label>
           <input
             type="number"
@@ -603,43 +767,65 @@ export const SettingsTab = () => {
               width: "60px",
               padding: "4px 8px",
               borderRadius: "4px",
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
               fontSize: "12px",
+              backgroundColor: "var(--gh-input-bg, white)",
+              color: "var(--gh-text, #374151)",
             }}
           />
         </div>
 
-        <div style={{ marginBottom: "12px" }}>
-          <label
-            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
-            {t("outlineFollowModeLabel") || "大纲跟随模式"}
-          </label>
-          <select
-            value={settings.outline?.followMode || "current"}
-            onChange={(e) =>
-              updateNestedSetting(
-                "outline",
-                "followMode",
-                e.target.value as "current" | "latest" | "manual",
-              )
-            }
+        <div
+          style={{
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+          }}>
+          <div
             style={{
-              width: "100%",
-              padding: "6px 8px",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              fontSize: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}>
-            <option value="current">{t("outlineFollowCurrent") || "跟随当前位置"}</option>
-            <option value="latest">{t("outlineFollowLatest") || "跟随最新消息"}</option>
-            <option value="manual">{t("outlineFollowManual") || "手动控制"}</option>
-          </select>
-          <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+            <label style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+              {t("outlineFollowModeLabel") || "大纲跟随模式"}
+            </label>
+            <select
+              value={settings.outline?.followMode || "current"}
+              onChange={(e) =>
+                updateNestedSetting(
+                  "outline",
+                  "followMode",
+                  e.target.value as "current" | "latest" | "manual",
+                )
+              }
+              style={{
+                width: "auto",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
+                fontSize: "12px",
+                backgroundColor: "var(--gh-input-bg, white)",
+                color: "var(--gh-text, #374151)",
+              }}>
+              <option value="current">{t("outlineFollowCurrent") || "跟随当前位置"}</option>
+              <option value="latest">{t("outlineFollowLatest") || "跟随最新消息"}</option>
+              <option value="manual">{t("outlineFollowManual") || "手动控制"}</option>
+            </select>
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              color: "var(--gh-text-secondary, #9ca3af)",
+              marginTop: "4px",
+            }}>
             {settings.outline?.followMode === "current"
-              ? t("outlineFollowCurrentDesc") || "滚动页面时高亮当前大纲项"
+              ? t("outlineFollowCurrentDesc") || "滚动页面时自动定位高亮大纲项"
               : settings.outline?.followMode === "latest"
-                ? t("outlineFollowLatestDesc") || "自动滚动到最新消息"
-                : t("outlineFollowManualDesc") || "不自动滚动，用户手动控制"}
+                ? t("outlineFollowLatestDesc") || "大纲始终自动滚动到底部"
+                : t("outlineFollowManualDesc") || "不自动滚动大纲"}
           </div>
         </div>
       </CollapsibleSection>
@@ -695,17 +881,18 @@ export const SettingsTab = () => {
         {/* 检测频率 - 始终显示，未开启自动重命名时置灰 */}
         <div
           style={{
-            marginBottom: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
             opacity: settings.tabSettings?.autoRenameTab ? 1 : 0.5,
             pointerEvents: settings.tabSettings?.autoRenameTab ? "auto" : "none",
           }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "4px",
-              fontWeight: 500,
-              fontSize: "13px",
-            }}>
+          <label style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
             {t("renameIntervalLabel") || "检测频率"}
           </label>
           <select
@@ -715,12 +902,15 @@ export const SettingsTab = () => {
             }
             disabled={!settings.tabSettings?.autoRenameTab}
             style={{
-              width: "100%",
+              width: "auto",
               padding: "4px 8px",
               borderRadius: "4px",
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
               fontSize: "12px",
-              backgroundColor: settings.tabSettings?.autoRenameTab ? "white" : "#f3f4f6",
+              backgroundColor: settings.tabSettings?.autoRenameTab
+                ? "var(--gh-input-bg, white)"
+                : "var(--gh-bg-tertiary, #f3f4f6)",
+              color: "var(--gh-text, #374151)",
             }}>
             {[1, 3, 5, 10, 30, 60].map((v) => (
               <option key={v} value={v}>
@@ -732,35 +922,56 @@ export const SettingsTab = () => {
         {/* 标题格式 - 始终显示，未开启自动重命名时置灰 */}
         <div
           style={{
-            marginBottom: "12px",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
             opacity: settings.tabSettings?.autoRenameTab ? 1 : 0.5,
             pointerEvents: settings.tabSettings?.autoRenameTab ? "auto" : "none",
           }}>
-          <label
+          <div
             style={{
-              display: "block",
-              marginBottom: "4px",
-              fontWeight: 500,
-              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}>
-            {t("titleFormatLabel") || "标题格式"}
-          </label>
-          <input
-            type="text"
-            value={settings.tabSettings?.titleFormat || "{status}{title}"}
-            onChange={(e) => updateNestedSetting("tabSettings", "titleFormat", e.target.value)}
-            placeholder="{status}{title}"
-            disabled={!settings.tabSettings?.autoRenameTab}
+            <label
+              style={{
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "var(--gh-text, #374151)",
+                marginRight: "12px",
+                whiteSpace: "nowrap",
+              }}>
+              {t("titleFormatLabel") || "标题格式"}
+            </label>
+            <input
+              type="text"
+              value={settings.tabSettings?.titleFormat || "{status}{title}"}
+              onChange={(e) => updateNestedSetting("tabSettings", "titleFormat", e.target.value)}
+              placeholder="{status}{title}"
+              disabled={!settings.tabSettings?.autoRenameTab}
+              style={{
+                flex: 1,
+                maxWidth: "200px",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
+                fontSize: "12px",
+                backgroundColor: settings.tabSettings?.autoRenameTab
+                  ? "var(--gh-input-bg, white)"
+                  : "var(--gh-bg-tertiary, #f3f4f6)",
+                color: "var(--gh-text, #374151)",
+              }}
+            />
+          </div>
+          <div
             style={{
-              width: "100%",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              border: "1px solid #d1d5db",
-              fontSize: "12px",
-              backgroundColor: settings.tabSettings?.autoRenameTab ? "white" : "#f3f4f6",
-            }}
-          />
-          <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+              fontSize: "11px",
+              color: "var(--gh-text-secondary, #9ca3af)",
+              marginTop: "4px",
+            }}>
             {t("titleFormatDesc") || "自定义标题格式，支持占位符：{status}、{title}、{model}"}
           </div>
         </div>
@@ -875,12 +1086,25 @@ export const SettingsTab = () => {
         {/* 伪装标题 - 始终显示，未开启隐私模式时置灰 */}
         <div
           style={{
-            marginBottom: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
             opacity: settings.tabSettings?.privacyMode ? 1 : 0.5,
             pointerEvents: settings.tabSettings?.privacyMode ? "auto" : "none",
           }}>
           <label
-            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
+            style={{
+              fontWeight: 500,
+              fontSize: "13px",
+              color: "var(--gh-text, #374151)",
+              marginRight: "12px",
+              whiteSpace: "nowrap",
+            }}>
             {t("privacyTitleLabel") || "伪装标题"}
           </label>
           <input
@@ -890,12 +1114,17 @@ export const SettingsTab = () => {
             placeholder="Google"
             disabled={!settings.tabSettings?.privacyMode}
             style={{
-              width: "100%",
+              flex: 1,
+              maxWidth: "200px",
               padding: "4px 8px",
               borderRadius: "4px",
-              border: "1px solid #d1d5db",
+
+              border: "1px solid var(--gh-input-border, #d1d5db)",
               fontSize: "12px",
-              backgroundColor: settings.tabSettings?.privacyMode ? "white" : "#f3f4f6",
+              backgroundColor: settings.tabSettings?.privacyMode
+                ? "var(--gh-input-bg, white)"
+                : "var(--gh-bg-tertiary, #f3f4f6)",
+              color: "var(--gh-text, #374151)",
             }}
           />
         </div>
@@ -929,9 +1158,19 @@ export const SettingsTab = () => {
           }
         />
         <div
-          style={{ marginBottom: "12px", opacity: settings.readingHistory?.persistence ? 1 : 0.5 }}>
-          <label
-            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+            opacity: settings.readingHistory?.persistence ? 1 : 0.5,
+            pointerEvents: settings.readingHistory?.persistence ? "auto" : "none",
+          }}>
+          <label style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
             {t("readingHistoryCleanup") || "历史保留时间"}
           </label>
           <select
@@ -941,11 +1180,13 @@ export const SettingsTab = () => {
             }
             disabled={!settings.readingHistory?.persistence}
             style={{
-              width: "100%",
+              width: "auto",
               padding: "4px 8px",
               borderRadius: "4px",
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
               fontSize: "12px",
+              backgroundColor: "var(--gh-input-bg, white)",
+              color: "var(--gh-text, #374151)",
             }}>
             <option value={1}>1 天</option>
             <option value={3}>3 天</option>
@@ -1060,7 +1301,12 @@ export const SettingsTab = () => {
 
       {/* ========== 数据管理 ========== */}
       <CollapsibleSection title={t("dataManagementTitle") || "数据管理"} defaultExpanded={false}>
-        <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "12px" }}>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--gh-text-secondary, #6b7280)",
+            marginBottom: "12px",
+          }}>
           {t("dataManagementDesc") || "导出或导入扩展的所有设置和数据"}
         </div>
 
@@ -1106,8 +1352,9 @@ export const SettingsTab = () => {
               width: "100%",
               padding: "10px 16px",
               borderRadius: "6px",
-              border: "1px solid #d1d5db",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
+              background:
+                "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
               color: "white",
               fontWeight: 500,
               fontSize: "13px",
@@ -1181,9 +1428,9 @@ export const SettingsTab = () => {
               width: "100%",
               padding: "10px 16px",
               borderRadius: "6px",
-              border: "1px solid #d1d5db",
-              background: "#f9fafb",
-              color: "#374151",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
+              background: "var(--gh-bg-secondary, #f9fafb)",
+              color: "var(--gh-text, #374151)",
               fontWeight: 500,
               fontSize: "13px",
               cursor: "pointer",
@@ -1197,7 +1444,12 @@ export const SettingsTab = () => {
           </button>
         </div>
 
-        <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "12px" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            color: "var(--gh-text-secondary, #9ca3af)",
+            marginTop: "12px",
+          }}>
           {t("dataManagementNote") ||
             "提示：导出的文件包含所有设置、会话记录等数据。可用于备份或迁移到新设备。"}
         </div>

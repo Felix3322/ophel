@@ -81,6 +81,10 @@ export interface ThemeVariables {
   "--gh-glass-bg": string
   "--gh-glass-bg-hover": string
   "--gh-glass-text": string
+
+  // 设置卡片样式
+  "--gh-card-bg": string
+  "--gh-card-border": string
 }
 
 // 主题预置定义
@@ -145,6 +149,8 @@ export const lightPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.2)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
       "--gh-glass-text": "#ffffff",
+      "--gh-card-bg": "#ffffff",
+      "--gh-card-border": "#e5e7eb",
     },
   },
   {
@@ -198,6 +204,8 @@ export const lightPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.2)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
       "--gh-glass-text": "#ffffff",
+      "--gh-card-bg": "#ffffff",
+      "--gh-card-border": "#e5e7eb",
     },
   },
   {
@@ -251,6 +259,8 @@ export const lightPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.2)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
       "--gh-glass-text": "#ffffff",
+      "--gh-card-bg": "#ffffff",
+      "--gh-card-border": "#e5e7eb",
     },
   },
 ]
@@ -309,6 +319,8 @@ export const darkPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
       "--gh-glass-text": "#e3e3e3",
+      "--gh-card-bg": "#0b0b0b",
+      "--gh-card-border": "#333333",
     },
   },
   {
@@ -362,6 +374,8 @@ export const darkPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
       "--gh-glass-text": "#e2e8f0",
+      "--gh-card-bg": "#0b0b0b",
+      "--gh-card-border": "#333333",
     },
   },
   {
@@ -415,6 +429,8 @@ export const darkPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
       "--gh-glass-text": "#d1fae5",
+      "--gh-card-bg": "#0b0b0b",
+      "--gh-card-border": "#333333",
     },
   },
 ]

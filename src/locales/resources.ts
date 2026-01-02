@@ -78,6 +78,7 @@ export const resources = {
     themeDark: "深色",
     // 页面宽度设置
     pageWidthLabel: "页面宽度",
+    pageWidthValueLabel: "宽度值",
     pageWidthDesc: "调整聊天页面的宽度，即时生效",
     enablePageWidth: "启用页面加宽",
     widthValue: "宽度值",
@@ -431,6 +432,7 @@ export const resources = {
     jumpToAnchor: "返回之前位置",
     // 頁面寬度設置
     pageWidthLabel: "頁面寬度",
+    pageWidthValueLabel: "寬度值",
     pageWidthDesc: "調整聊天頁面的寬度，即時生效",
     enablePageWidth: "啟用頁面加寬",
     widthValue: "寬度值",
@@ -771,6 +773,7 @@ export const resources = {
     themeDark: "Dark",
     // Page width settings
     pageWidthLabel: "Page Width",
+    pageWidthValueLabel: "Width Value",
     pageWidthDesc: "Adjust chat page width, takes effect immediately",
     enablePageWidth: "Enable Page Widening",
     widthValue: "Width Value",

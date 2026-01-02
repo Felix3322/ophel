@@ -217,4 +217,8 @@ body[data-gh-mode="dark"] {
 
   /* === 滑块圆点颜色（深色模式） === */
   --gh-slider-dot-bg: #4b5563;
+
+  /* === 设置卡片背景（深色模式） === */
+  --gh-card-bg: #0b0b0b;
+  --gh-card-border: #333333;
 }
