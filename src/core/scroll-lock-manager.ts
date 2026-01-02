@@ -1,58 +1,78 @@
-import { type SiteAdapter } from "~adapters/base"
-import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_START } from "~utils/messaging"
-import type { Settings } from "~utils/storage"
-
 /**
  * 滚动锁定管理器
+ *
  * 功能：当 AI 正在生成内容时，如果用户手动向上滚动查看历史消息，
  * 则阻止页面自动滚动到底部，避免打断用户阅读。
+ *
+ * 使用适配器的 isGenerating() 方法检测 AI 生成状态
  */
+
+import type { SiteAdapter } from "~adapters/base"
+import type { Settings } from "~utils/storage"
+
 export class ScrollLockManager {
   private adapter: SiteAdapter
   private settings: Settings
-  private isGenerating = false
   private userHasScrolledUp = false
-  private scrollCheckInterval: NodeJS.Timeout | null = null
   private scrollContainer: HTMLElement | null = null
+  private checkInterval: NodeJS.Timeout | null = null
+  private originalScrollTo: typeof Element.prototype.scrollTo | null = null
 
-  // 阈值：距离底部多少像素内被视为“在底部”
+  // 阈值：距离底部多少像素内被视为"在底部"
   private static readonly BOTTOM_THRESHOLD = 100
 
   constructor(adapter: SiteAdapter, settings: Settings) {
     this.adapter = adapter
     this.settings = settings
-    window.addEventListener("message", this.handleMessage.bind(this))
+    this.init()
   }
 
   updateSettings(settings: Settings) {
     this.settings = settings
-  }
-
-  private handleMessage(event: MessageEvent) {
-    if (event.source !== window) return
-    const { type } = event.data || {}
-
-    if (type === "GH_MONITOR_START") {
-      this.isGenerating = true
-      this.userHasScrolledUp = false
-      this.initScrollDetection()
-    } else if (type === "GH_MONITOR_COMPLETE") {
-      this.isGenerating = false
-      this.stopScrollDetection()
+    if (!settings.preventAutoScroll) {
+      this.stop()
     }
   }
 
-  private initScrollDetection() {
+  private init() {
     if (!this.settings.preventAutoScroll) return
 
-    // 尝试获取滚动容器（通常是 main 或特定 class）
-    // Gemini 的滚动容器可能会变，需要动态获取
+    // 定时检测 AI 生成状态
+    this.checkInterval = setInterval(() => {
+      const isGenerating = this.adapter.isGenerating()
+
+      if (isGenerating && !this.scrollContainer) {
+        // AI 开始生成，初始化滚动检测
+        this.userHasScrolledUp = false
+        this.initScrollDetection()
+      } else if (!isGenerating && this.scrollContainer) {
+        // AI 生成完成，停止滚动检测
+        this.stopScrollDetection()
+      }
+    }, 500)
+
+    // 初始化滚动容器监听
+    this.initScrollDetection()
+  }
+
+  stop() {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval)
+      this.checkInterval = null
+    }
+    this.stopScrollDetection()
+  }
+
+  private initScrollDetection() {
+    // 获取滚动容器
     this.scrollContainer = this.findScrollContainer()
 
     if (this.scrollContainer) {
       this.scrollContainer.addEventListener("scroll", this.onScroll)
-      // 同时也监听 wheel 事件来更早捕获用户意图
       this.scrollContainer.addEventListener("wheel", this.onWheel, { passive: true })
+
+      // 覆盖 scrollTo 方法以阻止自动滚动
+      this.patchScrollTo()
     }
   }
 
@@ -62,16 +82,18 @@ export class ScrollLockManager {
       this.scrollContainer.removeEventListener("wheel", this.onWheel)
       this.scrollContainer = null
     }
+    this.restoreScrollTo()
+    this.userHasScrolledUp = false
   }
 
   private findScrollContainer(): HTMLElement {
     // 常见的滚动容器选择器
     const selectors = [
       "infinite-scroller.chat-history",
+      ".chat-history",
       ".chat-mode-scroller",
       "main",
       '[role="main"]',
-      "body", // fallback
     ]
 
     for (const sel of selectors) {
@@ -84,29 +106,14 @@ export class ScrollLockManager {
   }
 
   private onScroll = () => {
-    if (!this.isGenerating || !this.scrollContainer) return
+    if (!this.adapter.isGenerating() || !this.scrollContainer) return
 
     const { scrollTop, scrollHeight, clientHeight } = this.scrollContainer
     const distanceToBottom = scrollHeight - scrollTop - clientHeight
 
-    // 如果用户滚动到底部附近，重置锁定状态，允许后续自动跟随
+    // 如果用户滚动到底部附近，重置锁定状态
     if (distanceToBottom <= ScrollLockManager.BOTTOM_THRESHOLD) {
       this.userHasScrolledUp = false
-    } else {
-      // 否则，如果正在生成且距离底部较远，标记用户已向上滚动
-      // 这里可以配合 onWheel 进一步确认是用户主动行为
-      this.userHasScrolledUp = true
-    }
-
-    // 关键逻辑：如果用户已向上滚动，阻止 Gemini 的自动滚动脚本行为
-    // Gemini 可能会通过 JS 强制 scrollTop = scrollHeight
-    // 我们可以通过强制设回原来的位置来“对抗”，但这可能导致抖动
-    // 更好的方式是捕获并阻止 Gemini 的滚动事件，但这很难
-    // 这里采用“对抗式”锁定：
-    if (this.userHasScrolledUp) {
-      // 防止被强制拉到底部
-      // 注意：这种方式可能会导致画面轻微抖动，但能有效防止跳到底部
-      // 实际实现中，通常需要更积极地介入，或者覆盖 Element.prototype.scrollTo
     }
   }
 
@@ -118,6 +125,44 @@ export class ScrollLockManager {
     }
   }
 
-  // 注入到页面中覆盖原生 scrollTo (如果需要更强力的锁定)
-  // 目前先保持简单观察模式，如果需要强力模式再注入脚本
+  // 覆盖 scrollTo 方法，阻止自动滚动到底部
+  private patchScrollTo() {
+    if (this.originalScrollTo) return
+
+    const self = this
+    this.originalScrollTo = Element.prototype.scrollTo
+
+    Element.prototype.scrollTo = function (this: Element, ...args: any[]) {
+      // 如果用户已向上滚动且 AI 正在生成，阻止滚动到底部
+      if (
+        self.userHasScrolledUp &&
+        self.adapter.isGenerating() &&
+        self.scrollContainer &&
+        this === self.scrollContainer
+      ) {
+        // 检查是否是滚动到底部的操作
+        const options = args[0] as ScrollToOptions | undefined
+        const targetTop = options?.top ?? args[0]
+        const scrollHeight = this.scrollHeight
+        const clientHeight = this.clientHeight
+
+        // 如果目标位置接近底部，阻止滚动
+        if (typeof targetTop === "number" && targetTop > scrollHeight - clientHeight - 100) {
+          console.log("[Chat Helper] Blocked auto scroll to bottom")
+          return
+        }
+      }
+
+      // 正常执行原始的 scrollTo
+      self.originalScrollTo?.apply(this, args as any)
+    }
+  }
+
+  // 恢复原始的 scrollTo
+  private restoreScrollTo() {
+    if (this.originalScrollTo) {
+      Element.prototype.scrollTo = this.originalScrollTo
+      this.originalScrollTo = null
+    }
+  }
 }

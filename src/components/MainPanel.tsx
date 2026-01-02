@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
+import { useDraggable } from "~hooks/useDraggable"
 import type { Exporter } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
@@ -25,6 +26,10 @@ interface MainPanelProps {
   themeMode?: "light" | "dark"
   selectedPromptId?: string | null
   onPromptSelect?: (prompt: Prompt | null) => void
+  edgeSnapState?: "left" | "right" | null
+  isEdgePeeking?: boolean
+  onEdgeSnap?: (side: "left" | "right") => void
+  onUnsnap?: () => void
 }
 
 export const MainPanel: React.FC<MainPanelProps> = ({
@@ -38,10 +43,21 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   themeMode,
   selectedPromptId,
   onPromptSelect,
+  edgeSnapState,
+  isEdgePeeking = false,
+  onEdgeSnap,
+  onUnsnap,
 }) => {
   const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS)
   const currentSettings = settings || DEFAULT_SETTINGS
   const { tabOrder } = currentSettings
+
+  // 拖拽功能
+  const { panelRef, headerRef, panelStyle, isDragging } = useDraggable({
+    edgeSnapHide: currentSettings.edgeSnapHide,
+    onEdgeSnap,
+    onUnsnap,
+  })
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
@@ -191,7 +207,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   return (
     <div
-      className="gh-main-panel gh-interactive"
+      ref={panelRef}
+      className={`gh-main-panel gh-interactive ${edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgePeeking ? "edge-peek" : ""}`}
       style={{
         position: "fixed",
         top: "50%",
@@ -209,9 +226,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         border: "1px solid var(--gh-border, #e5e7eb)",
         zIndex: 9999,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        ...panelStyle, // 应用拖拽位置样式
       }}>
-      {/* Header - 背景由 CSS 类控制（亮色渐变/深色纯色） */}
+      {/* Header - 拖拽区域 */}
       <div
+        ref={headerRef}
         className="gh-panel-header"
         style={{
           padding: "12px 14px",
@@ -219,7 +238,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          cursor: "move",
+          cursor: isDragging ? "grabbing" : "grab",
           userSelect: "none",
         }}>
         {/* 左侧：图标 + 标题 */}

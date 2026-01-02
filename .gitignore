@@ -31,3 +31,6 @@ dist/
 
 # typescript
 .tsbuildinfo
+
+MIGRATION_STATUS.md
+THEME_UNIFICATION.md

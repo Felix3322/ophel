@@ -335,6 +335,172 @@
   }
 }
 
+/* ============= 边缘吸附隐藏样式 (Edge Snap) ============= */
+/* 与油猴脚本一致 */
+
+/* 面板吸附到左边缘时隐藏 */
+.gh-main-panel.edge-snapped-left {
+  left: -310px !important;
+  right: auto !important;
+  transition:
+    left 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.gh-main-panel.edge-snapped-left:hover,
+.gh-main-panel.edge-snapped-left.edge-peek {
+  left: 0 !important;
+}
+
+/* 面板吸附到右边缘时隐藏 */
+.gh-main-panel.edge-snapped-right {
+  right: -310px !important;
+  left: auto !important;
+  transition:
+    right 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.gh-main-panel.edge-snapped-right:hover,
+.gh-main-panel.edge-snapped-right.edge-peek {
+  right: 0 !important;
+}
+
+/* 边缘触发条 */
+.edge-snap-trigger {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 80px;
+  background: var(--gh-header-bg);
+  cursor: pointer;
+  z-index: 999998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  transition: width 0.2s ease;
+}
+
+.edge-snap-trigger.left {
+  left: 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.edge-snap-trigger.right {
+  right: 0;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.edge-snap-trigger:hover {
+  width: 16px;
+}
+
+.edge-snap-trigger.visible {
+  display: flex;
+}
+
+.edge-snap-trigger::after {
+  content: "";
+  width: 4px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+}
+
+/* ============= 快捷按钮组样式 (QuickButtons) ============= */
+
+/* 单个快捷按钮 */
+.quick-prompt-btn {
+  width: 44px;
+  height: 44px;
+  background: var(--gh-header-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+  border: none;
+  transition: transform 0.3s;
+}
+
+.quick-prompt-btn:hover {
+  transform: scale(1.1);
+}
+
+/* 快捷按钮组容器 */
+.quick-btn-group {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 999997;
+  transition: opacity 0.3s;
+}
+
+.quick-btn-group .quick-prompt-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* panel-only 按钮：面板展开时隐藏 */
+.quick-btn-group .quick-prompt-btn.panel-only {
+  display: none;
+}
+
+/* 面板折叠时显示 panel-only 按钮 */
+.quick-btn-group.collapsed .quick-prompt-btn.panel-only {
+  display: flex;
+}
+
+/* 禁用的按钮始终隐藏 */
+.quick-btn-group .quick-prompt-btn.btn-disabled {
+  display: none !important;
+}
+
+/* 手动锚点返回按钮：无锚点时置灰 */
+.quick-btn-group .quick-prompt-btn.manual-anchor-btn.back-btn {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.quick-btn-group .quick-prompt-btn.manual-anchor-btn.back-btn.has-anchor {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* 手动锚点清除按钮：悬停时变红 */
+.quick-btn-group .quick-prompt-btn.manual-anchor-btn.clear-btn:hover:not(:disabled) {
+  background: #ef4444 !important;
+}
+
+/* 分隔线 */
+.quick-btn-group .divider {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 2px auto;
+}
+
+/* panel-only 分隔线：面板展开时隐藏 */
+.quick-btn-group .divider.panel-only {
+  display: none;
+}
+
+.quick-btn-group.collapsed .divider.panel-only {
+  display: block;
+}
+
 /* ============= 底栏滚动按钮样式 (Footer Scroll Buttons) ============= */
 .scroll-nav-btn {
   flex: 1;

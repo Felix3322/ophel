@@ -10,7 +10,6 @@ import { ThemeManager } from "~core/theme-manager"
 import { Exporter } from "~utils/exporter"
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
 
-import { FloatingBall } from "./FloatingBall"
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
@@ -32,6 +31,11 @@ export const App = () => {
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
+
+  // 边缘吸附状态
+  const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
+  // 临时显示状态（当鼠标悬停在面板上时）
+  const [isEdgePeeking, setIsEdgePeeking] = useState(false)
 
   // 当设置中的主题变化时，同步更新本地状态
   useEffect(() => {
@@ -310,7 +314,14 @@ export const App = () => {
 
   return (
     <div className="gh-root">
-      <div ref={panelRef}>
+      <div
+        ref={panelRef}
+        onMouseLeave={() => {
+          // 边缘吸附恢复逻辑：鼠标移出面板时结束 peek 状态
+          if (edgeSnapState && settings?.edgeSnapHide && isEdgePeeking) {
+            setIsEdgePeeking(false)
+          }
+        }}>
         <MainPanel
           isOpen={isPanelOpen}
           onClose={() => setIsPanelOpen(false)}
@@ -322,12 +333,24 @@ export const App = () => {
           themeMode={themeMode}
           selectedPromptId={selectedPrompt?.id}
           onPromptSelect={handlePromptSelect}
+          edgeSnapState={edgeSnapState}
+          isEdgePeeking={isEdgePeeking}
+          onEdgeSnap={(side) => setEdgeSnapState(side)}
+          onUnsnap={() => {
+            setEdgeSnapState(null)
+            setIsEdgePeeking(false)
+          }}
         />
       </div>
-      <FloatingBall isOpen={isPanelOpen} onClick={() => setIsPanelOpen(!isPanelOpen)} />
       <QuickButtons
         isPanelOpen={isPanelOpen}
-        onPanelToggle={() => setIsPanelOpen(!isPanelOpen)}
+        onPanelToggle={() => {
+          // 如果当前处于吸附状态且要展开面板，进入 peek 状态
+          if (!isPanelOpen && edgeSnapState && settings?.edgeSnapHide) {
+            setIsEdgePeeking(true)
+          }
+          setIsPanelOpen(!isPanelOpen)
+        }}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
       />
