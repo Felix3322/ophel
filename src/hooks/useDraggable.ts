@@ -33,6 +33,9 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     position: null,
   })
 
+  // 记录拖拽是否发生过实质性移动（避免点击触发吸附）
+  const hasMovedRef = useRef(false)
+
   // 拖拽偏移量（鼠标相对于面板左上角的偏移）
   const offsetRef = useRef({ x: 0, y: 0 })
 
@@ -59,6 +62,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         y: e.clientY - rect.top,
       }
 
+      hasMovedRef.current = false // 重置移动标记
+
       // 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
       setDragState({
         isDragging: true,
@@ -79,6 +84,9 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
       e.preventDefault()
 
+      // 标记发生了移动
+      hasMovedRef.current = true
+
       // 直接计算面板左上角位置 = 鼠标位置 - 初始偏移
       return {
         ...prev,
@@ -98,8 +106,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       // 恢复文本选中
       document.body.style.userSelect = ""
 
-      // 边缘吸附检测
-      if (edgeSnapHide && prev.position && panelRef.current) {
+      // 边缘吸附检测 (仅当发生过实质性拖动时才触发)
+      if (edgeSnapHide && hasMovedRef.current && prev.position && panelRef.current) {
         const rect = panelRef.current.getBoundingClientRect()
         const snapThreshold = 30 // 距离边缘30px时触发吸附
 

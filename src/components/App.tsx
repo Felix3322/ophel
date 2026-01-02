@@ -51,6 +51,15 @@ export const App = () => {
   // 临时显示状态（当鼠标悬停在面板上时）
   const [isEdgePeeking, setIsEdgePeeking] = useState(false)
 
+  // 当设置中的语言变化时，同步更新 i18n
+  useEffect(() => {
+    if (!isSettingsLoading && settings?.language) {
+      // 这里的 setLanguage 是从 utils/i18n 导入的全局函数
+      const { setLanguage } = require("~utils/i18n")
+      setLanguage(settings.language)
+    }
+  }, [settings?.language, isSettingsLoading])
+
   // 当设置中的主题变化时，同步更新本地状态
   useEffect(() => {
     if (settings?.themeMode && settings.themeMode !== themeMode) {
