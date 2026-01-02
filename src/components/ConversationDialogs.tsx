@@ -812,7 +812,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             justifyContent: "space-between",
             alignItems: "center",
           }}>
-          <span>{conv ? "选择标签" : "已有标签"}</span>
+          <span>{conv ? t("conversationsSelectTag") : t("conversationsExistingTags")}</span>
           <span style={{ fontSize: "11px", color: "var(--gh-text-secondary, #9ca3af)" }}>
             {tags.length} 个
           </span>
@@ -994,7 +994,11 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             justifyContent: "space-between",
             alignItems: "center",
           }}>
-          <span>{editingId ? "编辑标签" : "新建标签"}</span>
+          <span>
+            {editingId
+              ? t("conversationsEditTag") || "编辑标签"
+              : t("conversationsNewTag") || "新建标签"}
+          </span>
           {editingId && (
             <button
               style={{
@@ -1010,7 +1014,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                 setTagName("")
                 updateColorSelection(TAG_COLORS[0])
               }}>
-              取消编辑
+              {t("conversationsCancelEdit") || "取消编辑"}
             </button>
           )}
         </div>
@@ -1065,7 +1069,9 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               }}
             />
             <span style={{ fontSize: "12px", color: "#666", flex: 1 }}>
-              {colorExpanded ? "收起颜色" : "选择颜色"}
+              {colorExpanded
+                ? t("conversationsCollapseColor") || "收起颜色"
+                : t("conversationsSelectColor") || "选择颜色"}
             </span>
             {/* SVG 箭头图标 */}
             <svg

@@ -182,7 +182,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       async (newName: string) => {
         if (newName && newName.trim() && newName !== oldName) {
           await manager.renameCategory(oldName, newName.trim())
-          showToast(`分类已重命名为「${newName.trim()}」`)
+          showToast(
+            (t("categoryRenamedTo") || "分类已重命名为「{name}」").replace(
+              "{name}",
+              newName.trim(),
+            ),
+          )
           loadData()
         }
       },
@@ -194,10 +199,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     e.preventDefault()
     showConfirm(
       t("confirmDeleteCategory") || "确认删除分类",
-      `确定删除分类「${name}」？关联的提示词将移至「未分类」`,
+      (
+        t("confirmDeleteCategoryMsg") || "确定删除分类「{name}」？关联的提示词将移至「未分类」"
+      ).replace("{name}", name),
       async () => {
         await manager.deleteCategory(name)
-        showToast(`分类「${name}」已删除`)
+        showToast((t("categoryDeletedMsg") || "分类「{name}」已删除").replace("{name}", name))
         if (selectedCategory === name) {
           setSelectedCategory("all")
         }
@@ -750,7 +757,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     <div>
                       <div style={{ fontWeight: 500, color: "var(--gh-text, #374151)" }}>{cat}</div>
                       <div style={{ fontSize: "12px", color: "var(--gh-text-tertiary, #9ca3af)" }}>
-                        {count} 个提示词
+                        {count} {t("promptCountSuffix") || " 个提示词"}
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
