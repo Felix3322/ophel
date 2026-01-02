@@ -15,9 +15,10 @@ import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 
 export const App = () => {
-  // 读取设置
-  const [settings, setSettings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
-    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
+  // 读取设置 - useStorage 返回 [value, setter, { isLoading }]
+  const [settings, setSettings, { isLoading: isSettingsLoading }] = useStorage<Settings>(
+    STORAGE_KEYS.SETTINGS,
+    (saved) => (saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved }),
   )
 
   // 面板状态 - 初始值来自设置
@@ -32,13 +33,15 @@ export const App = () => {
 
   // 当设置加载完成后，同步面板初始状态（只执行一次）
   useEffect(() => {
-    if (settings && !hasInitializedPanel.current) {
+    // 只有当 storage 真正加载完成（isLoading = false）且尚未初始化时才执行
+    if (!isSettingsLoading && settings && !hasInitializedPanel.current) {
       hasInitializedPanel.current = true
+      // 如果 defaultPanelOpen 为 true，打开面板
       if (settings.defaultPanelOpen) {
         setIsPanelOpen(true)
       }
     }
-  }, [settings])
+  }, [isSettingsLoading, settings])
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
@@ -188,13 +191,21 @@ export const App = () => {
     if (!settings?.autoHidePanel || !isPanelOpen) return
 
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Element
-      // 检查点击是否在面板外部
-      if (panelRef.current && !panelRef.current.contains(target)) {
-        // 排除悬浮球本身和快捷按钮
-        if (!target.closest(".gh-floating-ball") && !target.closest(".gh-quick-buttons")) {
-          setIsPanelOpen(false)
-        }
+      // 使用 composedPath() 支持 Shadow DOM
+      const path = e.composedPath()
+
+      // 检查点击路径中是否包含面板或快捷按钮
+      const isInsidePanel = path.some((el) => {
+        if (!(el instanceof Element)) return false
+        // 检查是否是面板内部
+        if (el.closest?.(".gh-main-panel")) return true
+        // 检查是否是快捷按钮
+        if (el.closest?.(".gh-quick-buttons")) return true
+        return false
+      })
+
+      if (!isInsidePanel) {
+        setIsPanelOpen(false)
       }
     }
 
