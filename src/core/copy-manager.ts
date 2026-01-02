@@ -19,6 +19,29 @@ export class CopyManager {
   }
 
   updateSettings(settings: Settings["copy"]) {
+    // 动态启用/禁用公式复制
+    if (settings.formulaCopyEnabled !== this.settings.formulaCopyEnabled) {
+      if (settings.formulaCopyEnabled) {
+        // 先临时赋值以便 init 读取
+        this.settings = settings
+        this.initFormulaCopy()
+      } else {
+        this.destroyFormulaCopy()
+      }
+    }
+
+    // 动态启用/禁用表格复制
+    if (settings.tableCopyEnabled !== this.settings.tableCopyEnabled) {
+      if (settings.tableCopyEnabled) {
+        // 先临时赋值以便 init 读取
+        this.settings = settings
+        this.initTableCopy()
+      } else {
+        this.destroyTableCopy()
+      }
+    }
+
+    // 更新设置
     this.settings = settings
   }
 
@@ -94,11 +117,7 @@ export class CopyManager {
     if (style) style.remove()
 
     if (this.formulaDblClickHandler) {
-      document.removeEventListener(
-        "dblclick",
-        this.formulaDblClickHandler,
-        true
-      )
+      document.removeEventListener("dblclick", this.formulaDblClickHandler, true)
       this.formulaDblClickHandler = null
     }
   }
@@ -156,7 +175,7 @@ export class CopyManager {
       (table) => {
         this.injectTableButton(table as HTMLTableElement)
       },
-      { shadow: true }
+      { shadow: true },
     )
   }
 
@@ -166,9 +185,7 @@ export class CopyManager {
 
     try {
       // 尝试找到原生表格容器
-      let container = table.closest(
-        "table-block, ucs-markdown-table"
-      ) as HTMLElement
+      let container = table.closest("table-block, ucs-markdown-table") as HTMLElement
       if (!container) {
         container = table.parentNode as HTMLElement
         if (!container) return
@@ -193,7 +210,7 @@ export class CopyManager {
       Object.assign(btn.style, {
         position: "absolute",
         top: "4px",
-        right: rightOffset
+        right: rightOffset,
       })
 
       btn.addEventListener("click", (e) => {
@@ -252,20 +269,15 @@ export class CopyManager {
             el.replaceWith(document.createTextNode(replacement))
           }
         })
-        return (
-          clone.innerText?.trim().replace(/\|/g, "\\|").replace(/\n/g, " ") ||
-          ""
-        )
+        return clone.innerText?.trim().replace(/\|/g, "\\|").replace(/\n/g, " ") || ""
       }
-      return (
-        cell.innerText?.trim().replace(/\|/g, "\\|").replace(/\n/g, " ") || ""
-      )
+      return cell.innerText?.trim().replace(/\|/g, "\\|").replace(/\n/g, " ") || ""
     }
 
     rows.forEach((row, rowIndex) => {
       const cells = row.querySelectorAll("th, td")
       const cellTexts = Array.from(cells).map((cell) =>
-        getCellContent(cell as HTMLTableCellElement)
+        getCellContent(cell as HTMLTableCellElement),
       )
       lines.push("| " + cellTexts.join(" | ") + " |")
 
@@ -303,13 +315,13 @@ export class CopyManager {
     ;(
       DOMToolkit.query(".gh-table-copy-btn", {
         all: true,
-        shadow: true
+        shadow: true,
       }) as Element[]
     )?.forEach((btn) => btn.remove())
     ;(
       DOMToolkit.query("[data-gh-table-copy]", {
         all: true,
-        shadow: true
+        shadow: true,
       }) as Element[]
     )?.forEach((el) => {
       if (el instanceof HTMLElement) {
@@ -319,7 +331,7 @@ export class CopyManager {
     ;(
       DOMToolkit.query(".gh-table-container", {
         all: true,
-        shadow: true
+        shadow: true,
       }) as Element[]
     )?.forEach((el) => {
       el.classList.remove("gh-table-container")

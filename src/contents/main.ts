@@ -129,25 +129,102 @@ if (!(window as any).chatHelperInitialized) {
         modelLocker.start()
       }
 
-      // 监听设置变化以支持动态开关
-      const { syncStorage } = await import("~utils/storage")
-      syncStorage.watch({
-        [STORAGE_KEYS.SETTINGS]: (change) => {
-          const newSiteConfig = change.newValue?.modelLockConfig?.[siteId]
-          if (newSiteConfig && modelLocker) {
-            modelLocker.updateConfig(newSiteConfig)
-          }
-        },
-      })
-
       // 9. 滚动锁定（始终创建以支持动态开关）
       scrollLockManager = new ScrollLockManager(adapter, settings)
 
-      // 将 ScrollLockManager 也加入监听（复用已有的 watch）
+      // 监听设置变化以支持动态开关 (合并所有模块的监听)
+      const { syncStorage } = await import("~utils/storage")
       syncStorage.watch({
         [STORAGE_KEYS.SETTINGS]: (change) => {
-          if (change.newValue && scrollLockManager) {
-            scrollLockManager.updateSettings(change.newValue)
+          const newSettings = change.newValue
+
+          // 1. Theme Manager (Always running)
+          if (newSettings && themeManager) {
+            themeManager.updateMode(newSettings.themeMode)
+          }
+
+          // 2. Model Locker update
+          const newSiteConfig = newSettings?.modelLockConfig?.[siteId]
+          if (newSiteConfig && modelLocker) {
+            modelLocker.updateConfig(newSiteConfig)
+          }
+
+          // 3. Scroll Lock update
+          if (newSettings && scrollLockManager) {
+            scrollLockManager.updateSettings(newSettings)
+          }
+
+          // 4. Markdown Fix update
+          if (newSettings && adapter.getSiteId() === "gemini") {
+            if (newSettings.markdownFix) {
+              if (!markdownFixer) {
+                markdownFixer = new MarkdownFixer()
+              }
+              markdownFixer.start()
+            } else {
+              markdownFixer?.stop()
+            }
+          }
+
+          // 5. Layout Manager update
+          const newPageWidth = newSettings?.pageWidth
+          if (newPageWidth) {
+            if (layoutManager) {
+              layoutManager.updateConfig(newPageWidth)
+            } else if (newPageWidth.enabled) {
+              layoutManager = new LayoutManager(adapter, newPageWidth)
+              layoutManager.apply()
+            }
+          }
+
+          // 6. Watermark Remover update
+          if (
+            newSettings &&
+            (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-business")
+          ) {
+            if (newSettings.watermarkRemoval) {
+              if (!watermarkRemover) {
+                watermarkRemover = new WatermarkRemover()
+              }
+              watermarkRemover.start()
+            } else {
+              watermarkRemover?.stop()
+            }
+          }
+
+          // 7. Tab Manager update
+          if (newSettings?.tabSettings) {
+            if (tabManager) {
+              tabManager.updateSettings(newSettings.tabSettings)
+            } else if (
+              newSettings.tabSettings.autoRenameTab ||
+              newSettings.tabSettings.showNotification
+            ) {
+              tabManager = new TabManager(adapter, newSettings.tabSettings)
+              tabManager.start()
+            }
+          }
+
+          // 8. Reading History update
+          if (newSettings?.readingHistory) {
+            if (readingHistoryManager) {
+              readingHistoryManager.updateSettings(newSettings.readingHistory)
+            } else if (newSettings.readingHistory.persistence) {
+              readingHistoryManager = new ReadingHistoryManager(adapter, newSettings.readingHistory)
+              readingHistoryManager.startRecording()
+            }
+          }
+
+          // 9. Copy Manager update
+          if (newSettings?.copy) {
+            if (copyManager) {
+              copyManager.updateSettings(newSettings.copy)
+            } else {
+              copyManager = new CopyManager(newSettings.copy)
+              // 首次创建需收到初始化 (因为 Constructor 不会自动 Init)
+              if (newSettings.copy.formulaCopyEnabled) copyManager.initFormulaCopy()
+              if (newSettings.copy.tableCopyEnabled) copyManager.initTableCopy()
+            }
           }
         },
       })
