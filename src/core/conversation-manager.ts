@@ -53,8 +53,29 @@ export class ConversationManager {
   // Ideally passed in constructor or updated via method.
   private syncUnpin: boolean = false
 
+  // 数据变更回调（用于通知 UI 刷新）
+  private onChangeCallbacks: Array<() => void> = []
+
   constructor(adapter: SiteAdapter) {
     this.siteAdapter = adapter
+  }
+
+  /**
+   * 订阅数据变更事件
+   * @returns 取消订阅函数
+   */
+  onDataChange(callback: () => void): () => void {
+    this.onChangeCallbacks.push(callback)
+    return () => {
+      this.onChangeCallbacks = this.onChangeCallbacks.filter((cb) => cb !== callback)
+    }
+  }
+
+  /**
+   * 触发数据变更通知
+   */
+  private notifyDataChange() {
+    this.onChangeCallbacks.forEach((cb) => cb())
   }
 
   async init() {
@@ -233,7 +254,7 @@ export class ConversationManager {
 
     if (needsSave) {
       this.saveConversations()
-      // Notify UI?
+      this.notifyDataChange()
     }
   }
 
@@ -314,6 +335,7 @@ export class ConversationManager {
 
       if (needsSave) {
         this.saveConversations()
+        this.notifyDataChange()
       }
     })
   }

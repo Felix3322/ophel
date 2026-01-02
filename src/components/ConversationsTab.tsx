@@ -133,6 +133,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
     loadData()
   }, [loadData])
 
+  // 订阅 ConversationManager 的数据变更事件
+  useEffect(() => {
+    const unsubscribe = manager.onDataChange(() => {
+      loadData()
+    })
+    return () => unsubscribe()
+  }, [manager, loadData])
+
   // 搜索处理
   const handleSearch = useCallback(
     (query: string) => {
