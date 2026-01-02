@@ -140,9 +140,7 @@ export const resources = {
     outlineLevel1: "仅 1 级",
     outlineLevel2: "至 2 级",
     outlineLevel3: "至 3 级",
-    refreshPrompts: "刷新提示词",
-    refreshOutline: "刷新大纲",
-    refreshSettings: "刷新设置",
+
     jumpToAnchor: "返回跳转前位置",
     anchorUpdated: "锚点已更新",
     // 大纲高级工具栏
@@ -172,6 +170,14 @@ export const resources = {
     cleanupInfinite: "永久",
     restoredPosition: "已恢复上次阅读位置",
     cleanupDone: "已清理过期数据",
+
+    contentExportSettingsTitle: "内容设置",
+    markdownFixLabel: "Markdown 加粗修复",
+    markdownFixDesc: "修复 Gemini 响应中未正确渲染的 **加粗** 语法",
+    exportImagesToBase64Label: "导出时图片转Base64",
+    exportImagesToBase64Desc: "导出会话时将图片转为Base64嵌入",
+    watermarkRemovalLabel: "移除图片水印",
+    watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
     // 大纲高级设置
     outlineAutoUpdateLabel: "对话期间自动更新大纲",
     outlineAutoUpdateDesc: "AI 生成内容时自动刷新目录结构",
@@ -201,8 +207,7 @@ export const resources = {
     collapsedButtonsOrderDesc: "调整折叠面板按钮的显示顺序",
     preventAutoScrollLabel: "防止自动滚动",
     preventAutoScrollDesc: "当 AI 生成长内容时，阻止页面自动滚动到底部，方便阅读上文",
-    markdownFixLabel: "Markdown 加粗修复",
-    markdownFixDesc: "修复 Gemini 响应中未正确渲染的 **加粗** 语法",
+
     // 界面排版开关
     defaultPanelStateLabel: "默认显示面板",
     defaultPanelStateDesc: "刷新页面后面板默认保持展开状态",
@@ -332,15 +337,10 @@ export const resources = {
     manualAnchorLabel: "手动锚点",
     manualAnchorDesc: "在快捷工具栏显示手动锚点按钮",
     // 水印移除
-    watermarkRemovalLabel: "移除图片水印",
-    watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
     watermarkProcessing: "正在处理图片...",
     watermarkProcessed: "水印已移除",
     watermarkFailed: "处理失败",
     // 内容设置
-    contentExportSettingsTitle: "内容设置",
-    exportImagesToBase64Label: "导出时图片转 Base64",
-    exportImagesToBase64Desc: "将对话中的图片转换为 Base64 编码嵌入 Markdown，方便离线查看",
     formulaCopyLabel: "双击复制公式",
     formulaCopyDesc: "双击数学公式可复制 LaTeX 源码（仅 Gemini 标准版）",
     formulaCopied: "公式已复制",
@@ -555,8 +555,7 @@ export const resources = {
     collapsedButtonsOrderDesc: "調整折疊面板按鈕的顯示順序",
     preventAutoScrollLabel: "防止自動滾動",
     preventAutoScrollDesc: "當 AI 生成長內容時，阻止頁面自動滾動到底部，方便閱讀上文",
-    markdownFixLabel: "Markdown 加粗修復",
-    markdownFixDesc: "修復 Gemini 響應中未正確渲染的 **加粗** 語法",
+
     // 介面排版開關
     defaultPanelStateLabel: "默認顯示面板",
     defaultPanelStateDesc: "刷新頁面後面板默認保持展開狀態",
@@ -797,7 +796,27 @@ export const resources = {
     // Theme settings
     themeLabel: "Theme",
     themeAuto: "Auto",
-    themeLight: "Light",
+    outlineLevel1: "Level 1 Only",
+    outlineLevel2: "Up to Level 2",
+    outlineLevel3: "Up to Level 3",
+    // Reading History (en)
+    readingHistoryTitle: "Reading History",
+    readingHistoryPersistenceLabel: "Enable Reading History",
+    readingHistoryPersistenceDesc:
+      "Automatically record reading position and restore on next visit",
+    readingHistoryAutoRestoreLabel: "Auto Restore Position",
+    readingHistoryAutoRestoreDesc: "Automatically jump to last reading position when opening page",
+    readingHistoryCleanup: "Retention Period",
+    // Missing Content Settings (en)
+    contentExportSettingsTitle: "Content Settings",
+    markdownFixLabel: "Markdown Bold Fix",
+    markdownFixDesc: "Fix unrendered **bold** syntax in Gemini responses",
+    exportImagesToBase64Label: "Export Images to Base64",
+    exportImagesToBase64Desc:
+      "Convert images to Base64 when exporting conversations for offline viewing",
+    watermarkRemovalLabel: "Remove Image Watermark",
+    watermarkRemovalDesc: "Automatically remove NanoBanana watermark from AI generated images",
+    refreshPrompts: "Refresh Prompts",
     themeDark: "Dark",
     // Page width settings
     pageWidthLabel: "Page Width",
@@ -845,11 +864,6 @@ export const resources = {
     enableOutline: "Enable Outline",
     outlineMaxLevel: "Heading Levels",
     outlineLevelAll: "All (1-6)",
-    outlineLevel1: "Level 1 only",
-    outlineLevel2: "Up to Level 2",
-    outlineLevel3: "Up to Level 3",
-    // Refresh button hints
-    refreshPrompts: "Refresh Prompts",
     refreshOutline: "Refresh Outline",
     refreshSettings: "Refresh Settings",
     jumpToAnchor: "Go back to previous position",
