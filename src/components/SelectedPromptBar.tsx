@@ -114,7 +114,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         transform: "translateX(-50%)",
         // 使用渐变背景
         background: "var(--gh-brand-gradient)",
-        color: "var(--gh-glass-text, white)",
+        color: "var(--gh-text-on-primary, white)",
         padding: "8px 16px",
         borderRadius: "20px",
         boxShadow: "var(--gh-shadow-brand)",
@@ -142,7 +142,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       <span
         style={{
           fontSize: "12px",
-          color: "var(--gh-glass-text, rgba(255,255,255,0.8))",
+          color: "var(--gh-text-on-primary, rgba(255,255,255,0.8))",
           whiteSpace: "nowrap",
           userSelect: "none",
         }}>
@@ -153,7 +153,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         style={{
           fontSize: "13px",
           fontWeight: 500,
-          color: "var(--gh-glass-text, white)",
+          color: "var(--gh-text-on-primary, white)",
           maxWidth: "300px",
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -170,7 +170,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         style={{
           background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
           border: "none",
-          color: "var(--gh-glass-text, white)",
+          color: "var(--gh-text-on-primary, white)",
           width: "20px",
           height: "20px",
           borderRadius: "50%",
