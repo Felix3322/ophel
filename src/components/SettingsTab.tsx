@@ -625,11 +625,92 @@ export const SettingsTab = () => {
       <CollapsibleSection title={t("themeSettings") || "主题设置"} defaultExpanded={false}>
         <div
           style={{
-            marginBottom: "8px",
+            marginBottom: "12px",
             fontSize: "12px",
             color: "var(--gh-text-secondary, #6b7280)",
           }}>
           {t("themeSettingsDesc") || "选择浅色和深色模式下使用的主题预置"}
+        </div>
+
+        {/* 当前模式切换 */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "12px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+          }}>
+          <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+            {t("currentThemeMode") || "当前模式"}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              borderRadius: "8px",
+              overflow: "hidden",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
+            }}>
+            <button
+              onClick={() => {
+                if (settings.themeMode !== "light") {
+                  // 更新设置
+                  setSettings({ ...settings, themeMode: "light" })
+                  // 触发 ThemeManager 切换（通过全局实例）
+                  const themeManager = (window as any).__ghThemeManager
+                  if (themeManager) {
+                    themeManager.toggle()
+                  }
+                }
+              }}
+              style={{
+                padding: "6px 16px",
+                border: "none",
+                fontSize: "12px",
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                backgroundColor:
+                  settings.themeMode === "light"
+                    ? "var(--gh-primary, #4285f4)"
+                    : "var(--gh-bg-secondary, #f9fafb)",
+                color:
+                  settings.themeMode === "light" ? "#ffffff" : "var(--gh-text-secondary, #6b7280)",
+              }}>
+              ☀️ {t("themeLight") || "浅色"}
+            </button>
+            <button
+              onClick={() => {
+                if (settings.themeMode !== "dark") {
+                  // 更新设置
+                  setSettings({ ...settings, themeMode: "dark" })
+                  // 触发 ThemeManager 切换（通过全局实例）
+                  const themeManager = (window as any).__ghThemeManager
+                  if (themeManager) {
+                    themeManager.toggle()
+                  }
+                }
+              }}
+              style={{
+                padding: "6px 16px",
+                border: "none",
+                fontSize: "12px",
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                backgroundColor:
+                  settings.themeMode === "dark"
+                    ? "var(--gh-primary, #4285f4)"
+                    : "var(--gh-bg-secondary, #f9fafb)",
+                color:
+                  settings.themeMode === "dark" ? "#ffffff" : "var(--gh-text-secondary, #6b7280)",
+              }}>
+              🌙 {t("themeDark") || "深色"}
+            </button>
+          </div>
         </div>
 
         {/* 浅色模式预置 */}
@@ -695,11 +776,11 @@ export const SettingsTab = () => {
                 backgroundColor: "var(--gh-input-bg, white)",
                 color: "var(--gh-text, #374151)",
                 cursor: "pointer",
-                width: "90px",
+                width: "120px",
               }}>
               {lightPresets.map((preset) => (
                 <option key={preset.id} value={preset.id}>
-                  {preset.name}
+                  {t(`themePreset_${preset.id}`) || preset.name}
                 </option>
               ))}
             </select>
@@ -769,11 +850,11 @@ export const SettingsTab = () => {
                 backgroundColor: "var(--gh-input-bg, white)",
                 color: "var(--gh-text, #374151)",
                 cursor: "pointer",
-                width: "90px",
+                width: "120px",
               }}>
               {darkPresets.map((preset) => (
                 <option key={preset.id} value={preset.id}>
-                  {preset.name}
+                  {t(`themePreset_${preset.id}`) || preset.name}
                 </option>
               ))}
             </select>
@@ -1361,12 +1442,12 @@ export const SettingsTab = () => {
               backgroundColor: "var(--gh-input-bg, white)",
               color: "var(--gh-text, #374151)",
             }}>
-            <option value={1}>1 天</option>
-            <option value={3}>3 天</option>
-            <option value={7}>7 天</option>
-            <option value={30}>30 天</option>
-            <option value={90}>90 天</option>
-            <option value={-1}>永久保留</option>
+            <option value={1}>1{t("daysSuffix")}</option>
+            <option value={3}>3{t("daysSuffix")}</option>
+            <option value={7}>7{t("daysSuffix")}</option>
+            <option value={30}>30{t("daysSuffix")}</option>
+            <option value={90}>90{t("daysSuffix")}</option>
+            <option value={-1}>{t("cleanupInfinite")}</option>
           </select>
         </div>
       </CollapsibleSection>
