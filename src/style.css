@@ -30,6 +30,8 @@
   /* 使用 CSS 变量，支持动态主题切换 */
   background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
   color: white;
+  /* ⭐ 整个 header 区域统一使用 pointer 光标，避免不同子区域光标不一致导致的视觉跳动 */
+  cursor: pointer;
 }
 
 /* Outline Styles */
@@ -333,6 +335,13 @@
   100% {
     background: transparent;
   }
+}
+
+/* ============= 拖拽状态样式 (Dragging) ============= */
+/* 当面板处于拖拽状态时，强制使用 left/top 定位，防止 React 重渲染覆盖位置 */
+.gh-main-panel.dragging {
+  right: auto !important;
+  transform: none !important;
 }
 
 /* ============= 边缘吸附隐藏样式 (Edge Snap) ============= */

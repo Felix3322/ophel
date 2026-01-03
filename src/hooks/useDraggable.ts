@@ -1,19 +1,17 @@
 /**
- * 面板拖拽 Hook
+ * 面板拖拽 Hook（高性能版本）
  *
  * 与油猴脚本 makeDraggable() 逻辑一致：
  * - 通过 header 拖拽移动面板
  * - 拖拽结束时检测边缘吸附
  * - 窗口 resize 时边界检测
+ *
+ * ⭐ 性能优化：
+ * - 使用 useRef 存储位置，避免频繁触发 React 渲染
+ * - 在 mousemove 中直接操作 DOM，绕过 React 更新周期
  */
 
-import { useCallback, useEffect, useRef, useState } from "react"
-
-interface DragState {
-  isDragging: boolean
-  hasDragged: boolean
-  position: { left: number; top: number } | null
-}
+import { useCallback, useEffect, useRef } from "react"
 
 interface UseDraggableOptions {
   edgeSnapHide?: boolean
@@ -28,157 +26,128 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const panelRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
 
-  const [dragState, setDragState] = useState<DragState>({
-    isDragging: false,
-    hasDragged: false,
-    position: null,
-  })
-
-  // 当吸附状态变化时，重置拖拽位置状态
-  // 这样可以避免旧的位置数据干扰吸附状态下的 CSS 定位
-  useEffect(() => {
-    if (edgeSnapState) {
-      // 进入吸附状态时，清除位置状态，让 CSS 类完全控制位置
-      setDragState((prev) => ({
-        ...prev,
-        hasDragged: false,
-        position: null,
-      }))
-    }
-  }, [edgeSnapState])
-
-  // 记录拖拽是否发生过实质性移动（避免点击触发吸附）
-  const hasMovedRef = useRef(false)
-  // ⭐ 追踪是否真正在拖拽中（用于 handleMouseUp 的检查）
+  // ⭐ 使用 Ref 存储实时状态，避免触发 React 渲染
   const isDraggingRef = useRef(false)
-
-  // 拖拽偏移量（鼠标相对于面板左上角的偏移）
+  const hasMovedRef = useRef(false)
   const offsetRef = useRef({ x: 0, y: 0 })
 
   // 开始拖拽
-  const handleMouseDown = useCallback((e: MouseEvent) => {
-    // 排除控制按钮区域
-    if ((e.target as Element).closest(".gh-panel-controls")) return
+  const handleMouseDown = useCallback(
+    (e: MouseEvent) => {
+      // 排除控制按钮区域
+      if ((e.target as Element).closest(".gh-panel-controls")) return
+
+      const panel = panelRef.current
+      if (!panel) return
+
+      e.preventDefault() // 阻止文本选中
+
+      // 如果当前处于吸附状态，先取消吸附
+      if (edgeSnapState) {
+        onUnsnap?.()
+      }
+
+      // 读取面板当前的实际位置
+      const rect = panel.getBoundingClientRect()
+
+      // 计算鼠标相对于面板左上角的偏移
+      offsetRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      }
+
+      // ⭐ 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
+      // 这样后续拖拽就不会有跳动问题（与油猴脚本一致）
+      panel.style.left = rect.left + "px"
+      panel.style.top = rect.top + "px"
+      panel.style.right = "auto" // 清除 right 定位
+      panel.style.transform = "none" // 清除 translateY(-50%)
+
+      hasMovedRef.current = false
+      isDraggingRef.current = true
+
+      // ⭐ 添加 dragging 类，通过 CSS !important 确保拖拽时 left/top 定位不会被 React 重渲染覆盖
+      panel.classList.add("dragging")
+
+      // 拖动时禁止全局文本选中
+      document.body.style.userSelect = "none"
+    },
+    [edgeSnapState, onUnsnap],
+  )
+
+  // ⭐ 拖拽移动 - 直接操作 DOM，不触发 React 渲染
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current) return
 
     const panel = panelRef.current
     if (!panel) return
 
-    e.preventDefault() // 阻止文本选中
+    e.preventDefault()
+    hasMovedRef.current = true
 
-    // 读取面板当前的实际位置
-    const rect = panel.getBoundingClientRect()
-
-    // 计算鼠标相对于面板左上角的偏移
-    offsetRef.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    }
-
-    hasMovedRef.current = false // 重置移动标记
-    isDraggingRef.current = true // ⭐ 标记开始拖拽
-
-    // 只设置 isDragging=true，不设置 hasDragged 和 position
-    // 只有在 mousemove 检测到实际移动时才更新位置
-    setDragState((prev) => ({
-      ...prev,
-      isDragging: true,
-    }))
-
-    // 拖动时禁止全局文本选中
-    document.body.style.userSelect = "none"
+    // ⭐ 核心优化：直接操作 DOM 样式，绕过 React 更新
+    // 这与油猴脚本的实现完全一致，实现丝滑拖拽
+    panel.style.left = e.clientX - offsetRef.current.x + "px"
+    panel.style.top = e.clientY - offsetRef.current.y + "px"
   }, [])
-
-  // 拖拽移动
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      setDragState((prev) => {
-        if (!prev.isDragging) return prev
-
-        e.preventDefault()
-
-        // 首次移动时取消吸附状态并标记已拖拽
-        if (!hasMovedRef.current) {
-          hasMovedRef.current = true
-          // 使用 setTimeout 避免在 setDragState 回调中直接调用外部状态更新
-          setTimeout(() => onUnsnap?.(), 0)
-        }
-
-        // 直接计算面板左上角位置 = 鼠标位置 - 初始偏移
-        return {
-          ...prev,
-          hasDragged: true, // 标记发生过拖拽
-          position: {
-            left: e.clientX - offsetRef.current.x,
-            top: e.clientY - offsetRef.current.y,
-          },
-        }
-      })
-    },
-    [onUnsnap],
-  )
 
   // 结束拖拽
   const handleMouseUp = useCallback(() => {
-    // 先获取需要的状态
+    if (!isDraggingRef.current) return
+
     const panel = panelRef.current
     const hasMoved = hasMovedRef.current
-    // ⭐ 使用 ref 获取实时的拖拽状态，这比 state 更新更及时且同步
-    const wasDragging = isDraggingRef.current
 
-    setDragState((prev) => {
-      if (!prev.isDragging) return prev
-
-      // 恢复文本选中
-      document.body.style.userSelect = ""
-
-      return { ...prev, isDragging: false }
-    })
-
-    // 重置 ref 状态
     isDraggingRef.current = false
 
-    // 边缘吸附检测 (在 setDragState 之后执行，避免渲染期间状态更新警告)
-    // ⭐ 使用 wasDragging ref 值检查，确保只在真正拖拽结束时才检测
-    // 这样可以完美过滤掉点击按钮（如展开面板）产生的 mouseup 事件，因为点击按钮不会将 isDraggingRef 设为 true
-    if (edgeSnapHide && wasDragging && hasMoved && panel) {
-      setTimeout(() => {
-        const rect = panel.getBoundingClientRect()
-        const snapThreshold = 30 // 距离边缘30px时触发吸附
+    // 恢复文本选中
+    document.body.style.userSelect = ""
 
-        if (rect.left < snapThreshold) {
-          onEdgeSnap?.("left")
-        } else if (window.innerWidth - rect.right < snapThreshold) {
-          onEdgeSnap?.("right")
-        }
-      }, 0)
+    // ⭐ 移除 dragging 类（但保持 left/top 样式，面板会停留在当前位置）
+    panel?.classList.remove("dragging")
+
+    // 边缘吸附检测
+    if (edgeSnapHide && hasMoved && panel) {
+      const rect = panel.getBoundingClientRect()
+      const snapThreshold = 30 // 距离边缘30px时触发吸附
+
+      if (rect.left < snapThreshold) {
+        onEdgeSnap?.("left")
+      } else if (window.innerWidth - rect.right < snapThreshold) {
+        onEdgeSnap?.("right")
+      }
     }
   }, [edgeSnapHide, onEdgeSnap])
 
   // 边界检测：确保面板在视口内可见
   const clampToViewport = useCallback(() => {
-    setDragState((prev) => {
-      if (!prev.hasDragged || !prev.position || !panelRef.current) return prev
+    const panel = panelRef.current
+    if (!panel) return
 
-      const rect = panelRef.current.getBoundingClientRect()
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const margin = 10
+    // 跳过条件：处于吸附状态
+    if (edgeSnapState) return
 
-      let newLeft = prev.position.left
-      let newTop = prev.position.top
+    const rect = panel.getBoundingClientRect()
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const margin = 10
 
-      // 超出边界检测
-      if (rect.right > vw) newLeft = vw - rect.width - margin
-      if (rect.bottom > vh) newTop = vh - rect.height - margin
-      if (rect.left < 0) newLeft = margin
-      if (rect.top < 0) newTop = margin
+    let newLeft = rect.left
+    let newTop = rect.top
 
-      if (newLeft !== prev.position.left || newTop !== prev.position.top) {
-        return { ...prev, position: { left: newLeft, top: newTop } }
-      }
-      return prev
-    })
-  }, [])
+    // 超出边界检测
+    if (rect.right > vw) newLeft = vw - rect.width - margin
+    if (rect.bottom > vh) newTop = vh - rect.height - margin
+    if (rect.left < 0) newLeft = margin
+    if (rect.top < 0) newTop = margin
+
+    if (newLeft !== rect.left || newTop !== rect.top) {
+      panel.style.left = newLeft + "px"
+      panel.style.top = newTop + "px"
+      panel.style.right = "auto"
+      panel.style.transform = "none"
+    }
+  }, [edgeSnapState])
 
   // 绑定事件
   useEffect(() => {
@@ -198,21 +167,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     }
   }, [handleMouseDown, handleMouseMove, handleMouseUp, clampToViewport])
 
-  // 计算面板样式
-  const panelStyle: React.CSSProperties = dragState.position
-    ? {
-        left: `${dragState.position.left}px`,
-        top: `${dragState.position.top}px`,
-        right: "auto",
-        transform: "none",
-      }
-    : {}
-
   return {
     panelRef,
     headerRef,
-    panelStyle,
-    isDragging: dragState.isDragging,
-    hasDragged: dragState.hasDragged,
   }
 }

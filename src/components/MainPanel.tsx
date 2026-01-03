@@ -58,10 +58,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const { tabOrder } = currentSettings
 
-  // 拖拽功能
-  const { panelRef, headerRef, panelStyle, isDragging } = useDraggable({
+  // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）
+  const { panelRef, headerRef } = useDraggable({
     edgeSnapHide: currentSettings.edgeSnapHide,
-    edgeSnapState, // 传递当前吸附状态，让 hook 知道何时重置位置
+    edgeSnapState, // 传递当前吸附状态
     onEdgeSnap,
     onUnsnap,
   })
@@ -235,8 +235,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         border: "1px solid var(--gh-border, #e5e7eb)",
         zIndex: 9999,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        // 只有在非吸附状态时才应用拖拽位置，吸附状态由 CSS class 控制位置
-        ...(edgeSnapState ? {} : panelStyle),
+        // ⭐ 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
       }}>
       {/* Header - 拖拽区域 */}
       <div
@@ -248,7 +247,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          cursor: isDragging ? "grabbing" : "grab",
+          // ⭐ cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
           userSelect: "none",
         }}>
         {/* 左侧：图标 + 标题（双击切换隐私模式） */}
