@@ -2,12 +2,19 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
+import type { SiteAdapter } from "~adapters/base"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import { useDraggable } from "~hooks/useDraggable"
 import type { Exporter } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import {
+  getScrollInfo,
+  smartScrollTo,
+  smartScrollToBottom,
+  smartScrollToTop,
+} from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
 
 import { ConversationsTab } from "./ConversationsTab"
@@ -21,6 +28,7 @@ interface MainPanelProps {
   promptManager: PromptManager
   conversationManager: ConversationManager
   outlineManager: OutlineManager
+  adapter?: SiteAdapter | null
   exporter?: Exporter | null
   onThemeToggle?: () => void
   themeMode?: "light" | "dark"
@@ -41,6 +49,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   promptManager,
   conversationManager,
   outlineManager,
+  adapter,
   exporter,
   onThemeToggle,
   themeMode,
@@ -96,24 +105,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [tabOrder, isInitialized])
 
-  // 获取滚动容器（与 QuickButtons 保持一致）
-  const getScrollContainer = useCallback(() => {
-    const selectors = [
-      "infinite-scroller.chat-history",
-      ".chat-history",
-      ".chat-mode-scroller",
-      "main",
-      '[role="main"]',
-    ]
-    for (const selector of selectors) {
-      const el = document.querySelector(selector) as HTMLElement
-      if (el && el.scrollHeight > el.clientHeight) {
-        return el
-      }
-    }
-    return document.documentElement
-  }, [])
-
   // === 锚点状态（双向跳转） ===
   // previousAnchor: 上一个位置（跳转前）
   // 实现类似 git switch - 的双位置交换
@@ -124,50 +115,44 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const hasAnchor = previousAnchor !== null
 
   // 设置锚点（跳转前调用，保存当前位置）
-  const setAnchor = useCallback(() => {
-    const container = getScrollContainer()
-    setPreviousAnchor(container.scrollTop)
-  }, [getScrollContainer])
+  const setAnchor = useCallback(async () => {
+    const scrollInfo = await getScrollInfo(adapter || null)
+    setPreviousAnchor(scrollInfo.scrollTop)
+  }, [adapter])
 
   // 滚动到顶部（自动记录当前位置为锚点）
-  const scrollToTop = useCallback(() => {
-    const container = getScrollContainer()
-    // 点击去顶部时，自动记录当前位置为锚点
-    setPreviousAnchor(container.scrollTop)
-    container.scrollTo({ top: 0, behavior: "smooth" })
-  }, [getScrollContainer])
+  const scrollToTop = useCallback(async () => {
+    const { previousScrollTop } = await smartScrollToTop(adapter || null)
+    setPreviousAnchor(previousScrollTop)
+  }, [adapter])
 
   // 滚动到底部（自动记录当前位置为锚点）
-  const scrollToBottom = useCallback(() => {
-    const container = getScrollContainer()
-    // 点击去底部时，自动记录当前位置为锚点
-    setPreviousAnchor(container.scrollTop)
-    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
-  }, [getScrollContainer])
+  const scrollToBottom = useCallback(async () => {
+    const { previousScrollTop } = await smartScrollToBottom(adapter || null)
+    setPreviousAnchor(previousScrollTop)
+  }, [adapter])
 
   // 跳转到锚点（实现位置交换，支持来回跳转）
-  const goToAnchor = useCallback(() => {
+  const goToAnchor = useCallback(async () => {
     if (previousAnchor === null) return
 
-    const container = getScrollContainer()
-    // 1. 先保存当前位置（跳转后可以再跳回来）
-    const currentPos = container.scrollTop
+    // 获取当前位置
+    const scrollInfo = await getScrollInfo(adapter || null)
+    const currentPos = scrollInfo.scrollTop
 
-    // 2. 跳转到 previousAnchor
-    container.scrollTo({ top: previousAnchor, behavior: "instant" })
+    // 跳转到 previousAnchor
+    await smartScrollTo(adapter || null, previousAnchor)
 
-    // 3. 交换位置：实现来回跳转
-    // 原来的 previousAnchor 变成 currentAnchor（备用）
-    // 刚才的位置变成新的 previousAnchor（下次跳回去）
+    // 交换位置
     setCurrentAnchor(previousAnchor)
     setPreviousAnchor(currentPos)
-  }, [previousAnchor, getScrollContainer])
+  }, [previousAnchor, adapter])
 
   // 记录锚点位置（每次跳转大纲时调用）
-  const saveAnchor = useCallback(() => {
-    const container = getScrollContainer()
-    setPreviousAnchor(container.scrollTop)
-  }, [getScrollContainer])
+  const saveAnchor = useCallback(async () => {
+    const scrollInfo = await getScrollInfo(adapter || null)
+    setPreviousAnchor(scrollInfo.scrollTop)
+  }, [adapter])
 
   if (!isOpen) return null
 

@@ -455,6 +455,7 @@ export const App = () => {
         promptManager={promptManager}
         conversationManager={conversationManager}
         outlineManager={outlineManager}
+        adapter={adapter}
         exporter={exporter}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}

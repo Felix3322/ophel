@@ -1,7 +1,6 @@
 /**
  * 面板拖拽 Hook（高性能版本）
  *
- * 与油猴脚本 makeDraggable() 逻辑一致：
  * - 通过 header 拖拽移动面板
  * - 拖拽结束时检测边缘吸附
  * - 窗口 resize 时边界检测
@@ -57,7 +56,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       }
 
       // ⭐ 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
-      // 这样后续拖拽就不会有跳动问题（与油猴脚本一致）
+      // 这样后续拖拽就不会有跳动问题
       panel.style.left = rect.left + "px"
       panel.style.top = rect.top + "px"
       panel.style.right = "auto" // 清除 right 定位
@@ -86,7 +85,6 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     hasMovedRef.current = true
 
     // ⭐ 核心优化：直接操作 DOM 样式，绕过 React 更新
-    // 这与油猴脚本的实现完全一致，实现丝滑拖拽
     panel.style.left = e.clientX - offsetRef.current.x + "px"
     panel.style.top = e.clientY - offsetRef.current.y + "px"
   }, [])

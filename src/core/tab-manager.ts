@@ -199,7 +199,7 @@ export class TabManager {
     }
     this.lastAiState = isGenerating ? "generating" : "idle"
 
-    // 构建标题 - 与油猴脚本一致的状态图标逻辑
+    // 构建标题
     // 开启 showStatus 时：生成中显示 ⏳，其他情况（idle/completed）都显示 ✅
     const statusPrefix = this.settings.showStatus !== false ? (isGenerating ? "⏳ " : "✅ ") : ""
 

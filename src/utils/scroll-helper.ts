@@ -1,0 +1,223 @@
+/**
+ * 滚动辅助工具
+ *
+ * 封装与 Main World 脚本的通信，处理 iframe 内 Flutter 滚动容器（图文并茂模式）
+ * Content Script (Isolated World) 无法直接访问 iframe 的 contentDocument，
+ * 需要通过 postMessage 与 Main World 脚本通信。
+ */
+
+import type { SiteAdapter } from "~adapters/base"
+
+interface ScrollResponse {
+  success: boolean
+  scrollTop?: number
+  scrollHeight?: number
+  reason?: string
+}
+
+/**
+ * 通过 Main World 脚本执行 iframe 内滚动操作
+ * @param action 滚动动作
+ * @param position 目标位置（仅 scrollTo 需要）
+ * @returns Promise 返回滚动结果
+ */
+function sendScrollRequest(
+  action: "scrollToTop" | "scrollToBottom" | "scrollTo" | "getScrollInfo",
+  position?: number,
+): Promise<ScrollResponse> {
+  return new Promise((resolve) => {
+    const handler = (event: MessageEvent) => {
+      if (event.source !== window) return
+      if (event.data?.type === "CHAT_HELPER_SCROLL_RESPONSE") {
+        window.removeEventListener("message", handler)
+        resolve(event.data as ScrollResponse)
+      }
+    }
+
+    window.addEventListener("message", handler)
+
+    // 发送请求到 Main World
+    window.postMessage({ type: "CHAT_HELPER_SCROLL_REQUEST", action, position }, "*")
+
+    // 超时处理（100ms 后如果没有响应，认为 Main World 脚本未加载或无 Flutter 容器）
+    setTimeout(() => {
+      window.removeEventListener("message", handler)
+      resolve({ success: false, reason: "timeout" })
+    }, 100)
+  })
+}
+
+/**
+ * 智能获取滚动容器
+ * 优先尝试 adapter 的实现，如果失败则回退到 Main World 查询
+ */
+export function getScrollContainer(adapter: SiteAdapter | null): HTMLElement | null {
+  if (!adapter) return document.documentElement
+
+  // 尝试 adapter 的实现（普通页面模式）
+  const container = adapter.getScrollContainer()
+  if (container) {
+    return container
+  }
+
+  // 如果 adapter 找不到，返回 document.documentElement 作为 fallback
+  // 实际的 iframe 滚动将通过 Main World 脚本处理
+  return document.documentElement
+}
+
+/**
+ * 智能滚动到顶部
+ * 策略：先尝试 Main World 通信（处理 iframe 内滚动），失败后回退到本地适配器容器
+ */
+export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
+  container: HTMLElement
+  previousScrollTop: number
+  scrollHeight: number
+}> {
+  // 首先尝试通过 Main World 处理 iframe 内滚动（图文并茂模式）
+  const infoResult = await sendScrollRequest("getScrollInfo")
+  if (infoResult.success) {
+    const previousScrollTop = infoResult.scrollTop || 0
+    const scrollHeight = infoResult.scrollHeight || 0
+    await sendScrollRequest("scrollToTop")
+    // 返回一个代理容器对象用于后续操作
+    return { container: createFlutterScrollProxy(), previousScrollTop, scrollHeight }
+  }
+
+  // Main World 没有找到 Flutter 容器，尝试本地适配器
+  const container = adapter?.getScrollContainer()
+
+  if (container && container.scrollHeight > container.clientHeight) {
+    // 普通容器，直接滚动
+    const previousScrollTop = container.scrollTop
+    const scrollHeight = container.scrollHeight
+    container.scrollTop = 0
+    return { container, previousScrollTop, scrollHeight }
+  }
+
+  // 最终回退到 document.documentElement
+  const fallback = document.documentElement
+  return {
+    container: fallback,
+    previousScrollTop: fallback.scrollTop,
+    scrollHeight: fallback.scrollHeight,
+  }
+}
+
+/**
+ * 智能滚动到底部
+ * 策略：先尝试 Main World 通信（处理 iframe 内滚动），失败后回退到本地适配器容器
+ */
+export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<{
+  container: HTMLElement
+  previousScrollTop: number
+}> {
+  // 首先尝试通过 Main World 处理 iframe 内滚动（图文并茂模式）
+  const infoResult = await sendScrollRequest("getScrollInfo")
+  if (infoResult.success) {
+    const previousScrollTop = infoResult.scrollTop || 0
+    await sendScrollRequest("scrollToBottom")
+    return { container: createFlutterScrollProxy(), previousScrollTop }
+  }
+
+  // Main World 没有找到 Flutter 容器，尝试本地适配器
+  const container = adapter?.getScrollContainer()
+
+  if (container && container.scrollHeight > container.clientHeight) {
+    const previousScrollTop = container.scrollTop
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
+    return { container, previousScrollTop }
+  }
+
+  // 最终回退到 document.documentElement
+  const fallback = document.documentElement
+  return { container: fallback, previousScrollTop: fallback.scrollTop }
+}
+
+/**
+ * 智能滚动到指定位置
+ * 策略：先尝试 Main World 通信，失败后回退到本地容器
+ */
+export async function smartScrollTo(
+  adapter: SiteAdapter | null,
+  position: number,
+): Promise<{ success: boolean; currentScrollTop: number }> {
+  // 首先尝试通过 Main World 处理
+  const result = await sendScrollRequest("scrollTo", position)
+  if (result.success) {
+    return { success: true, currentScrollTop: result.scrollTop || 0 }
+  }
+
+  // Main World 失败，尝试本地适配器
+  const container = adapter?.getScrollContainer()
+
+  if (container && container.scrollHeight > container.clientHeight) {
+    container.scrollTo({ top: position, behavior: "instant" })
+    return { success: true, currentScrollTop: container.scrollTop }
+  }
+
+  // 最终回退
+  document.documentElement.scrollTo({ top: position, behavior: "instant" })
+  return { success: true, currentScrollTop: document.documentElement.scrollTop }
+}
+
+/**
+ * 获取当前滚动信息
+ * 策略：先尝试 Main World 通信，失败后回退到本地容器
+ */
+export async function getScrollInfo(adapter: SiteAdapter | null): Promise<{
+  scrollTop: number
+  scrollHeight: number
+  clientHeight: number
+  isFlutterMode: boolean
+}> {
+  // 首先尝试通过 Main World 获取 Flutter 容器信息
+  const result = await sendScrollRequest("getScrollInfo")
+  if (result.success) {
+    return {
+      scrollTop: result.scrollTop || 0,
+      scrollHeight: result.scrollHeight || 0,
+      clientHeight: 0, // Flutter 模式暂不提供
+      isFlutterMode: true,
+    }
+  }
+
+  // Main World 失败，尝试本地适配器
+  const container = adapter?.getScrollContainer()
+
+  if (container && container.scrollHeight > container.clientHeight) {
+    return {
+      scrollTop: container.scrollTop,
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      isFlutterMode: false,
+    }
+  }
+
+  // 最终回退
+  return {
+    scrollTop: document.documentElement.scrollTop,
+    scrollHeight: document.documentElement.scrollHeight,
+    clientHeight: document.documentElement.clientHeight,
+    isFlutterMode: false,
+  }
+}
+
+/**
+ * 创建一个代理对象，用于 Flutter 模式下的滚动操作
+ * 这个对象模拟 HTMLElement 接口，但实际通过 Main World 执行滚动
+ */
+function createFlutterScrollProxy(): HTMLElement {
+  // 返回一个最小的代理对象，仅用于类型兼容
+  // 实际滚动操作应该通过 smartScrollTo 等函数执行
+  const proxy = document.createElement("div")
+  Object.defineProperty(proxy, "__isFlutterProxy", { value: true })
+  return proxy
+}
+
+/**
+ * 检查容器是否是 Flutter 代理
+ */
+export function isFlutterProxy(container: HTMLElement): boolean {
+  return (container as any).__isFlutterProxy === true
+}

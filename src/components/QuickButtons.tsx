@@ -1,20 +1,19 @@
-/**
- * 快捷按钮组
- *
- * - 面板折叠时显示 panel-only 按钮
- * - 智能分隔线逻辑
- * - 手动锚点组（设置/返回/清除）
- */
-
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { getAdapter } from "~adapters/index"
 import { t } from "~utils/i18n"
+import {
+  getScrollInfo,
+  isFlutterProxy,
+  smartScrollTo,
+  smartScrollToBottom,
+  smartScrollToTop,
+} from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Settings } from "~utils/storage"
 
-// 折叠面板按钮定义（与油猴脚本一致）
+// 折叠面板按钮定义
 // isPanelOnly: true 表示仅在面板折叠时显示，false 表示常显
 const COLLAPSED_BUTTON_DEFS: Record<
   string,
@@ -62,39 +61,33 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 获取适配器
   const adapter = getAdapter()
 
-  // 获取滚动容器
-  const getScrollContainer = useCallback(() => {
-    const selectors = [
-      "infinite-scroller.chat-history",
-      ".chat-history",
-      ".chat-mode-scroller",
-      "main",
-      '[role="main"]',
-    ]
-    for (const selector of selectors) {
-      const el = document.querySelector(selector) as HTMLElement
-      if (el && el.scrollHeight > el.clientHeight) {
-        return el
-      }
-    }
-    return document.documentElement
-  }, [])
+  // 跟踪是否处于 Flutter 模式（图文并茂）
+  const [isFlutterMode, setIsFlutterMode] = useState(false)
 
   // 加载状态
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [loadingText, setLoadingText] = useState("")
   const abortLoadingRef = useRef(false)
 
-  // 滚动到顶部（完全按照油猴脚本 HistoryLoader 实现）
+  // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
-    const container = getScrollContainer()
+    // 使用智能滚动函数，自动处理 Flutter iframe
+    const { previousScrollTop, scrollHeight, container } = await smartScrollToTop(adapter)
 
-    // 先保存当前位置作为锚点
-    const currentPos = container.scrollTop
-    setSavedAnchorTop(currentPos)
+    // 保存当前位置作为锚点
+    setSavedAnchorTop(previousScrollTop)
     setHasAnchor(true)
 
-    // 配置参数（与油猴脚本一致）
+    // 检测是否处于 Flutter 模式
+    const flutterMode = isFlutterProxy(container)
+    setIsFlutterMode(flutterMode)
+
+    // 如果是 Flutter 模式，滚动已由 Main World 处理，直接返回
+    if (flutterMode) {
+      return
+    }
+
+    // 配置参数
     const WAIT_MS = 800
     const MAX_NO_CHANGE_ROUNDS = 3
     const MAX_TOTAL_ROUNDS = 50
@@ -102,13 +95,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     abortLoadingRef.current = false
 
-    const initialHeight = container.scrollHeight
+    const initialHeight = scrollHeight
     let lastHeight = initialHeight
     let noChangeCount = 0
     let loopCount = 0
-
-    // 快速检测：先跳到顶部
-    container.scrollTop = 0
 
     // 延迟显示遮罩的定时器
     let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
@@ -188,55 +178,58 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     // 开始加载循环
     await loadLoop()
-  }, [getScrollContainer])
+  }, [adapter])
 
   // 停止加载
   const stopLoading = useCallback(() => {
     abortLoadingRef.current = true
   }, [])
 
-  // 滚动到底部
-  const scrollToBottom = useCallback(() => {
-    const container = getScrollContainer()
+  // 滚动到底部（支持图文并茂模式）
+  const scrollToBottom = useCallback(async () => {
+    const { previousScrollTop, container } = await smartScrollToBottom(adapter)
 
     // 保存当前位置作为锚点
-    setSavedAnchorTop(container.scrollTop)
+    setSavedAnchorTop(previousScrollTop)
     setHasAnchor(true)
 
-    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
-  }, [getScrollContainer])
+    // 检测是否处于 Flutter 模式
+    setIsFlutterMode(isFlutterProxy(container))
+  }, [adapter])
 
-  // 锚点跳转（双向）
-  const handleAnchorClick = useCallback(() => {
+  // 锚点跳转（双向，支持图文并茂模式）
+  const handleAnchorClick = useCallback(async () => {
     if (savedAnchorTop === null) return
 
-    const container = getScrollContainer()
-    const currentPos = container.scrollTop
+    // 获取当前位置
+    const scrollInfo = await getScrollInfo(adapter)
+    const currentPos = scrollInfo.scrollTop
 
     // 跳转到锚点
-    container.scrollTo({ top: savedAnchorTop, behavior: "instant" })
+    await smartScrollTo(adapter, savedAnchorTop)
 
     // 交换位置
     setSavedAnchorTop(currentPos)
-  }, [savedAnchorTop, getScrollContainer])
+  }, [savedAnchorTop, adapter])
 
-  // 手动锚点：设置
-  const setAnchorManually = useCallback(() => {
-    const container = getScrollContainer()
-    setSavedAnchorTop(container.scrollTop)
+  // 手动锚点：设置（支持图文并茂模式）
+  const setAnchorManually = useCallback(async () => {
+    const scrollInfo = await getScrollInfo(adapter)
+    setSavedAnchorTop(scrollInfo.scrollTop)
     setHasAnchor(true)
-  }, [getScrollContainer])
+    setIsFlutterMode(scrollInfo.isFlutterMode)
+  }, [adapter])
 
-  // 手动锚点：返回
-  const backToManualAnchor = useCallback(() => {
+  // 手动锚点：返回（支持图文并茂模式）
+  const backToManualAnchor = useCallback(async () => {
     if (savedAnchorTop === null) return
 
-    const container = getScrollContainer()
-    const currentPos = container.scrollTop
+    const scrollInfo = await getScrollInfo(adapter)
+    const currentPos = scrollInfo.scrollTop
 
-    container.scrollTo({ top: savedAnchorTop, behavior: "instant" })
+    await smartScrollTo(adapter, savedAnchorTop)
     setSavedAnchorTop(currentPos)
-  }, [savedAnchorTop, getScrollContainer])
+  }, [savedAnchorTop, adapter])
 
   // 手动锚点：清除
   const clearAnchorManually = useCallback(() => {
@@ -244,7 +237,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     setHasAnchor(false)
   }, [])
 
-  // 获取主题图标（与油猴脚本一致，使用 SVG）
+  // 获取主题图标
   const getThemeIcon = () => {
     const isDark = themeMode === "dark"
     // 深色模式显示太阳（点击切换到浅色），浅色模式显示月亮（点击切换到深色）
@@ -447,7 +440,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   return (
     <>
-      {/* 加载历史遮罩（与油猴脚本一致） */}
+      {/* 加载历史遮罩 */}
       {isLoadingHistory && (
         <div className="gh-loading-mask">
           <div className="gh-loading-content">
