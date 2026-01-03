@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react"
 
 import { useStorage } from "@plasmohq/storage/hook"
 
+import { Switch } from "~components/ui"
 import { setLanguage, t } from "~utils/i18n"
 import { DEFAULT_SETTINGS, STORAGE_KEYS, syncStorage, type Settings } from "~utils/storage"
 import { darkPresets, getPreset, lightPresets } from "~utils/themes"
@@ -59,42 +60,7 @@ const ToggleRow: React.FC<{
         </div>
       )}
     </div>
-    <label style={{ position: "relative", display: "inline-block", width: "36px", height: "20px" }}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-        style={{ opacity: 0, width: 0, height: 0 }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          cursor: disabled ? "not-allowed" : "pointer",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: checked
-            ? "var(--gh-primary, #4285f4)"
-            : "var(--gh-input-border, #d1d5db)",
-          borderRadius: "20px",
-          transition: "0.3s",
-        }}>
-        <span
-          style={{
-            position: "absolute",
-            height: "16px",
-            width: "16px",
-            left: checked ? "18px" : "2px",
-            bottom: "2px",
-            backgroundColor: "var(--gh-bg, #ffffff)",
-            borderRadius: "50%",
-            transition: "0.3s",
-          }}
-        />
-      </span>
-    </label>
+    <Switch checked={checked} onChange={onChange} disabled={disabled} />
   </div>
 )
 
@@ -299,48 +265,12 @@ const ModelLockSiteRow: React.FC<{
       <span style={{ fontWeight: 500, fontSize: "13px", minWidth: "80px" }}>{siteName}</span>
 
       {/* 开关 */}
-      <label
-        style={{
-          position: "relative",
-          display: "inline-block",
-          width: "36px",
-          height: "20px",
-          marginRight: "12px",
-        }}>
-        <input
-          type="checkbox"
+      <div style={{ marginRight: "12px" }}>
+        <Switch
           checked={config.enabled}
-          onChange={() => onChange({ ...config, enabled: !config.enabled })}
-          style={{ opacity: 0, width: 0, height: 0 }}
+          onChange={(checked) => onChange({ ...config, enabled: checked })}
         />
-        <span
-          style={{
-            position: "absolute",
-            cursor: "pointer",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: config.enabled
-              ? "var(--gh-primary, #4285f4)"
-              : "var(--gh-input-border, #ccc)",
-            borderRadius: "20px",
-            transition: "0.3s",
-          }}>
-          <span
-            style={{
-              position: "absolute",
-              height: "16px",
-              width: "16px",
-              left: config.enabled ? "18px" : "2px",
-              bottom: "2px",
-              backgroundColor: "var(--gh-bg, white)",
-              borderRadius: "50%",
-              transition: "0.3s",
-            }}
-          />
-        </span>
-      </label>
+      </div>
 
       {/* 输入框 */}
       <ModelKeywordInput
@@ -389,48 +319,9 @@ const SortableItem: React.FC<{
     </div>
     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
       {showToggle && (
-        <label
-          style={{
-            position: "relative",
-            display: "inline-block",
-            width: "32px",
-            height: "18px",
-            marginRight: "8px",
-          }}>
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={onToggle}
-            style={{ opacity: 0, width: 0, height: 0 }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              cursor: "pointer",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: enabled
-                ? "var(--gh-primary, #4285f4)"
-                : "var(--gh-input-border, #ccc)",
-              borderRadius: "18px",
-              transition: "0.3s",
-            }}>
-            <span
-              style={{
-                position: "absolute",
-                height: "14px",
-                width: "14px",
-                left: enabled ? "16px" : "2px",
-                bottom: "2px",
-                backgroundColor: "var(--gh-bg, white)",
-                borderRadius: "50%",
-                transition: "0.3s",
-              }}
-            />
-          </span>
-        </label>
+        <div style={{ marginRight: "8px" }}>
+          <Switch checked={enabled} onChange={() => onToggle?.()} size="sm" />
+        </div>
       )}
       <button
         onClick={onMoveUp}

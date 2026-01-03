@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { Button } from "~components/ui"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"
 import { t } from "~utils/i18n"
 
@@ -68,29 +69,6 @@ const DIALOG_STYLES = `
     justify-content: flex-end;
     gap: 8px;
     margin-top: 20px;
-  }
-  .conversations-dialog-btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .conversations-dialog-btn.cancel {
-    border: 1px solid var(--gh-input-border, #d1d5db);
-    background: var(--gh-bg, white);
-    color: var(--gh-text, #374151);
-  }
-  .conversations-dialog-btn.cancel:hover {
-    background: var(--gh-hover, #f3f4f6);
-  }
-  .conversations-dialog-btn.confirm {
-    border: 1px solid var(--gh-border, rgba(255,255,255,0.2));
-    background: var(--gh-primary-gradient, linear-gradient(135deg, #4285f4 0%, #1a73e8 100%));
-    color: white;
-  }
-  .conversations-dialog-btn.confirm:hover {
-    opacity: 0.9;
   }
   .emoji-grid-hidden-scrollbar::-webkit-scrollbar {
     display: none;
@@ -182,15 +160,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         {message}
       </div>
       <div className="conversations-dialog-buttons">
-        <button className="conversations-dialog-btn cancel" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           {cancelText || t("cancel") || "取消"}
-        </button>
-        <button
-          className="conversations-dialog-btn confirm"
-          style={danger ? { background: "#ef4444" } : undefined}
-          onClick={onConfirm}>
+        </Button>
+        <Button variant={danger ? "danger" : "primary"} onClick={onConfirm}>
           {confirmText || t("confirm") || "确定"}
-        </button>
+        </Button>
       </div>
     </DialogOverlay>
   )
@@ -432,12 +407,12 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({ folder, onConfirm, o
       </div>
 
       <div className="conversations-dialog-buttons">
-        <button className="conversations-dialog-btn cancel" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           {t("cancel") || "取消"}
-        </button>
-        <button className="conversations-dialog-btn confirm" onClick={handleConfirm}>
+        </Button>
+        <Button variant="primary" onClick={handleConfirm}>
           {t("confirm") || "确定"}
-        </button>
+        </Button>
       </div>
     </DialogOverlay>
   )
@@ -492,12 +467,12 @@ export const RenameDialog: React.FC<RenameDialogProps> = ({
         />
       </div>
       <div className="conversations-dialog-buttons">
-        <button className="conversations-dialog-btn cancel" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           {t("cancel") || "取消"}
-        </button>
-        <button className="conversations-dialog-btn confirm" onClick={handleConfirm}>
+        </Button>
+        <Button variant="primary" onClick={handleConfirm}>
           {t("confirm") || "确定"}
-        </button>
+        </Button>
       </div>
     </DialogOverlay>
   )
@@ -569,8 +544,8 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         {onCreateFolder && (
-          <button
-            className="conversations-dialog-btn confirm"
+          <Button
+            variant="primary"
             style={{ padding: "8px 12px" }}
             onClick={() => {
               onCancel()
@@ -578,7 +553,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
             }}
             title={t("conversationsAddFolder") || "新建文件夹"}>
             +
-          </button>
+          </Button>
         )}
       </div>
 
@@ -605,9 +580,9 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
       </div>
 
       <div className="conversations-dialog-buttons">
-        <button className="conversations-dialog-btn cancel" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           {t("cancel") || "取消"}
-        </button>
+        </Button>
       </div>
     </DialogOverlay>
   )
@@ -1246,8 +1221,8 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
         </div>
 
         {/* 提交按钮 */}
-        <button
-          className="conversations-dialog-btn confirm"
+        <Button
+          variant="primary"
           style={{
             width: "100%",
             background: editingId
@@ -1259,7 +1234,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           {editingId
             ? t("conversationsUpdateTag") || "更新标签"
             : t("conversationsNewTag") || "新建标签"}
-        </button>
+        </Button>
       </div>
     </DialogOverlay>
   )

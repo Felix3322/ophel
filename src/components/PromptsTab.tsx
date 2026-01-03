@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { Button, ConfirmDialog, InputDialog } from "~components/ui"
 import type { PromptManager } from "~core/prompt-manager"
 import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
@@ -295,190 +296,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   const filtered = getFilteredPrompts()
 
-  // 确认对话框组件
-  const renderConfirmDialog = () => {
-    if (!confirmState.show) return null
-
-    return createPortal(
-      <div
-        className="prompt-modal gh-interactive"
-        onClick={() => setConfirmState({ ...confirmState, show: false })}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "var(--gh-overlay-bg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2147483647,
-        }}>
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            background: "var(--gh-bg, white)",
-            borderRadius: "12px",
-            padding: "20px",
-            minWidth: "280px",
-            maxWidth: "400px",
-            boxShadow: "var(--gh-shadow, 0 20px 50px rgba(0,0,0,0.3))",
-          }}>
-          <div
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              marginBottom: "12px",
-              color: "var(--gh-text, #1f2937)",
-            }}>
-            {confirmState.title}
-          </div>
-          <div
-            style={{
-              fontSize: "14px",
-              color: "var(--gh-text-secondary, #6b7280)",
-              marginBottom: "20px",
-            }}>
-            {confirmState.message}
-          </div>
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-            <button
-              onClick={() => setConfirmState({ ...confirmState, show: false })}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                border: "1px solid var(--gh-border, #d1d5db)",
-                background: "var(--gh-bg, white)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}>
-              {t("cancel") || "取消"}
-            </button>
-            <button
-              onClick={() => {
-                setConfirmState({ ...confirmState, show: false })
-                confirmState.onConfirm()
-              }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                border: "none",
-                background: "var(--gh-text-danger, #ef4444)",
-                color: "white",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}>
-              {t("confirm") || "确定"}
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body,
-    )
-  }
-
-  // 输入对话框组件
-  const renderPromptInputDialog = () => {
-    if (!promptInputState.show) return null
-
-    return createPortal(
-      <div
-        className="prompt-modal gh-interactive"
-        onClick={() => setPromptInputState({ ...promptInputState, show: false })}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "var(--gh-overlay-bg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2147483647,
-        }}>
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            background: "var(--gh-bg, white)",
-            borderRadius: "12px",
-            padding: "20px",
-            minWidth: "320px",
-            maxWidth: "400px",
-            boxShadow: "var(--gh-shadow, 0 20px 50px rgba(0,0,0,0.3))",
-          }}>
-          <div
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              marginBottom: "16px",
-              color: "var(--gh-text, #1f2937)",
-            }}>
-            {promptInputState.title}
-          </div>
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setPromptInputState({ ...promptInputState, show: false })
-                promptInputState.onConfirm(inputValue)
-              }
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: "1px solid var(--gh-border, #d1d5db)",
-              borderRadius: "6px",
-              fontSize: "14px",
-              boxSizing: "border-box",
-              marginBottom: "20px",
-              background: "var(--gh-bg, #ffffff)",
-              color: "var(--gh-text, #1f2937)",
-            }}
-          />
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-            <button
-              onClick={() => setPromptInputState({ ...promptInputState, show: false })}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                border: "1px solid var(--gh-border, #d1d5db)",
-                background: "var(--gh-bg, white)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}>
-              {t("cancel") || "取消"}
-            </button>
-            <button
-              onClick={() => {
-                setPromptInputState({ ...promptInputState, show: false })
-                promptInputState.onConfirm(inputValue)
-              }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                border: "none",
-                background:
-                  "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
-                color: "white",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}>
-              {t("confirm") || "确定"}
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body,
-    )
-  }
-
   // 编辑/新增弹窗
   const renderEditModal = () => {
     if (!isModalOpen) return null
@@ -646,38 +463,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           {/* 按钮 */}
           <div
             style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => {
                 setIsModalOpen(false)
                 setEditingPrompt(null)
               }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                background: "var(--gh-hover, #f3f4f6)",
-                color: "var(--gh-text-secondary, #4b5563)",
-              }}>
+              style={{ background: "var(--gh-hover, #f3f4f6)" }}>
               {t("cancel")}
-            </button>
-            <button
-              onClick={handleSave}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                background:
-                  "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
-                color: "white",
-              }}>
+            </Button>
+            <Button variant="primary" onClick={handleSave}>
               {editingPrompt?.id ? t("save") : t("add")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>,
@@ -761,32 +558,22 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
-                      <button
+                      <Button
+                        size="sm"
                         onClick={(e) => handleRenameCategory(cat, e)}
-                        style={{
-                          padding: "4px 8px",
-                          fontSize: "12px",
-                          border: "1px solid var(--gh-border, #d1d5db)",
-                          borderRadius: "4px",
-                          background: "var(--gh-bg, white)",
-                          cursor: "pointer",
-                          color: "var(--gh-primary, #4285f4)",
-                        }}>
+                        style={{ color: "var(--gh-primary, #4285f4)" }}>
                         {t("rename") || "重命名"}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={(e) => handleDeleteCategory(cat, e)}
                         style={{
-                          padding: "4px 8px",
-                          fontSize: "12px",
                           border: "1px solid var(--gh-border-danger, #fecaca)",
-                          borderRadius: "4px",
                           background: "var(--gh-bg-danger, #fef2f2)",
-                          cursor: "pointer",
                           color: "var(--gh-text-danger, #ef4444)",
                         }}>
                         {t("delete") || "删除"}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )
@@ -795,20 +582,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           </div>
 
           <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setIsCategoryModalOpen(false)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                fontSize: "14px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border: "none",
-                background: "var(--gh-hover, #f3f4f6)",
-                color: "var(--gh-text-secondary, #4b5563)",
-              }}>
+              style={{ background: "var(--gh-hover, #f3f4f6)" }}>
               {t("close") || "关闭"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>,
@@ -1131,8 +910,31 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       {/* 弹窗 */}
       {renderEditModal()}
       {renderCategoryModal()}
-      {renderConfirmDialog()}
-      {renderPromptInputDialog()}
+
+      {/* 公共对话框组件 */}
+      {confirmState.show && (
+        <ConfirmDialog
+          title={confirmState.title}
+          message={confirmState.message}
+          danger
+          onConfirm={() => {
+            setConfirmState({ ...confirmState, show: false })
+            confirmState.onConfirm()
+          }}
+          onCancel={() => setConfirmState({ ...confirmState, show: false })}
+        />
+      )}
+      {promptInputState.show && (
+        <InputDialog
+          title={promptInputState.title}
+          defaultValue={promptInputState.defaultValue}
+          onConfirm={(value) => {
+            setPromptInputState({ ...promptInputState, show: false })
+            promptInputState.onConfirm(value)
+          }}
+          onCancel={() => setPromptInputState({ ...promptInputState, show: false })}
+        />
+      )}
 
       {/* 样式 */}
       <style>{`
