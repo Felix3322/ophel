@@ -174,6 +174,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 过滤出启用的 Tab（设置页通过 header 按钮进入，不在 tab 栏显示）
   const visibleTabs = tabOrder.filter((tabId) => {
     if (tabId === "settings") return false // 设置在 header 中
+    // 检查每个 Tab 的 enabled 状态
+    if (tabId === "prompts" && currentSettings.prompts?.enabled === false) return false
+    if (tabId === "conversations" && currentSettings.conversations?.enabled === false) return false
+    if (tabId === "outline" && currentSettings.outline?.enabled === false) return false
     return true
   })
 

@@ -489,13 +489,14 @@ export const SettingsTab = () => {
     value: any,
   ) => {
     if (!settings) return
-    setSettings({
+    const newSettings = {
       ...settings,
       [section]: {
         ...(settings[section] as object),
         [key]: value,
       },
-    })
+    }
+    setSettings(newSettings)
   }
 
   const handleLanguageChange = (lang: string) => {
@@ -980,16 +981,11 @@ export const SettingsTab = () => {
                 enabled={isEnabled}
                 showToggle
                 onToggle={() => {
-                  if (tabId === "prompts")
-                    updateNestedSetting("prompts", "enabled", !settings.prompts?.enabled)
+                  if (tabId === "prompts") updateNestedSetting("prompts", "enabled", !isEnabled)
                   else if (tabId === "outline")
-                    updateNestedSetting("outline", "enabled", !settings.outline?.enabled)
+                    updateNestedSetting("outline", "enabled", !isEnabled)
                   else if (tabId === "conversations")
-                    updateNestedSetting(
-                      "conversations",
-                      "enabled",
-                      !settings.conversations?.enabled,
-                    )
+                    updateNestedSetting("conversations", "enabled", !isEnabled)
                 }}
                 onMoveUp={() => moveTab(index, -1)}
                 onMoveDown={() => moveTab(index, 1)}
