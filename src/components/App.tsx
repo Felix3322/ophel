@@ -154,9 +154,25 @@ export const App = () => {
       // 同时保存到 storage
       setSettings((prev) => (prev ? { ...prev, themeMode: mode } : prev))
     }
-    return new ThemeManager(themeMode, handleThemeModeChange, adapter)
+    return new ThemeManager(
+      themeMode,
+      handleThemeModeChange,
+      adapter,
+      settings?.themePresets?.lightPresetId || "google-gradient",
+      settings?.themePresets?.darkPresetId || "classic-dark",
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时创建
   }, [])
+
+  // 监听主题预置变化，动态更新 ThemeManager
+  useEffect(() => {
+    if (settings?.themePresets) {
+      themeManager.setPresets(
+        settings.themePresets.lightPresetId || "google-gradient",
+        settings.themePresets.darkPresetId || "classic-dark",
+      )
+    }
+  }, [settings?.themePresets?.lightPresetId, settings?.themePresets?.darkPresetId, themeManager])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
   const handleThemeToggle = useCallback(

@@ -79,6 +79,18 @@
   --gh-badge-border: #e5e7eb;
   --gh-badge-shadow: #ffffff;
 
+  /* === 危险操作 === */
+  --gh-bg-danger: #fef2f2;
+  --gh-text-danger: #ef4444;
+  --gh-bg-danger-hover: #fee2e2;
+
+  /* === 品牌边框 === */
+  --gh-brand-border: transparent;
+
+  /* === 设置卡片 === */
+  --gh-card-bg: #ffffff;
+  --gh-card-border: #e5e7eb;
+
   /* === 选中项渐变背景 === */
   --gh-selected-gradient: linear-gradient(
     135deg,

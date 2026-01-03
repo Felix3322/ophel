@@ -15,6 +15,7 @@ export interface ThemeVariables {
   // 文字颜色
   "--gh-text": string
   "--gh-text-secondary": string
+  "--gh-text-tertiary": string
   "--gh-text-on-primary": string
 
   // 边框
@@ -28,13 +29,24 @@ export interface ThemeVariables {
   // 输入框
   "--gh-input-bg": string
   "--gh-input-border": string
+  "--gh-input-focus-border": string
+  "--gh-input-focus-shadow": string
 
   // 阴影
   "--gh-shadow": string
+  "--gh-shadow-sm": string
+  "--gh-shadow-lg": string
+  "--gh-shadow-brand": string
+
+  // 品牌色
+  "--gh-primary": string
+  "--gh-secondary": string
+  "--gh-danger": string
 
   // 语义化组件变量
   "--gh-header-bg": string
-  "--gh-primary": string
+  "--gh-tag-active-bg": string
+  "--gh-checkbox-bg": string
 
   // 徽章样式
   "--gh-badge-text": string
@@ -85,6 +97,25 @@ export interface ThemeVariables {
   // 设置卡片样式
   "--gh-card-bg": string
   "--gh-card-border": string
+
+  // 遮罩层
+  "--gh-overlay-bg": string
+
+  // 按钮阴影
+  "--gh-btn-shadow": string
+  "--gh-btn-shadow-hover": string
+
+  // 搜索高亮
+  "--gh-search-highlight-bg": string
+
+  // Emoji 选中背景
+  "--gh-emoji-selected-bg": string
+
+  // 动画高亮色
+  "--gh-highlight-pulse": string
+
+  // 滑块圆点颜色
+  "--gh-slider-dot-bg": string
 }
 
 // 主题预置定义
@@ -108,6 +139,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-bg-tertiary": "#f3f4f6",
       "--gh-text": "#1f2937",
       "--gh-text-secondary": "#6b7280",
+      "--gh-text-tertiary": "#9ca3af",
       "--gh-text-on-primary": "#ffffff",
       "--gh-border": "#e5e7eb",
       "--gh-border-active": "#4285f4",
@@ -115,9 +147,18 @@ export const lightPresets: ThemePreset[] = [
       "--gh-active-bg": "#e5e7eb",
       "--gh-input-bg": "#ffffff",
       "--gh-input-border": "#d1d5db",
+      "--gh-input-focus-border": "#4285f4",
+      "--gh-input-focus-shadow": "0 0 0 2px rgba(66, 133, 244, 0.1)",
       "--gh-shadow": "0 10px 40px rgba(0, 0, 0, 0.15)",
-      "--gh-header-bg": "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+      "--gh-shadow-sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
+      "--gh-shadow-lg": "0 20px 60px rgba(0, 0, 0, 0.3)",
+      "--gh-shadow-brand": "0 4px 12px rgba(66, 133, 244, 0.3)",
       "--gh-primary": "#4285f4",
+      "--gh-secondary": "#34a853",
+      "--gh-danger": "#ef4444",
+      "--gh-header-bg": "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+      "--gh-tag-active-bg": "#4285f4",
+      "--gh-checkbox-bg": "#4f46e5",
       "--gh-badge-text": "#4b5563",
       "--gh-badge-bg": "#ffffff",
       "--gh-badge-border": "#e5e7eb",
@@ -151,6 +192,13 @@ export const lightPresets: ThemePreset[] = [
       "--gh-glass-text": "#ffffff",
       "--gh-card-bg": "#ffffff",
       "--gh-card-border": "#e5e7eb",
+      "--gh-overlay-bg": "rgba(0, 0, 0, 0.5)",
+      "--gh-btn-shadow": "0 2px 6px rgba(0, 0, 0, 0.15)",
+      "--gh-btn-shadow-hover": "0 4px 12px rgba(0, 0, 0, 0.2)",
+      "--gh-search-highlight-bg": "rgba(255, 235, 59, 0.5)",
+      "--gh-emoji-selected-bg": "#dbeafe",
+      "--gh-highlight-pulse": "rgba(59, 130, 246, 0.3)",
+      "--gh-slider-dot-bg": "#d1d5db",
     },
   },
   {
@@ -163,6 +211,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-bg-tertiary": "#f3e8ff",
       "--gh-text": "#1f2937",
       "--gh-text-secondary": "#6b7280",
+      "--gh-text-tertiary": "#9ca3af",
       "--gh-text-on-primary": "#ffffff",
       "--gh-border": "#e9d5ff",
       "--gh-border-active": "#8b5cf6",
@@ -170,16 +219,25 @@ export const lightPresets: ThemePreset[] = [
       "--gh-active-bg": "#e9d5ff",
       "--gh-input-bg": "#ffffff",
       "--gh-input-border": "#d8b4fe",
+      "--gh-input-focus-border": "#8b5cf6",
+      "--gh-input-focus-shadow": "0 0 0 2px rgba(139, 92, 246, 0.1)",
       "--gh-shadow": "0 10px 40px rgba(139, 92, 246, 0.15)",
-      "--gh-header-bg": "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
+      "--gh-shadow-sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
+      "--gh-shadow-lg": "0 20px 60px rgba(0, 0, 0, 0.3)",
+      "--gh-shadow-brand": "0 4px 12px rgba(139, 92, 246, 0.3)",
       "--gh-primary": "#8b5cf6",
+      "--gh-secondary": "#a855f7",
+      "--gh-danger": "#ef4444",
+      "--gh-header-bg": "linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)",
+      "--gh-tag-active-bg": "#8b5cf6",
+      "--gh-checkbox-bg": "#8b5cf6",
       "--gh-badge-text": "#4b5563",
       "--gh-badge-bg": "#ffffff",
       "--gh-badge-border": "#e9d5ff",
       "--gh-badge-shadow": "#ffffff",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)",
-      "--gh-folder-bg-default": "#f3e8ff", // specific for purple
+      "--gh-folder-bg-default": "#f3e8ff",
       "--gh-folder-bg-expanded": "#e9d5ff",
       "--gh-folder-bg-0": "#fef9e7",
       "--gh-folder-bg-1": "#fdf2f8",
@@ -205,7 +263,14 @@ export const lightPresets: ThemePreset[] = [
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
       "--gh-glass-text": "#ffffff",
       "--gh-card-bg": "#ffffff",
-      "--gh-card-border": "#e5e7eb",
+      "--gh-card-border": "#e9d5ff",
+      "--gh-overlay-bg": "rgba(0, 0, 0, 0.5)",
+      "--gh-btn-shadow": "0 2px 6px rgba(139, 92, 246, 0.15)",
+      "--gh-btn-shadow-hover": "0 4px 12px rgba(139, 92, 246, 0.2)",
+      "--gh-search-highlight-bg": "rgba(255, 235, 59, 0.5)",
+      "--gh-emoji-selected-bg": "#f3e8ff",
+      "--gh-highlight-pulse": "rgba(139, 92, 246, 0.3)",
+      "--gh-slider-dot-bg": "#d8b4fe",
     },
   },
   {
@@ -218,6 +283,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-bg-tertiary": "#e0f2fe",
       "--gh-text": "#1f2937",
       "--gh-text-secondary": "#6b7280",
+      "--gh-text-tertiary": "#9ca3af",
       "--gh-text-on-primary": "#ffffff",
       "--gh-border": "#bae6fd",
       "--gh-border-active": "#0ea5e9",
@@ -225,16 +291,25 @@ export const lightPresets: ThemePreset[] = [
       "--gh-active-bg": "#bae6fd",
       "--gh-input-bg": "#ffffff",
       "--gh-input-border": "#7dd3fc",
+      "--gh-input-focus-border": "#0ea5e9",
+      "--gh-input-focus-shadow": "0 0 0 2px rgba(14, 165, 233, 0.1)",
       "--gh-shadow": "0 10px 40px rgba(14, 165, 233, 0.15)",
-      "--gh-header-bg": "linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)",
+      "--gh-shadow-sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
+      "--gh-shadow-lg": "0 20px 60px rgba(0, 0, 0, 0.3)",
+      "--gh-shadow-brand": "0 4px 12px rgba(14, 165, 233, 0.3)",
       "--gh-primary": "#0ea5e9",
+      "--gh-secondary": "#06b6d4",
+      "--gh-danger": "#ef4444",
+      "--gh-header-bg": "linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)",
+      "--gh-tag-active-bg": "#0ea5e9",
+      "--gh-checkbox-bg": "#0ea5e9",
       "--gh-badge-text": "#4b5563",
       "--gh-badge-bg": "#ffffff",
       "--gh-badge-border": "#bae6fd",
       "--gh-badge-shadow": "#ffffff",
       "--gh-selected-gradient":
         "linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)",
-      "--gh-folder-bg-default": "#e0f2fe", // specific for ocean
+      "--gh-folder-bg-default": "#e0f2fe",
       "--gh-folder-bg-expanded": "#bae6fd",
       "--gh-folder-bg-0": "#fef9e7",
       "--gh-folder-bg-1": "#fdf2f8",
@@ -260,7 +335,14 @@ export const lightPresets: ThemePreset[] = [
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.3)",
       "--gh-glass-text": "#ffffff",
       "--gh-card-bg": "#ffffff",
-      "--gh-card-border": "#e5e7eb",
+      "--gh-card-border": "#bae6fd",
+      "--gh-overlay-bg": "rgba(0, 0, 0, 0.5)",
+      "--gh-btn-shadow": "0 2px 6px rgba(14, 165, 233, 0.15)",
+      "--gh-btn-shadow-hover": "0 4px 12px rgba(14, 165, 233, 0.2)",
+      "--gh-search-highlight-bg": "rgba(255, 235, 59, 0.5)",
+      "--gh-emoji-selected-bg": "#e0f2fe",
+      "--gh-highlight-pulse": "rgba(14, 165, 233, 0.3)",
+      "--gh-slider-dot-bg": "#7dd3fc",
     },
   },
 ]
@@ -278,6 +360,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-bg-tertiary": "#262626",
       "--gh-text": "#e3e3e3",
       "--gh-text-secondary": "#a0a0a0",
+      "--gh-text-tertiary": "#6b7280",
       "--gh-text-on-primary": "#ffffff",
       "--gh-border": "#333333",
       "--gh-border-active": "#818cf8",
@@ -285,9 +368,18 @@ export const darkPresets: ThemePreset[] = [
       "--gh-active-bg": "#333333",
       "--gh-input-bg": "#262626",
       "--gh-input-border": "#404040",
+      "--gh-input-focus-border": "#818cf8",
+      "--gh-input-focus-shadow": "0 0 0 2px rgba(129, 140, 248, 0.2)",
       "--gh-shadow": "0 10px 40px rgba(0, 0, 0, 0.6)",
-      "--gh-header-bg": "#1e1e1e",
+      "--gh-shadow-sm": "0 1px 3px rgba(0, 0, 0, 0.3)",
+      "--gh-shadow-lg": "0 20px 60px rgba(0, 0, 0, 0.7)",
+      "--gh-shadow-brand": "0 4px 12px rgba(129, 140, 248, 0.3)",
       "--gh-primary": "#818cf8",
+      "--gh-secondary": "#6366f1",
+      "--gh-danger": "#fca5a5",
+      "--gh-header-bg": "#1e1e1e",
+      "--gh-tag-active-bg": "rgba(129, 140, 248, 0.6)",
+      "--gh-checkbox-bg": "#818cf8",
       "--gh-badge-text": "#e5e7eb",
       "--gh-badge-bg": "#374151",
       "--gh-badge-border": "#4b5563",
@@ -321,6 +413,13 @@ export const darkPresets: ThemePreset[] = [
       "--gh-glass-text": "#e3e3e3",
       "--gh-card-bg": "#0b0b0b",
       "--gh-card-border": "#333333",
+      "--gh-overlay-bg": "rgba(0, 0, 0, 0.7)",
+      "--gh-btn-shadow": "0 2px 6px rgba(0, 0, 0, 0.4)",
+      "--gh-btn-shadow-hover": "0 4px 12px rgba(0, 0, 0, 0.5)",
+      "--gh-search-highlight-bg": "rgba(255, 235, 59, 0.4)",
+      "--gh-emoji-selected-bg": "rgba(129, 140, 248, 0.3)",
+      "--gh-highlight-pulse": "rgba(129, 140, 248, 0.4)",
+      "--gh-slider-dot-bg": "#4b5563",
     },
   },
   {
@@ -333,6 +432,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-bg-tertiary": "#1e293b",
       "--gh-text": "#e2e8f0",
       "--gh-text-secondary": "#94a3b8",
+      "--gh-text-tertiary": "#64748b",
       "--gh-text-on-primary": "#ffffff",
       "--gh-border": "#334155",
       "--gh-border-active": "#60a5fa",
@@ -340,9 +440,18 @@ export const darkPresets: ThemePreset[] = [
       "--gh-active-bg": "#334155",
       "--gh-input-bg": "#1e293b",
       "--gh-input-border": "#475569",
+      "--gh-input-focus-border": "#60a5fa",
+      "--gh-input-focus-shadow": "0 0 0 2px rgba(96, 165, 250, 0.2)",
       "--gh-shadow": "0 10px 40px rgba(0, 0, 0, 0.7)",
-      "--gh-header-bg": "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+      "--gh-shadow-sm": "0 1px 3px rgba(0, 0, 0, 0.4)",
+      "--gh-shadow-lg": "0 20px 60px rgba(0, 0, 0, 0.8)",
+      "--gh-shadow-brand": "0 4px 12px rgba(96, 165, 250, 0.3)",
       "--gh-primary": "#60a5fa",
+      "--gh-secondary": "#3b82f6",
+      "--gh-danger": "#fca5a5",
+      "--gh-header-bg": "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+      "--gh-tag-active-bg": "rgba(96, 165, 250, 0.6)",
+      "--gh-checkbox-bg": "#60a5fa",
       "--gh-badge-text": "#e2e8f0",
       "--gh-badge-bg": "#334155",
       "--gh-badge-border": "#475569",
@@ -374,8 +483,15 @@ export const darkPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
       "--gh-glass-text": "#e2e8f0",
-      "--gh-card-bg": "#0b0b0b",
-      "--gh-card-border": "#333333",
+      "--gh-card-bg": "#020617",
+      "--gh-card-border": "#334155",
+      "--gh-overlay-bg": "rgba(0, 0, 0, 0.7)",
+      "--gh-btn-shadow": "0 2px 6px rgba(0, 0, 0, 0.4)",
+      "--gh-btn-shadow-hover": "0 4px 12px rgba(0, 0, 0, 0.5)",
+      "--gh-search-highlight-bg": "rgba(255, 235, 59, 0.4)",
+      "--gh-emoji-selected-bg": "rgba(96, 165, 250, 0.3)",
+      "--gh-highlight-pulse": "rgba(96, 165, 250, 0.4)",
+      "--gh-slider-dot-bg": "#475569",
     },
   },
   {
@@ -388,6 +504,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-bg-tertiary": "#14261c",
       "--gh-text": "#d1fae5",
       "--gh-text-secondary": "#86efac",
+      "--gh-text-tertiary": "#6ee7b7",
       "--gh-text-on-primary": "#ffffff",
       "--gh-border": "#1f3d2b",
       "--gh-border-active": "#34d399",
@@ -395,9 +512,18 @@ export const darkPresets: ThemePreset[] = [
       "--gh-active-bg": "#1f3d2b",
       "--gh-input-bg": "#14261c",
       "--gh-input-border": "#2a5a3d",
+      "--gh-input-focus-border": "#34d399",
+      "--gh-input-focus-shadow": "0 0 0 2px rgba(52, 211, 153, 0.2)",
       "--gh-shadow": "0 10px 40px rgba(0, 0, 0, 0.7)",
-      "--gh-header-bg": "linear-gradient(135deg, #065f46 0%, #10b981 100%)",
+      "--gh-shadow-sm": "0 1px 3px rgba(0, 0, 0, 0.4)",
+      "--gh-shadow-lg": "0 20px 60px rgba(0, 0, 0, 0.8)",
+      "--gh-shadow-brand": "0 4px 12px rgba(52, 211, 153, 0.3)",
       "--gh-primary": "#34d399",
+      "--gh-secondary": "#10b981",
+      "--gh-danger": "#fca5a5",
+      "--gh-header-bg": "linear-gradient(135deg, #065f46 0%, #10b981 100%)",
+      "--gh-tag-active-bg": "rgba(52, 211, 153, 0.6)",
+      "--gh-checkbox-bg": "#34d399",
       "--gh-badge-text": "#d1fae5",
       "--gh-badge-bg": "#1f3d2b",
       "--gh-badge-border": "#2a5a3d",
@@ -429,8 +555,15 @@ export const darkPresets: ThemePreset[] = [
       "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",
       "--gh-glass-text": "#d1fae5",
-      "--gh-card-bg": "#0b0b0b",
-      "--gh-card-border": "#333333",
+      "--gh-card-bg": "#050a07",
+      "--gh-card-border": "#1f3d2b",
+      "--gh-overlay-bg": "rgba(0, 0, 0, 0.7)",
+      "--gh-btn-shadow": "0 2px 6px rgba(0, 0, 0, 0.4)",
+      "--gh-btn-shadow-hover": "0 4px 12px rgba(0, 0, 0, 0.5)",
+      "--gh-search-highlight-bg": "rgba(255, 235, 59, 0.4)",
+      "--gh-emoji-selected-bg": "rgba(52, 211, 153, 0.3)",
+      "--gh-highlight-pulse": "rgba(52, 211, 153, 0.4)",
+      "--gh-slider-dot-bg": "#2a5a3d",
     },
   },
 ]

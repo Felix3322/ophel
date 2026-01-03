@@ -91,6 +91,10 @@ export interface Settings {
   tabOrder: string[]
   collapsedButtonsOrder: Array<{ id: string; enabled: boolean }> // 快捷按钮组配置
   clearTextareaOnSend: boolean // Gemini Business 专属：发送后修复中文输入
+  themePresets: {
+    lightPresetId: string // 浅色模式预置 ID
+    darkPresetId: string // 深色模式预置 ID
+  }
   copy: {
     formulaCopyEnabled: boolean
     formulaDelimiterEnabled: boolean
@@ -160,6 +164,10 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "scrollBottom", enabled: true },
   ],
   clearTextareaOnSend: false, // Gemini Business 专属：发送后修复中文输入
+  themePresets: {
+    lightPresetId: "google-gradient", // 默认浅色主题：Google 渐变
+    darkPresetId: "classic-dark", // 默认深色主题：经典深黑
+  },
   copy: {
     formulaCopyEnabled: true,
     formulaDelimiterEnabled: true,

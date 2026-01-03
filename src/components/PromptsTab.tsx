@@ -927,7 +927,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             style={{
               textAlign: "center",
               padding: "40px 20px",
-              color: "#9ca3af",
+              color: "var(--gh-text-tertiary, #9ca3af)",
               fontSize: "14px",
             }}>
             暂无提示词
@@ -1033,7 +1033,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                     fontSize: "12px",
                   }}>
                   ☰
@@ -1051,7 +1051,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                     fontSize: "12px",
                   }}>
                   📋
@@ -1073,7 +1073,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                     fontSize: "12px",
                   }}>
                   ✏
@@ -1091,7 +1091,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                     fontSize: "12px",
                     color: "var(--gh-text-danger, #ef4444)",
                   }}>

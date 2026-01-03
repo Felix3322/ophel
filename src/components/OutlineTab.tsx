@@ -855,7 +855,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   right: "4px",
                   background: "none",
                   border: "none",
-                  color: "#9ca3af",
+                  color: "var(--gh-text-tertiary, #9ca3af)",
                   cursor: "pointer",
                   fontSize: "14px",
                   padding: 0,
@@ -978,7 +978,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
           <div
             style={{
               textAlign: "center",
-              color: "#9ca3af",
+              color: "var(--gh-text-tertiary, #9ca3af)",
               marginTop: "20px",
               fontSize: "12px",
             }}>

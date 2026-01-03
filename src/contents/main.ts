@@ -63,7 +63,13 @@ if (!(window as any).chatHelperInitialized) {
       const settings = await getSetting(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS)
 
       // 1. 主题管理 (优先应用)
-      themeManager = new ThemeManager(settings.themeMode)
+      themeManager = new ThemeManager(
+        settings.themeMode,
+        undefined, // onModeChange callback
+        adapter, // adapter 引用
+        settings.themePresets?.lightPresetId || "google-gradient",
+        settings.themePresets?.darkPresetId || "classic-dark",
+      )
       themeManager.apply()
 
       // 2. Markdown 修复 (仅 Gemini 标准版)
@@ -141,6 +147,13 @@ if (!(window as any).chatHelperInitialized) {
           // 1. Theme Manager (Always running)
           if (newSettings && themeManager) {
             themeManager.updateMode(newSettings.themeMode)
+            // 更新主题预置
+            if (newSettings.themePresets) {
+              themeManager.setPresets(
+                newSettings.themePresets.lightPresetId || "google-gradient",
+                newSettings.themePresets.darkPresetId || "classic-dark",
+              )
+            }
           }
 
           // 2. Model Locker update

@@ -4,6 +4,7 @@ import { useStorage } from "@plasmohq/storage/hook"
 
 import { setLanguage, t } from "~utils/i18n"
 import { DEFAULT_SETTINGS, STORAGE_KEYS, syncStorage, type Settings } from "~utils/storage"
+import { darkPresets, getPreset, lightPresets } from "~utils/themes"
 
 // 快捷按钮定义
 const COLLAPSED_BUTTON_DEFS: Record<string, { icon: string; label: string }> = {
@@ -618,6 +619,166 @@ export const SettingsTab = () => {
             />
           )
         })}
+      </CollapsibleSection>
+
+      {/* ========== 主题设置 ========== */}
+      <CollapsibleSection title={t("themeSettings") || "主题设置"} defaultExpanded={false}>
+        <div
+          style={{
+            marginBottom: "8px",
+            fontSize: "12px",
+            color: "var(--gh-text-secondary, #6b7280)",
+          }}>
+          {t("themeSettingsDesc") || "选择浅色和深色模式下使用的主题预置"}
+        </div>
+
+        {/* 浅色模式预置 */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+          }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+              {t("lightModePreset") || "浅色模式预置"}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* 预览色块 */}
+            {(() => {
+              const preset = getPreset(
+                settings.themePresets?.lightPresetId || "google-gradient",
+                "light",
+              )
+              const primaryColor = preset.variables["--gh-primary"]
+              const secondaryColor = preset.variables["--gh-secondary"]
+              return (
+                <div
+                  style={{ display: "flex", gap: "4px", width: "40px", justifyContent: "center" }}>
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "4px",
+                      background: primaryColor,
+                      border: "1px solid rgba(0,0,0,0.1)",
+                    }}
+                    title={t("primaryColor") || "主色"}
+                  />
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "4px",
+                      background: secondaryColor,
+                      border: "1px solid rgba(0,0,0,0.1)",
+                    }}
+                    title={t("secondaryColor") || "次色"}
+                  />
+                </div>
+              )
+            })()}
+            <select
+              value={settings.themePresets?.lightPresetId || "google-gradient"}
+              onChange={(e) => updateNestedSetting("themePresets", "lightPresetId", e.target.value)}
+              style={{
+                padding: "6px 10px",
+                borderRadius: "6px",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
+                fontSize: "12px",
+                backgroundColor: "var(--gh-input-bg, white)",
+                color: "var(--gh-text, #374151)",
+                cursor: "pointer",
+                width: "90px",
+              }}>
+              {lightPresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 深色模式预置 */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            padding: "14px 16px",
+            backgroundColor: "var(--gh-card-bg, #ffffff)",
+            border: "1px solid var(--gh-card-border, #e5e7eb)",
+            borderRadius: "8px",
+          }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+              {t("darkModePreset") || "深色模式预置"}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* 预览色块 */}
+            {(() => {
+              const preset = getPreset(
+                settings.themePresets?.darkPresetId || "classic-dark",
+                "dark",
+              )
+              const primaryColor = preset.variables["--gh-primary"]
+              const secondaryColor = preset.variables["--gh-secondary"]
+              return (
+                <div
+                  style={{ display: "flex", gap: "4px", width: "40px", justifyContent: "center" }}>
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "4px",
+                      background: primaryColor,
+                      border: "1px solid rgba(255,255,255,0.2)",
+                    }}
+                    title={t("primaryColor") || "主色"}
+                  />
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "4px",
+                      background: secondaryColor,
+                      border: "1px solid rgba(255,255,255,0.2)",
+                    }}
+                    title={t("secondaryColor") || "次色"}
+                  />
+                </div>
+              )
+            })()}
+            <select
+              value={settings.themePresets?.darkPresetId || "classic-dark"}
+              onChange={(e) => updateNestedSetting("themePresets", "darkPresetId", e.target.value)}
+              style={{
+                padding: "6px 10px",
+                borderRadius: "6px",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
+                fontSize: "12px",
+                backgroundColor: "var(--gh-input-bg, white)",
+                color: "var(--gh-text, #374151)",
+                cursor: "pointer",
+                width: "90px",
+              }}>
+              {darkPresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </CollapsibleSection>
 
       {/* ========== 界面排版 ========== */}
@@ -1367,7 +1528,7 @@ export const SettingsTab = () => {
               border: "1px solid var(--gh-input-border, #d1d5db)",
               background:
                 "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
-              color: "white",
+              color: "var(--gh-text-on-primary, white)",
               fontWeight: 500,
               fontSize: "13px",
               cursor: "pointer",

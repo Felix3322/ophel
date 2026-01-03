@@ -593,7 +593,12 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
           </div>
         ))}
         {filteredFolders.length === 0 && (
-          <div style={{ padding: "16px", textAlign: "center", color: "#9ca3af" }}>
+          <div
+            style={{
+              padding: "16px",
+              textAlign: "center",
+              color: "var(--gh-text-tertiary, #9ca3af)",
+            }}>
             {t("conversationsNoSearchResult") || "未找到匹配结果"}
           </div>
         )}
@@ -899,7 +904,9 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                         color: "white",
                         backgroundColor: tag.color,
                         fontWeight: isSelected ? 500 : 400,
-                        boxShadow: isSelected ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
+                        boxShadow: isSelected
+                          ? "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.2))"
+                          : "none",
                       }}>
                       {tag.name}
                       {isEditing && <span style={{ fontSize: "10px" }}>✎</span>}
@@ -942,7 +949,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                       style={{
                         background: "transparent",
                         border: "none",
-                        color: "#9ca3af",
+                        color: "var(--gh-text-tertiary, #9ca3af)",
                         cursor: "pointer",
                         padding: "6px",
                         fontSize: "14px",
@@ -1004,7 +1011,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               style={{
                 background: "none",
                 border: "none",
-                color: "#9ca3af",
+                color: "var(--gh-text-tertiary, #9ca3af)",
                 cursor: "pointer",
                 fontSize: "11px",
                 padding: "2px 6px",
@@ -1064,11 +1071,11 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                 height: "20px",
                 borderRadius: "4px",
                 backgroundColor: selectedColor,
-                border: "1px solid rgba(0,0,0,0.1)",
+                border: "1px solid var(--gh-border, rgba(0,0,0,0.1))",
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: "12px", color: "#666", flex: 1 }}>
+            <span style={{ fontSize: "12px", color: "var(--gh-text-secondary, #666)", flex: 1 }}>
               {colorExpanded
                 ? t("conversationsCollapseColor") || "收起颜色"
                 : t("conversationsSelectColor") || "选择颜色"}
@@ -1105,7 +1112,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                 padding: "10px",
                 background: "var(--gh-bg, #ffffff)",
                 zIndex: 10,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                boxShadow: "var(--gh-shadow, 0 4px 12px rgba(0,0,0,0.15))",
               }}>
               {/* 30 色预设网格 - 紧凑模式 */}
               <div
@@ -1153,7 +1160,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                     borderRadius: "50%",
                     overflow: "hidden",
                     cursor: "pointer",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
                     border: !TAG_COLORS.includes(selectedColor.toUpperCase())
                       ? "2px solid #666"
                       : "2px solid transparent",
@@ -1204,7 +1211,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                   <span
                     style={{
                       fontSize: "11px",
-                      color: "#6b7280",
+                      color: "var(--gh-text-secondary, #6b7280)",
                       marginRight: "6px",
                       fontFamily: "monospace",
                       fontWeight: 600,
