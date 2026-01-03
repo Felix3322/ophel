@@ -658,6 +658,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
   const [hexError, setHexError] = useState(false)
   const [loading, setLoading] = useState(false)
   const [colorExpanded, setColorExpanded] = useState(false) // 颜色选择器折叠状态
+  const [deletingTagId, setDeletingTagId] = useState<string | null>(null) // 待删除的标签 ID
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const colorPickerRef = useRef<HTMLInputElement>(null)
@@ -724,12 +725,17 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
     nameInputRef.current?.focus()
   }
 
-  // 删除标签
-  const handleDelete = async (tagId: string) => {
-    if (confirm(t("confirmDelete") || "确定删除?")) {
-      await onDeleteTag(tagId)
-      onRefresh()
-    }
+  // 删除标签（打开确认弹窗）
+  const handleDeleteClick = (tagId: string) => {
+    setDeletingTagId(tagId)
+  }
+
+  // 确认删除
+  const confirmDelete = async () => {
+    if (!deletingTagId) return
+    await onDeleteTag(deletingTagId)
+    setDeletingTagId(null)
+    onRefresh()
   }
 
   // 切换会话标签
@@ -933,7 +939,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                       }}
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleDelete(tag.id)
+                        handleDeleteClick(tag.id)
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = "#fee2e2"
@@ -1225,9 +1231,10 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           variant="primary"
           style={{
             width: "100%",
-            background: editingId
-              ? "var(--gh-warning-gradient, linear-gradient(135deg, #f59e0b 0%, #d97706 100%))"
-              : undefined,
+            ...(editingId && {
+              background:
+                "var(--gh-warning-gradient, linear-gradient(135deg, #f59e0b 0%, #d97706 100%))",
+            }),
           }}
           disabled={!tagName.trim() || loading}
           onClick={handleSubmit}>
@@ -1236,6 +1243,19 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             : t("conversationsNewTag") || "新建标签"}
         </Button>
       </div>
+
+      {/* 删除确认弹窗 */}
+      {deletingTagId && (
+        <ConfirmDialog
+          title={t("conversationsDeleteTag") || "删除标签"}
+          message={t("confirmDelete") || "确定删除这个标签吗？此操作不可撤销。"}
+          confirmText={t("delete") || "删除"}
+          cancelText={t("cancel") || "取消"}
+          danger={true}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeletingTagId(null)}
+        />
+      )}
     </DialogOverlay>
   )
 }
