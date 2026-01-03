@@ -11,6 +11,7 @@
 3. [滚动锁定功能失效：隔离世界与 CSP 问题](#3-滚动锁定功能失效隔离世界与-csp-问题)
 4. [桌面通知不生效：document.hidden 始终返回 false](#4-桌面通知不生效documenthidden-始终返回-false)
 5. [图片去水印跨域 (CORS) 与 403 Forbidden 错误](#5-图片去水印跨域-cors-与-403-forbidden-错误)
+6. [边缘吸附状态下打开菜单/对话框时面板意外隐藏](#6-边缘吸附状态下打开菜单对话框时面板意外隐藏)
 
 ---
 
@@ -706,3 +707,237 @@ Gemini 生成的图片通常托管在 `googleusercontent.com`，但也可能重�
 | **CORS 与重定向**    | 如果请求发生跨域重定向，CORS 检查会对每一跳进行，必须确保权限和规则覆盖重定向后的最终域名。     |
 | **Credentials 限制** | 携带凭证的请求对 `Access-Control-Allow-Origin` 要求极严，不能使用通配符 `*`。                   |
 | **扩展伪装**         | 通过 Background Script + DNR 修改 Headers，可以完美模拟同源请求，是解决复杂跨域问题的终极手段。 |
+
+---
+
+## 6. 边缘吸附状态下打开菜单/对话框时面板意外隐藏
+
+**日期**: 2026-01-03
+
+### 症状
+
+- 面板在边缘吸附（Edge Snap）隐藏状态下，用户悬停显示面板后打开菜单或对话框
+- 鼠标从面板区域移到菜单/对话框上时，面板立即自动缩回隐藏
+- 严重影响用户体验，无法正常操作弹出的菜单和对话框
+
+### 背景
+
+项目实现了"边缘吸附隐藏"功能：
+
+1. 用户可以将面板拖到屏幕边缘，面板会自动吸附并隐藏
+2. 当鼠标悬停在面板区域时，面板通过 CSS `:hover` 或 `.edge-peek` 类显示
+3. 菜单和对话框通过 React Portal 渲染到 `document.body`，不在面板 DOM 内部
+
+相关代码结构：
+
+```
+src/components/
+├── App.tsx              # 主组件，管理边缘吸附状态
+├── MainPanel.tsx        # 面板组件，应用 edge-snapped 类
+├── ConversationMenus.tsx # 菜单组件，使用 createPortal
+└── ConversationDialogs.tsx # 对话框组件，使用 createPortal
+```
+
+边缘吸附的 CSS 实现：
+
+```css
+/* 面板吸附到右边缘时隐藏 */
+.gh-main-panel.edge-snapped-right {
+  right: -310px !important;
+  transition: right 0.3s ease;
+}
+
+/* 悬停或 peek 状态时显示 */
+.gh-main-panel.edge-snapped-right:hover,
+.gh-main-panel.edge-snapped-right.edge-peek {
+  right: 0 !important;
+}
+```
+
+### 调试过程
+
+#### 第一轮调试：排查 onMouseLeave 逻辑
+
+最初怀疑是 `onMouseLeave` 回调中的隐藏逻辑问题。添加调试日志后发现：
+
+```javascript
+// 日志输出
+[GH Debug] onMouseLeave check: {interactionActive: true, hasPortal: true, portalCount: 1}
+[GH Debug] Keeping panel visible due to active interaction or portal
+```
+
+**发现**：`onMouseLeave` 逻辑正确检测到了 Portal 元素并阻止了隐藏。
+
+但用户报告：打开某些对话框（如标签管理对话框）时，**根本没有调试日志输出**，面板却立即隐藏了。
+
+#### 第二轮调试：排查 autoHidePanel 逻辑
+
+检查了"点击外部关闭面板"的逻辑，发现 Portal 元素被视为"外部点击"，但这只会在用户**点击**对话框时触发。
+
+用户明确说只是鼠标**移出**面板就隐藏了，还没有点击任何东西。
+
+#### 第三轮调试：发现 CSS :hover 失效
+
+关键发现：**`onMouseLeave` 事件根本没有触发**！
+
+这意味着面板不是通过 React 状态变化隐藏的，而是 **CSS 样式变化**导致的。
+
+分析对话框的渲染方式：
+
+```tsx
+// DialogOverlay 组件
+const dialogContent = (
+  <div className="conversations-dialog-overlay" onClick={onClose}>
+    {/* 全屏覆盖层，z-index: 1000003 */}
+    <div className="conversations-dialog">{children}</div>
+  </div>
+)
+
+return createPortal(dialogContent, document.body)
+```
+
+**根因**：
+
+1. 对话框覆盖层是一个全屏 `fixed` 定位元素，`z-index: 1000003`
+2. 面板的 `z-index: 9999`
+3. 当对话框渲染时，它**覆盖在面板前面**
+4. 鼠标虽然在屏幕上没有移动，但从浏览器的角度看，鼠标现在**在覆盖层上**，不再在面板上
+5. 面板的 CSS `:hover` 伪类**立即失效**
+6. 面板样式立即变回 `right: -310px`，隐藏到屏幕外
+
+```
+时间线：
+1. 用户悬停在面板上 → :hover 生效 → 面板显示
+2. 用户点击"标签管理" → 对话框覆盖层渲染到 body
+3. 覆盖层出现在面板前面 → 鼠标"离开"面板（从 CSS 角度）
+4. :hover 失效 → 面板立即隐藏
+5. onMouseLeave 事件来不及触发（面板 DOM 都隐藏了）
+```
+
+### 根因
+
+**Portal 元素的 z-index 高于面板，导致 CSS `:hover` 伪类失效，面板依赖的悬停显示机制被破坏。**
+
+这是一个纯 CSS 层级问题，与 JavaScript 逻辑无关。
+
+### 修复方案
+
+**使用 MutationObserver 监听 Portal 元素，在 Portal 出现时强制添加 `.edge-peek` 类**
+
+核心思路：不依赖不可靠的 `:hover` 伪类，而是通过 JavaScript 主动检测 Portal 元素并控制面板显示状态。
+
+#### 1. 添加 MutationObserver 监听
+
+```typescript
+// App.tsx
+useEffect(() => {
+  if (!edgeSnapState || !settings?.edgeSnapHide) return
+
+  const portalSelector =
+    ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal"
+
+  const checkPortalExists = () => {
+    return document.body.querySelectorAll(portalSelector).length > 0
+  }
+
+  let prevHasPortal = checkPortalExists()
+
+  const observer = new MutationObserver(() => {
+    const hasPortal = checkPortalExists()
+
+    if (hasPortal && !prevHasPortal) {
+      // Portal 刚出现，强制保持面板显示
+      setIsEdgePeeking(true)
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current)
+        hideTimerRef.current = null
+      }
+    } else if (!hasPortal && prevHasPortal) {
+      // Portal 刚消失，延迟后隐藏面板
+      hideTimerRef.current = setTimeout(() => {
+        if (!checkPortalExists() && !isInteractionActiveRef.current) {
+          setIsEdgePeeking(false)
+        }
+      }, 500) // 500ms 延迟，给用户时间继续操作
+    }
+
+    prevHasPortal = hasPortal
+  })
+
+  observer.observe(document.body, { childList: true, subtree: false })
+
+  return () => observer.disconnect()
+}, [edgeSnapState, settings?.edgeSnapHide])
+```
+
+#### 2. 修复 autoHidePanel 的点击检测
+
+```typescript
+// 排除 Portal 元素，避免点击对话框时关闭面板
+const isInsidePanelOrPortal = path.some((el) => {
+  if (!(el instanceof Element)) return false
+  if (el.closest?.(".gh-main-panel")) return true
+  if (el.closest?.(".gh-quick-buttons")) return true
+  // 新增：排除 Portal 元素
+  if (el.closest?.(".conversations-dialog-overlay")) return true
+  if (el.closest?.(".conversations-folder-menu")) return true
+  if (el.closest?.(".conversations-tag-filter-menu")) return true
+  if (el.closest?.(".prompt-modal")) return true
+  return false
+})
+```
+
+#### 3. 修复 useDraggable 的 React 警告
+
+原代码在 `setDragState` 回调内部调用 `onEdgeSnap`，违反了 React 的渲染规则：
+
+```typescript
+// 修复前（有警告）
+setDragState((prev) => {
+  // ...
+  onEdgeSnap?.("left") // ❌ 在状态更新期间触发父组件状态更新
+  return { ...prev, isDragging: false }
+})
+
+// 修复后（无警告）
+setDragState((prev) => {
+  return { ...prev, isDragging: false }
+})
+
+// 在 setDragState 之后执行
+if (edgeSnapHide && hasMoved && panel) {
+  setTimeout(() => {
+    const rect = panel.getBoundingClientRect()
+    if (rect.left < snapThreshold) {
+      onEdgeSnap?.("left")
+    }
+  }, 0)
+}
+```
+
+### 验证结果
+
+修复后的行为：
+
+1. 面板边缘吸附隐藏 ✓
+2. 悬停显示面板 ✓
+3. 打开菜单/对话框 → 面板保持显示 ✓
+4. 鼠标移到对话框上操作 → 面板保持显示 ✓
+5. 关闭对话框 → 500ms 后面板自动隐藏 ✓
+
+### 经验总结
+
+| 教训                   | 说明                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| **CSS :hover 不可靠**  | 当有高 z-index 元素覆盖时，`:hover` 会立即失效，不能依赖它实现关键功能              |
+| **Portal 的层级影响**  | Portal 渲染到 body 的元素会影响原有 DOM 的鼠标事件和 CSS 伪类                       |
+| **MutationObserver**   | 监听 Portal 元素的增删是检测弹窗状态的可靠方式                                      |
+| **延迟隐藏的 UX 价值** | 弹窗关闭后延迟 500ms 再隐藏面板，给用户缓冲时间，避免突然隐藏造成的视觉跳跃         |
+| **React 渲染期间禁忌** | 不要在 `setState` 回调内部触发其他组件的状态更新，改用 `setTimeout(fn, 0)` 延迟执行 |
+
+### 文件变更
+
+| 文件                        | 变更                                               |
+| --------------------------- | -------------------------------------------------- |
+| `src/components/App.tsx`    | **修改** - 添加 MutationObserver，修复点击检测逻辑 |
+| `src/hooks/useDraggable.ts` | **修改** - 修复 React 渲染警告                     |

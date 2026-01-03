@@ -50,6 +50,14 @@ export const App = () => {
   const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
   // 临时显示状态（当鼠标悬停在面板上时）
   const [isEdgePeeking, setIsEdgePeeking] = useState(false)
+  // 是否有活跃的交互（如打开了菜单/对话框），此时即使鼠标移出也不隐藏面板
+  // 使用 useRef 避免闭包陷阱和不必要的重渲染
+  const isInteractionActiveRef = useRef(false)
+  const hideTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleInteractionChange = useCallback((isActive: boolean) => {
+    isInteractionActiveRef.current = isActive
+  }, [])
 
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
@@ -195,6 +203,67 @@ export const App = () => {
     }
   }, [promptManager, conversationManager, outlineManager])
 
+  // 使用 MutationObserver 监听 Portal 元素（菜单/对话框）的存在
+  // 当 Portal 元素存在时，强制设置 isEdgePeeking 为 true，防止 CSS :hover 失效导致面板隐藏
+  useEffect(() => {
+    if (!edgeSnapState || !settings?.edgeSnapHide) return
+
+    const portalSelector =
+      ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal"
+
+    // 检查当前是否有 Portal 元素存在
+    const checkPortalExists = () => {
+      const portals = document.body.querySelectorAll(portalSelector)
+      return portals.length > 0
+    }
+
+    // 追踪之前的 Portal 状态，用于检测 Portal 关闭
+    let prevHasPortal = checkPortalExists()
+
+    // 创建 MutationObserver 监听 document.body 的子元素变化
+    const observer = new MutationObserver(() => {
+      const hasPortal = checkPortalExists()
+
+      if (hasPortal && !prevHasPortal) {
+        // Portal 元素刚出现，强制保持面板显示
+        // 因为 Portal 覆盖层会导致 CSS :hover 失效
+        setIsEdgePeeking(true)
+
+        // 清除隐藏定时器
+        if (hideTimerRef.current) {
+          clearTimeout(hideTimerRef.current)
+          hideTimerRef.current = null
+        }
+      } else if (!hasPortal && prevHasPortal) {
+        // Portal 元素刚消失，延迟后检查是否需要隐藏
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+        hideTimerRef.current = setTimeout(() => {
+          // 500ms 后检查：如果没有新的 Portal，且没有活跃交互，则隐藏
+          if (!checkPortalExists() && !isInteractionActiveRef.current) {
+            setIsEdgePeeking(false)
+          }
+        }, 500)
+      }
+
+      prevHasPortal = hasPortal
+    })
+
+    // 开始观察 document.body 的直接子元素变化
+    observer.observe(document.body, {
+      childList: true,
+      subtree: false,
+    })
+
+    // 初始检查
+    if (checkPortalExists()) {
+      setIsEdgePeeking(true)
+    }
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [edgeSnapState, settings?.edgeSnapHide])
+
   // 自动隐藏面板 - 点击外部关闭
   useEffect(() => {
     if (!settings?.autoHidePanel || !isPanelOpen) return
@@ -203,17 +272,22 @@ export const App = () => {
       // 使用 composedPath() 支持 Shadow DOM
       const path = e.composedPath()
 
-      // 检查点击路径中是否包含面板或快捷按钮
-      const isInsidePanel = path.some((el) => {
+      // 检查点击路径中是否包含面板、快捷按钮或 Portal 元素（菜单/对话框）
+      const isInsidePanelOrPortal = path.some((el) => {
         if (!(el instanceof Element)) return false
         // 检查是否是面板内部
         if (el.closest?.(".gh-main-panel")) return true
         // 检查是否是快捷按钮
         if (el.closest?.(".gh-quick-buttons")) return true
+        // 检查是否是 Portal 元素（菜单、对话框）
+        if (el.closest?.(".conversations-dialog-overlay")) return true
+        if (el.closest?.(".conversations-folder-menu")) return true
+        if (el.closest?.(".conversations-tag-filter-menu")) return true
+        if (el.closest?.(".prompt-modal")) return true
         return false
       })
 
-      if (!isInsidePanel) {
+      if (!isInsidePanelOrPortal) {
         setIsPanelOpen(false)
       }
     }
@@ -345,34 +419,54 @@ export const App = () => {
 
   return (
     <div className="gh-root">
-      <div
-        ref={panelRef}
+      <MainPanel
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+        promptManager={promptManager}
+        conversationManager={conversationManager}
+        outlineManager={outlineManager}
+        exporter={exporter}
+        onThemeToggle={handleThemeToggle}
+        themeMode={themeMode}
+        selectedPromptId={selectedPrompt?.id}
+        onPromptSelect={handlePromptSelect}
+        edgeSnapState={edgeSnapState}
+        isEdgePeeking={isEdgePeeking}
+        onEdgeSnap={(side) => setEdgeSnapState(side)}
+        onUnsnap={() => {
+          setEdgeSnapState(null)
+          setIsEdgePeeking(false)
+        }}
+        onInteractionStateChange={handleInteractionChange}
+        onMouseEnter={() => {
+          if (hideTimerRef.current) {
+            clearTimeout(hideTimerRef.current)
+            hideTimerRef.current = null
+          }
+        }}
         onMouseLeave={() => {
           // 边缘吸附恢复逻辑：鼠标移出面板时结束 peek 状态
-          if (edgeSnapState && settings?.edgeSnapHide && isEdgePeeking) {
-            setIsEdgePeeking(false)
-          }
-        }}>
-        <MainPanel
-          isOpen={isPanelOpen}
-          onClose={() => setIsPanelOpen(false)}
-          promptManager={promptManager}
-          conversationManager={conversationManager}
-          outlineManager={outlineManager}
-          exporter={exporter}
-          onThemeToggle={handleThemeToggle}
-          themeMode={themeMode}
-          selectedPromptId={selectedPrompt?.id}
-          onPromptSelect={handlePromptSelect}
-          edgeSnapState={edgeSnapState}
-          isEdgePeeking={isEdgePeeking}
-          onEdgeSnap={(side) => setEdgeSnapState(side)}
-          onUnsnap={() => {
-            setEdgeSnapState(null)
-            setIsEdgePeeking(false)
-          }}
-        />
-      </div>
+          // 增加 200ms 缓冲，防止移动到外部菜单（Portal）时瞬间隐藏
+          if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+
+          hideTimerRef.current = setTimeout(() => {
+            // 检查是否有任何菜单/对话框/弹窗处于打开状态
+            const interactionActive = isInteractionActiveRef.current
+            const portalElements = document.body.querySelectorAll(
+              ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal",
+            )
+            const hasPortal = portalElements.length > 0
+
+            // 如果有活跃交互或 Portal 元素，不隐藏面板
+            if (interactionActive || hasPortal) return
+
+            // 安全检查后隐藏面板
+            if (edgeSnapState && settings?.edgeSnapHide && isEdgePeeking) {
+              setIsEdgePeeking(false)
+            }
+          }, 200)
+        }}
+      />
       <QuickButtons
         isPanelOpen={isPanelOpen}
         onPanelToggle={() => {

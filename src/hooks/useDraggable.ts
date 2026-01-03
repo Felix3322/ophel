@@ -100,15 +100,24 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
   // 结束拖拽
   const handleMouseUp = useCallback(() => {
+    // 先获取需要的状态
+    const panel = panelRef.current
+    const hasMoved = hasMovedRef.current
+
     setDragState((prev) => {
       if (!prev.isDragging) return prev
 
       // 恢复文本选中
       document.body.style.userSelect = ""
 
-      // 边缘吸附检测 (仅当发生过实质性拖动时才触发)
-      if (edgeSnapHide && hasMovedRef.current && prev.position && panelRef.current) {
-        const rect = panelRef.current.getBoundingClientRect()
+      return { ...prev, isDragging: false }
+    })
+
+    // 边缘吸附检测 (在 setDragState 之后执行，避免渲染期间状态更新警告)
+    // 使用 setTimeout 确保在 React 渲染完成后执行
+    if (edgeSnapHide && hasMoved && panel) {
+      setTimeout(() => {
+        const rect = panel.getBoundingClientRect()
         const snapThreshold = 30 // 距离边缘30px时触发吸附
 
         if (rect.left < snapThreshold) {
@@ -116,10 +125,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         } else if (window.innerWidth - rect.right < snapThreshold) {
           onEdgeSnap?.("right")
         }
-      }
-
-      return { ...prev, isDragging: false }
-    })
+      }, 0)
+    }
   }, [edgeSnapHide, onEdgeSnap])
 
   // 边界检测：确保面板在视口内可见

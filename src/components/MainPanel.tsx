@@ -30,6 +30,9 @@ interface MainPanelProps {
   isEdgePeeking?: boolean
   onEdgeSnap?: (side: "left" | "right") => void
   onUnsnap?: () => void
+  onInteractionStateChange?: (isActive: boolean) => void
+  onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
 
 export const MainPanel: React.FC<MainPanelProps> = ({
@@ -47,6 +50,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   isEdgePeeking = false,
   onEdgeSnap,
   onUnsnap,
+  onInteractionStateChange,
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS)
   const currentSettings = settings || DEFAULT_SETTINGS
@@ -208,6 +214,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   return (
     <div
       ref={panelRef}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className={`gh-main-panel gh-interactive ${edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgePeeking ? "edge-peek" : ""}`}
       style={{
         position: "fixed",
@@ -430,7 +438,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             onPromptSelect={onPromptSelect}
           />
         )}
-        {activeTab === "conversations" && <ConversationsTab manager={conversationManager} />}
+        {activeTab === "conversations" && (
+          <ConversationsTab
+            manager={conversationManager}
+            onInteractionStateChange={onInteractionStateChange}
+          />
+        )}
         {activeTab === "outline" && (
           <OutlineTab manager={outlineManager} onJumpBefore={saveAnchor} />
         )}

@@ -50,6 +50,7 @@ const SvgIcon: React.FC<{ path: string; size?: number }> = ({ path, size = 18 })
 
 interface ConversationsTabProps {
   manager: ConversationManager
+  onInteractionStateChange?: (isActive: boolean) => void
 }
 
 interface SearchResult {
@@ -84,7 +85,10 @@ type MenuType =
 
 // ==================== 主组件 ====================
 
-export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) => {
+export const ConversationsTab: React.FC<ConversationsTabProps> = ({
+  manager,
+  onInteractionStateChange,
+}) => {
   // 设置
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 
@@ -214,6 +218,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
       document.removeEventListener("click", handleClickOutside, true)
     }
   }, [showTagFilterMenu])
+
+  // 监听所有弹窗状态，向上汇报交互状态
+  useEffect(() => {
+    const isInteracting = !!(menu || dialog || showTagFilterMenu || batchMode)
+    onInteractionStateChange?.(isInteracting)
+  }, [menu, dialog, showTagFilterMenu, batchMode, onInteractionStateChange])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {
@@ -479,7 +489,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
           <button
             className="conversations-toolbar-btn add-folder"
             title={t("conversationsAddFolder") || "新建文件夹"}
-            onClick={() => setDialog({ type: "folder" })}>
+            onClick={() => {
+              onInteractionStateChange?.(true)
+              setDialog({ type: "folder" })
+            }}>
             <SvgIcon path={ADD_FOLDER_PATH} />
           </button>
         </div>
@@ -513,7 +526,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
               className={`conversations-tag-search-btn ${filterTagIds.size > 0 ? "active" : ""}`}
               title={t("conversationsFilterByTags") || "按标签筛选"}
               style={{ userSelect: "none" }}
-              onClick={() => setShowTagFilterMenu(!showTagFilterMenu)}>
+              onClick={() => {
+                const newState = !showTagFilterMenu
+                if (newState) onInteractionStateChange?.(true)
+                setShowTagFilterMenu(newState)
+              }}>
               🏷️
             </div>
 
@@ -560,6 +577,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                       if (sessionId && sessionId !== "default" && sessionId !== "app") {
                         conv = manager.getConversation(sessionId)
                       }
+                      onInteractionStateChange?.(true)
                       setDialog({ type: "tagManager", conv })
                     }}>
                     {t("conversationsManageTags") || "管理标签"}
@@ -686,6 +704,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                         }}
                         onClick={(e) => {
                           e.stopPropagation()
+                          onInteractionStateChange?.(true)
                           setMenu({ type: "folder", folder, anchorEl: e.currentTarget })
                         }}>
                         ⋯
@@ -761,6 +780,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                                 className="conversations-item-menu-btn"
                                 onClick={(e) => {
                                   e.stopPropagation()
+                                  onInteractionStateChange?.(true)
                                   setMenu({ type: "conversation", conv, anchorEl: e.currentTarget })
                                 }}>
                                 ⋯
@@ -798,23 +818,28 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                 className="conversations-batch-btn"
                 title={t("batchExport") || "导出"}
                 style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={(e) => setMenu({ type: "export", anchorEl: e.currentTarget })}>
+                onClick={(e) => {
+                  onInteractionStateChange?.(true)
+                  setMenu({ type: "export", anchorEl: e.currentTarget })
+                }}>
                 📤
               </button>
               <button
                 className="conversations-batch-btn"
                 title={t("batchMove") || "移动"}
                 style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={() =>
+                onClick={() => {
+                  onInteractionStateChange?.(true)
                   setDialog({ type: "folderSelect", convIds: Array.from(selectedIds) })
-                }>
+                }}>
                 📂
               </button>
               <button
                 className="conversations-batch-btn danger"
                 title={t("batchDelete") || "删除"}
                 style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={() =>
+                onClick={() => {
+                  onInteractionStateChange?.(true)
                   setDialog({
                     type: "confirm",
                     title: t("batchDelete") || "批量删除",
@@ -829,7 +854,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
                       setDialog(null)
                     },
                   })
-                }>
+                }}>
                 🗑️
               </button>
               <button
