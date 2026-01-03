@@ -571,14 +571,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     className="conversations-tag-filter-item conversations-tag-filter-action"
                     onClick={() => {
                       setShowTagFilterMenu(false)
-                      // 打开标签管理对话框（如果有当前会话则带入，否则作为全局管理）
-                      const sessionId = manager.siteAdapter?.getSessionId?.()
-                      let conv: Conversation | undefined
-                      if (sessionId && sessionId !== "default" && sessionId !== "app") {
-                        conv = manager.getConversation(sessionId)
-                      }
+                      // 从筛选菜单打开标签管理对话框，作为纯管理模式（不绑定会话）
                       onInteractionStateChange?.(true)
-                      setDialog({ type: "tagManager", conv })
+                      setDialog({ type: "tagManager", conv: undefined })
                     }}>
                     {t("conversationsManageTags") || "管理标签"}
                   </div>
