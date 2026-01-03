@@ -227,6 +227,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         height: "80vh",
         minHeight: "500px",
         backgroundColor: "var(--gh-bg, #ffffff)",
+        backgroundImage: "var(--gh-bg-image, none)",
+        backgroundBlendMode: "overlay",
+        animation: "var(--gh-bg-animation, none)",
         borderRadius: "12px",
         boxShadow: "var(--gh-shadow, 0 10px 40px rgba(0,0,0,0.15))",
         display: "flex",
@@ -237,6 +240,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         // ⭐ 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
       }}>
+      {/* 自定义 CSS 注入 */}
+      {settings.customCSS && <style>{settings.customCSS}</style>}
+
       {/* Header - 拖拽区域 */}
       <div
         ref={headerRef}

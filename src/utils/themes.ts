@@ -116,6 +116,11 @@ export interface ThemeVariables {
 
   // 滑块圆点颜色
   "--gh-slider-dot-bg": string
+
+  // 背景纹理图 (可选)
+  "--gh-bg-image"?: string
+  // 背景动画 (可选)
+  "--gh-bg-animation"?: string
 }
 
 // 主题预置定义
@@ -703,6 +708,8 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#fde68a",
       "--gh-highlight-pulse": "rgba(217, 119, 6, 0.3)",
       "--gh-slider-dot-bg": "#d6d3d1",
+      // 羊皮纸噪点纹理
+      "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E")`,
     },
   },
   {
@@ -849,6 +856,8 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#dbeafe",
       "--gh-highlight-pulse": "rgba(30, 78, 121, 0.2)",
       "--gh-slider-dot-bg": "#94a3b8",
+      // 冰裂纹/釉面纹理
+      "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E")`,
     },
   },
   {
@@ -921,6 +930,8 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#d6d3d1",
       "--gh-highlight-pulse": "rgba(120, 113, 108, 0.3)",
       "--gh-slider-dot-bg": "#d6d3d1",
+      // 饼干颗粒纹理
+      "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E")`,
     },
   },
   {
@@ -993,6 +1004,9 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#e9d5ff",
       "--gh-highlight-pulse": "rgba(244, 114, 182, 0.3)",
       "--gh-slider-dot-bg": "#e2e8f0",
+      // 梦幻云雾纹理
+      "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E")`,
+      "--gh-bg-animation": "gh-mist-drift 20s linear infinite alternate",
     },
   },
 ]
@@ -1227,7 +1241,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-text": "#e0e0e0",
       "--gh-text-secondary": "#a0a0a0",
       "--gh-text-tertiary": "#707070",
-      "--gh-text-on-primary": "#000000",
+      "--gh-text-on-primary": "#f472b6",
       "--gh-border": "#333333",
       "--gh-border-active": "#f472b6",
       "--gh-hover": "#1a1a1a",
@@ -1299,7 +1313,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-text": "#e7e5e4",
       "--gh-text-secondary": "#a8a29e",
       "--gh-text-tertiary": "#78716c",
-      "--gh-text-on-primary": "#292524",
+      "--gh-text-on-primary": "#e7e5e4",
       "--gh-border": "#44403c",
       "--gh-border-active": "#d4a373",
       "--gh-hover": "#292524",
@@ -1443,7 +1457,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-text": "#f8f8f2",
       "--gh-text-secondary": "#bd93f9",
       "--gh-text-tertiary": "#6272a4",
-      "--gh-text-on-primary": "#282a36",
+      "--gh-text-on-primary": "#f8f8f2",
       "--gh-border": "#44475a",
       "--gh-border-active": "#ff79c6",
       "--gh-hover": "#44475a",
@@ -1574,6 +1588,8 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(45, 212, 191, 0.25)",
       "--gh-highlight-pulse": "rgba(45, 212, 191, 0.3)",
       "--gh-slider-dot-bg": "#334155",
+      // 深海波纹纹理
+      "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.02' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E")`,
     },
   },
   {
@@ -1659,7 +1675,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-text": "#22c55e",
       "--gh-text-secondary": "#15803d",
       "--gh-text-tertiary": "#14532d",
-      "--gh-text-on-primary": "#000000",
+      "--gh-text-on-primary": "#22c55e",
       "--gh-border": "#14532d",
       "--gh-border-active": "#22c55e",
       "--gh-hover": "#1a1a1a",
@@ -1717,6 +1733,10 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(34, 197, 94, 0.2)",
       "--gh-highlight-pulse": "rgba(34, 197, 94, 0.5)",
       "--gh-slider-dot-bg": "#14532d",
+      // CRT 扫描线纹理 (微弱的绿色扫描线)
+      "--gh-bg-image":
+        "repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(34, 197, 94, 0.05) 2px, rgba(34, 197, 94, 0.05) 4px)",
+      "--gh-bg-animation": "gh-scanline 8s linear infinite",
     },
   },
   {

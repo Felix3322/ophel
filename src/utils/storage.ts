@@ -100,6 +100,7 @@ export interface Settings {
     formulaDelimiterEnabled: boolean
     tableCopyEnabled: boolean
   }
+  customCSS: string // 自定义 CSS
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -173,6 +174,7 @@ export const DEFAULT_SETTINGS: Settings = {
     formulaDelimiterEnabled: true,
     tableCopyEnabled: true,
   },
+  customCSS: "",
 }
 
 export interface Folder {

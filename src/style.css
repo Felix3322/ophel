@@ -740,3 +740,145 @@
     transform: rotate(360deg);
   }
 }
+
+/* ============= 主题选择网格样式 (Theme Selection) ============= */
+.gh-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+/* 隐藏滚动条但保留功能 */
+.gh-theme-grid::-webkit-scrollbar {
+  width: 4px;
+}
+.gh-theme-grid::-webkit-scrollbar-thumb {
+  background: var(--gh-border, #e5e7eb);
+  border-radius: 4px;
+}
+
+.gh-theme-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--gh-input-bg, #ffffff);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.gh-theme-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gh-theme-card.active {
+  border-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15);
+}
+
+.gh-theme-preview {
+  height: 60px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 预览图中的 Header 模拟 */
+.gh-theme-preview-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  /* background 由 inline style 动态注入 */
+}
+
+/* 预览图中的 色彩圆点 */
+.gh-theme-color-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  z-index: 1;
+}
+
+.gh-theme-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gh-theme-info {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--gh-card-bg, #ffffff);
+  border-top: 1px solid var(--gh-border, #f3f4f6);
+}
+
+.gh-theme-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gh-text, #374151);
+  /* 文字截断 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-theme-desc {
+  font-size: 10px;
+  color: var(--gh-text-tertiary, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 选中标记 */
+.gh-theme-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  background: var(--gh-primary, #4285f4);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s;
+}
+
+/* ============= 动态背景动画 ============= */
+@keyframes gh-scanline {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+@keyframes gh-mist-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}

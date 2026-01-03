@@ -131,6 +131,104 @@ const CollapsibleSection: React.FC<{
   )
 }
 
+// CSS template (CSS 模板)
+const CSS_TEMPLATE = `/* 🎨 Custom CSS Cheat Sheet
+ * The following are the main CSS classes used in this extension.
+ * 以下是本扩展使用的主要 CSS 类名，您可以自由覆盖。
+ */
+
+/* === 1. Theme Variables (主题变量) === */
+/*
+:root {
+  --gh-bg: #ffffff;           /* Panel Background / 面板背景 */
+  --gh-text: #374151;         /* Main Text / 主要文字 */
+  --gh-primary: #4285f4;      /* Highlighting / 高亮色 */
+  --gh-header-bg: #4285f4;    /* Header Background / 顶部背景 */
+  --gh-border: #e5e7eb;       /* Border Color / 把框颜色 */
+  /* --gh-bg-image: ... */    /* Background Texture / 背景纹理 */
+}
+*/
+
+/* === 2. Layout & Structure (布局结构) === */
+/*
+.gh-main-panel { }    /* Main Panel Container / 面板主容器 */
+.gh-panel-header { }  /* Header Bar / 顶部标题栏 */
+.gh-panel-content { } /* Scrollable Area / 中间滚动区域 */
+.gh-panel-footer { }  /* Footer Bar / 底部工具栏 */
+*/
+
+/* === 3. Components (组件样式) === */
+/*
+.outline-item { }         /* Outline Row / 大纲行 */
+.outline-item-text { }    /* Outline Text / 大纲文字 */
+.outline-toolbar-btn { }  /* Action Buttons / 操作按钮 */
+.gh-settings-tab { }      /* Settings Page / 设置页 */
+.gh-theme-card { }        /* Theme Preview Card / 主题卡片 */
+*/
+
+/* === 4. Example: Customizing Outline (示例：美化大纲) === */
+/*
+.outline-item {
+  border-bottom: 1px dashed var(--gh-border);
+  margin-bottom: 4px;
+}
+
+.outline-item:hover {
+  background: var(--gh-primary) !important;
+  color: white !important;
+}
+*/
+`
+
+// 主题卡片组件
+const ThemeCard: React.FC<{
+  preset: any
+  isActive: boolean
+  onClick: () => void
+  t: (key: string) => string
+}> = ({ preset, isActive, onClick, t }) => {
+  const primary = preset.variables["--gh-primary"]
+  const bg = preset.variables["--gh-bg"]
+  const text = preset.variables["--gh-text"]
+  const headerBg = preset.variables["--gh-header-bg"]
+
+  return (
+    <div className={`gh-theme-card ${isActive ? "active" : ""}`} onClick={onClick}>
+      <div className="gh-theme-preview">
+        {/* 模拟 Header */}
+        <div className="gh-theme-preview-header" style={{ background: headerBg }}></div>
+
+        {/* 模拟 内容区 */}
+        <div
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: bg,
+          }}></div>
+
+        {/* 色彩圆点 */}
+        <div className="gh-theme-color-dots">
+          <div className="gh-theme-dot" style={{ background: primary }} title="Primary" />
+          <div className="gh-theme-dot" style={{ background: bg }} title="Background" />
+          <div className="gh-theme-dot" style={{ background: text }} title="Text" />
+        </div>
+
+        {/* 选中对钩 */}
+        <div className="gh-theme-check">✓</div>
+      </div>
+
+      <div className="gh-theme-info">
+        <div className="gh-theme-name" title={preset.name}>
+          {t(`themePreset_${preset.id}`) || preset.name}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // 模型关键词输入组件 - 使用本地 state 避免输入被打断
 const ModelKeywordInput: React.FC<{
   value: string
@@ -638,8 +736,8 @@ export const SettingsTab = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: "12px",
-            padding: "14px 16px",
+            marginBottom: "16px",
+            padding: "10px 16px",
             backgroundColor: "var(--gh-card-bg, #ffffff)",
             border: "1px solid var(--gh-card-border, #e5e7eb)",
             borderRadius: "8px",
@@ -657,13 +755,9 @@ export const SettingsTab = () => {
             <button
               onClick={() => {
                 if (settings.themeMode !== "light") {
-                  // 更新设置
                   setSettings({ ...settings, themeMode: "light" })
-                  // 触发 ThemeManager 切换（通过全局实例）
                   const themeManager = (window as any).__ghThemeManager
-                  if (themeManager) {
-                    themeManager.toggle()
-                  }
+                  if (themeManager) themeManager.toggle()
                 }
               }}
               style={{
@@ -685,13 +779,9 @@ export const SettingsTab = () => {
             <button
               onClick={() => {
                 if (settings.themeMode !== "dark") {
-                  // 更新设置
                   setSettings({ ...settings, themeMode: "dark" })
-                  // 触发 ThemeManager 切换（通过全局实例）
                   const themeManager = (window as any).__ghThemeManager
-                  if (themeManager) {
-                    themeManager.toggle()
-                  }
+                  if (themeManager) themeManager.toggle()
                 }
               }}
               style={{
@@ -713,151 +803,148 @@ export const SettingsTab = () => {
           </div>
         </div>
 
-        {/* 浅色模式预置 */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "10px",
-            padding: "14px 16px",
-            backgroundColor: "var(--gh-card-bg, #ffffff)",
-            border: "1px solid var(--gh-card-border, #e5e7eb)",
-            borderRadius: "8px",
-          }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
-              {t("lightModePreset") || "浅色模式预置"}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* 预览色块 */}
-            {(() => {
-              const preset = getPreset(
-                settings.themePresets?.lightPresetId || "google-gradient",
-                "light",
-              )
-              const primaryColor = preset.variables["--gh-primary"]
-              const secondaryColor = preset.variables["--gh-secondary"]
-              return (
-                <div
-                  style={{ display: "flex", gap: "4px", width: "40px", justifyContent: "center" }}>
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "4px",
-                      background: primaryColor,
-                      border: "1px solid rgba(0,0,0,0.1)",
-                    }}
-                    title={t("primaryColor") || "主色"}
-                  />
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "4px",
-                      background: secondaryColor,
-                      border: "1px solid rgba(0,0,0,0.1)",
-                    }}
-                    title={t("secondaryColor") || "次色"}
-                  />
-                </div>
-              )
-            })()}
-            <select
-              value={settings.themePresets?.lightPresetId || "google-gradient"}
-              onChange={(e) => updateNestedSetting("themePresets", "lightPresetId", e.target.value)}
+        {/* 浅色模式预置 (Grid Layout) */}
+        <div style={{ marginBottom: "20px" }}>
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: "13px",
+              color: "var(--gh-text, #374151)",
+              marginBottom: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+            <span>{t("lightModePreset") || "浅色模式预置"}</span>
+            <span
               style={{
-                padding: "6px 10px",
-                borderRadius: "6px",
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                fontSize: "12px",
-                backgroundColor: "var(--gh-input-bg, white)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
-                width: "120px",
+                fontSize: "11px",
+                color: "var(--gh-text-secondary, #9ca3af)",
+                fontWeight: 400,
               }}>
-              {lightPresets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {t(`themePreset_${preset.id}`) || preset.name}
-                </option>
-              ))}
-            </select>
+              {t("lightModePresetDesc") || "仅在浅色模式生效"}
+            </span>
+          </div>
+          <div className="gh-theme-grid">
+            {lightPresets.map((preset) => (
+              <ThemeCard
+                key={preset.id}
+                preset={preset}
+                isActive={(settings.themePresets?.lightPresetId || "google-gradient") === preset.id}
+                t={t}
+                onClick={() => updateNestedSetting("themePresets", "lightPresetId", preset.id)}
+              />
+            ))}
           </div>
         </div>
 
-        {/* 深色模式预置 */}
+        {/* 深色模式预置 (Grid Layout) */}
+        <div style={{ marginBottom: "20px" }}>
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: "13px",
+              color: "var(--gh-text, #374151)",
+              marginBottom: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+            <span>{t("darkModePreset") || "深色模式预置"}</span>
+            <span
+              style={{
+                fontSize: "11px",
+                color: "var(--gh-text-secondary, #9ca3af)",
+                fontWeight: 400,
+              }}>
+              {t("darkModePresetDesc") || "仅在深色模式生效"}
+            </span>
+          </div>
+          <div className="gh-theme-grid">
+            {darkPresets.map((preset) => (
+              <ThemeCard
+                key={preset.id}
+                preset={preset}
+                isActive={(settings.themePresets?.darkPresetId || "classic-dark") === preset.id}
+                t={t}
+                onClick={() => updateNestedSetting("themePresets", "darkPresetId", preset.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 自定义 CSS */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "10px",
-            padding: "14px 16px",
-            backgroundColor: "var(--gh-card-bg, #ffffff)",
-            border: "1px solid var(--gh-card-border, #e5e7eb)",
-            borderRadius: "8px",
+            marginTop: "24px",
+            borderTop: "1px dashed var(--gh-border, #e5e7eb)",
+            paddingTop: "16px",
           }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
-              {t("darkModePreset") || "深色模式预置"}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "8px",
+            }}>
+            <div>
+              <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+                {t("customCSS") || "自定义 CSS"}
+              </div>
+              <div
+                style={{
+                  fontSize: "11px",
+                  color: "var(--gh-text-secondary, #6b7280)",
+                  marginTop: "2px",
+                }}>
+                {t("customCSSDesc") || "输入标准 CSS 代码覆盖当前主题样式"}
+              </div>
             </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* 预览色块 */}
-            {(() => {
-              const preset = getPreset(
-                settings.themePresets?.darkPresetId || "classic-dark",
-                "dark",
-              )
-              const primaryColor = preset.variables["--gh-primary"]
-              const secondaryColor = preset.variables["--gh-secondary"]
-              return (
-                <div
-                  style={{ display: "flex", gap: "4px", width: "40px", justifyContent: "center" }}>
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "4px",
-                      background: primaryColor,
-                      border: "1px solid rgba(255,255,255,0.2)",
-                    }}
-                    title={t("primaryColor") || "主色"}
-                  />
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "4px",
-                      background: secondaryColor,
-                      border: "1px solid rgba(255,255,255,0.2)",
-                    }}
-                    title={t("secondaryColor") || "次色"}
-                  />
-                </div>
-              )
-            })()}
-            <select
-              value={settings.themePresets?.darkPresetId || "classic-dark"}
-              onChange={(e) => updateNestedSetting("themePresets", "darkPresetId", e.target.value)}
-              style={{
-                padding: "6px 10px",
-                borderRadius: "6px",
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                fontSize: "12px",
-                backgroundColor: "var(--gh-input-bg, white)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
-                width: "120px",
+            <button
+              className="outline-toolbar-btn"
+              style={{ width: "auto", padding: "0 8px", fontSize: "12px", height: "24px" }}
+              title={t("customCSSTemplate") || "Insert Template"}
+              onClick={() => {
+                const confirmMsg =
+                  t("language") === "en"
+                    ? "Overwrite current CSS with template?"
+                    : "确认使用模板覆盖当前 CSS？"
+
+                if (!settings.customCSS || settings.customCSS.trim() === "") {
+                  setSettings({ ...settings, customCSS: CSS_TEMPLATE })
+                } else if (confirm(confirmMsg)) {
+                  setSettings({ ...settings, customCSS: CSS_TEMPLATE })
+                }
               }}>
-              {darkPresets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {t(`themePreset_${preset.id}`) || preset.name}
-                </option>
-              ))}
-            </select>
+              📝 {t("customCSSTemplate") || "Template"}
+            </button>
+          </div>
+          <textarea
+            value={settings.customCSS || ""}
+            onChange={(e) => setSettings({ ...settings, customCSS: e.target.value })}
+            placeholder="/* Enter custom CSS here / 在此输入自定义 CSS */"
+            spellCheck={false}
+            style={{
+              width: "100%",
+              height: "120px",
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid var(--gh-input-border, #d1d5db)",
+              backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
+              color: "var(--gh-text, #374151)",
+              fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+              fontSize: "12px",
+              resize: "vertical",
+              outline: "none",
+            }}
+          />
+          <div
+            style={{
+              fontSize: "11px",
+              color: "var(--gh-text-secondary, #9ca3af)",
+              marginTop: "4px",
+            }}>
+            {t("customCSSDesc") || "CSS 将自动应用。请谨慎使用。Changes apply automatically."}
           </div>
         </div>
       </CollapsibleSection>
