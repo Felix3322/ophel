@@ -13,6 +13,7 @@
 5. [图片去水印跨域 (CORS) 与 403 Forbidden 错误](#5-图片去水印跨域-cors-与-403-forbidden-错误)
 6. [边缘吸附状态下打开菜单/对话框时面板意外隐藏](#6-边缘吸附状态下打开菜单对话框时面板意外隐藏)
 7. [Gemini Business 主题切换后面板不同步更新](#7-gemini-business-主题切换后面板不同步更新)
+8. [WebDAV 恢复后主题同步失效与数据覆盖问题](#8-webdav-恢复后主题同步失效与数据覆盖问题)
 
 ---
 
@@ -674,10 +675,10 @@ Gemini 生成的图片通常托管在 `googleusercontent.com`，但也可能重�
 
 ### 根因
 
-1.  **需要认证**: 图片资源需要 Cookie 才能访问，普通 `fetch` 会报 403。
-2.  **CORS 限制**: 只有当请求头包含正确的 `Origin` / `Referer` (`https://gemini.google.com`) 时，服务器才允许访问。
-3.  **浏览器安全策略**: 带有 `credentials: 'include'` 的请求，浏览器要求服务器返回的 `Access-Control-Allow-Origin` 精确匹配请求源，不能是 `*`。
-4.  **重定向陷阱**: 请求 `*.googleusercontent.com` 时被重定向到 `*.google.com`。即使第一跳的规则设置正确，浏览器也会对重定向后的请求重新进行 CORS 检查，导致失败。
+1. **需要认证**: 图片资源需要 Cookie 才能访问，普通 `fetch` 会报 403。
+2. **CORS 限制**: 只有当请求头包含正确的 `Origin` / `Referer` (`https://gemini.google.com`) 时，服务器才允许访问。
+3. **浏览器安全策略**: 带有 `credentials: 'include'` 的请求，浏览器要求服务器返回的 `Access-Control-Allow-Origin` 精确匹配请求源，不能是 `*`。
+4. **重定向陷阱**: 请求 `*.googleusercontent.com` 时被重定向到 `*.google.com`。即使第一跳的规则设置正确，浏览器也会对重定向后的请求重新进行 CORS 检查，导致失败。
 
 ### 尝试过的方案
 
@@ -689,11 +690,11 @@ Gemini 生成的图片通常托管在 `googleusercontent.com`，但也可能重�
 
 **策略**: 后台代理 (Background Proxy) + 动态 DNR 规则 (Dynamic Rules)
 
-1.  **权限**: 在 `package.json` 中添加 `https://*.google.com/*` 和 `https://*.googleusercontent.com/*` 到 `host_permissions`。
-2.  **后台代理**:
+1. **权限**: 在 `package.json` 中添加 `https://*.google.com/*` 和 `https://*.googleusercontent.com/*` 到 `host_permissions`。
+2. **后台代理**:
     - Content Script 不直接 fetch，而是发送 `MSG_PROXY_FETCH` 消息给 Background Script。
     - 由 Background Script 发起请求。
-3.  **动态规则 (DNR)**:
+3. **动态规则 (DNR)**:
     - 在 `background.ts` 中配置动态规则。
     - **范围**: 仅针对扩展发起的请求 (`initiatorSchemes: ['chrome-extension']` 或通过 exclusion 排除页面请求)。
     - **动作**:
@@ -1115,3 +1116,116 @@ private syncPluginUITheme(mode?: ThemeMode) {
 | 文件                        | 变更                                                 |
 | --------------------------- | ---------------------------------------------------- |
 | `src/core/theme-manager.ts` | **修改** - 增强 `syncPluginUITheme()` 方法的同步机制 |
+
+---
+
+## 8. WebDAV 恢复后主题同步失效与数据覆盖问题
+
+**日期**: 2026-01-04
+
+### 症状
+
+- 用户执行 WebDAV 恢复后，页面刷新，但主题模式和配色方案（预置）未能正确恢复，被重置为默认值或错误值。
+- 控制台日志显示：恢复时数据写入成功，但页面刷新后 `App` 初始化时又读取到了旧值。
+- "清除全部数据"后执行备份，生成的备份文件中缺失 `language`、`themeMode`、`themePresets` 等关键设置。
+- WebDAV 测试连接时，Manager 读取不到用户刚刚填写的配置。
+
+### 背景
+
+项目使用 Plasmo 的 `useStorage` Hook 管理设置，结合 `WebDAVSyncManager` 进行云端备份恢复。`ThemeManager` 负责应用主题。恢复流程涉及：下载备份 -> 写入 Storage -> 刷新页面 -> 重新初始化。
+
+### 调试过程
+
+#### 第一轮调试：发现数据覆盖
+
+日志分析：
+
+1. 恢复操作日志显示 `themePresets` 已正确写入 Storage：`{ light: 'A', dark: 'B' }`。
+2. 页面刷新后，`main.ts` 正确读取并应用了 `{ light: 'A', dark: 'B' }`。
+3. 紧接着，`App.tsx` 中的 `useStorage` 触发更新，日志显示它读取到了 **旧值** `{ light: 'default', dark: 'default' }`。
+4. `App.tsx` 调用 `setPresets` 将旧值再次写入 Storage，导致数据被覆盖。
+
+**根因 1**：**Plasmo `useStorage` 的缓存机制**。在页面刷新后的短时间内，`useStorage` 可能会先返回缓存的旧值，然后才从底层 Storage 读取新值。这导致组件在初始化阶段错误地用旧缓存覆盖了 `main.ts` 正确初始化的设置。
+
+#### 第二轮调试：发现备份不完整
+
+用户反馈执行"清除全部数据"后备份，恢复时还是有问题。检查备份文件内容发现 `settings` 对象只包含 `webdav` 字段，其他字段均为 `undefined`。
+
+**根因 2**：**内存状态与 Storage 不同步**。清除数据后，Storage 为空。用户在 UI 上操作时，React 状态（内存）使用了默认值，但并未写入 Storage（除非用户显式修改）。WebDAV 备份时直接读取 Storage，因此只备份了被修改过的 `webdav` 配置，丢失了内存中的默认/当前设置。
+
+#### 第三轮调试：配置读取延迟
+
+用户反馈填写配置后立即点"测试连接"或"备份"失败。
+
+**根因 3**：**Storage 写入异步延迟**。用户输入配置 -> `setSettings` 写入 Storage（异步） -> 用户点击按钮 -> Manager 读取 Storage。如果写入尚未完成，Manager 读到空配置。
+
+### 修复方案
+
+#### 1. 解决数据覆盖（Race Condition）
+
+在 `App.tsx` 中引入**启动保护期**：
+
+```typescript
+const pageLoadTime = useRef(Date.now())
+const hasInitializedPresets = useRef(false)
+
+useEffect(() => {
+  const timeSinceLoad = Date.now() - pageLoadTime.current
+  
+  // 关键修复：跳过页面加载后 3 秒内的所有 setPresets 调用
+  // 1. main.ts 已经在启动时同步读取 Storage 并应用了正确主题
+  // 2. 避免 Plasmo useStorage 在初始化阶段用缓存的旧值覆盖正确设置
+  if (timeSinceLoad < 3000) {
+    return
+  }
+  
+  // ... 正常逻辑
+}, [...])
+```
+
+#### 2. 确保备份完整性
+
+在 `SettingsTab.tsx` 执行备份前，强制将当前内存中的完整 `settings` 对象写入 Storage：
+
+```typescript
+// 备份前
+await new Promise<void>((resolve, reject) =>
+  chrome.storage.local.set(
+    { settings: JSON.stringify(settings) }, // 强制写入完整 settings
+    () => resolve()
+  )
+)
+// ... 执行上传
+```
+
+#### 3. 实时同步 WebDAV 配置
+
+在测试连接、备份、恢复操作前，显式调用 `manager.saveConfig()` 将当前 UI 状态同步给 Manager，不完全依赖 Storage 读取。
+
+#### 4. 彻底的数据清理
+
+修改"清除全部数据"逻辑，同时清除 `chrome.storage.local` 和 `chrome.storage.sync`：
+
+```typescript
+await Promise.all([
+  chrome.storage.local.clear(),
+  chrome.storage.sync.clear()
+])
+```
+
+### 经验总结
+
+| 教训| 说明|
+| :---| :---|
+| **Storage Hook 缓存陷阱** | 封装良好的 Storage Hooks（如 Plasmo useStorage）通常有缓存策略。在跨组件/跨进程（Extension vs Web Page）同步数据时，需警惕缓存导致的“旧值覆盖新值”问题。 |
+| **启动保护机制** | 对于应用关键状态（如主题），在应用启动初期（Hydration 阶段）应限制写操作，信任初始化引导逻辑（如 `main.ts`）的结果。 |
+| **内存 vs 持久化** | 永远不要假设 UI 上看到的值等于 Storage 中的值。在执行关键 IO 操作（如备份）前，显式持久化当前状态是最安全的。 |
+| **异步一致性** | 涉及 Storage IO 的操作链（如配置 -> 保存 -> 读取 -> 测试），必须处理好异步时序，或通过内存传参规避读取延迟。 |
+
+### 文件变更
+
+| 文件| 变更|
+| :---| :---|
+| `src/components/App.tsx`| **修改** - 添加启动保护逻辑，3秒内禁止覆盖主题设置 |
+| `src/components/SettingsTab.tsx` | **修改** - 优化备份前完整写入、操作前配置同步、彻底清除数据 |
+| `src/core/webdav-sync.ts` | **修改** - 增强恢复数据的验证和日志，优化配置加载和保存逻辑 |

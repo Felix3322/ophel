@@ -62,6 +62,12 @@ if (!(window as any).chatHelperInitialized) {
       // 获取用户设置
       const settings = await getSetting(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS)
 
+      // DEBUG: 显示读取到的settings
+      console.log("[main.ts] Settings loaded:", {
+        themeMode: settings.themeMode,
+        themePresets: settings.themePresets,
+      })
+
       // 1. 主题管理 (优先应用)
       // ⭐ 创建全局唯一的 ThemeManager 实例，挂载到 window 供 App.tsx 使用
       themeManager = new ThemeManager(
@@ -74,6 +80,50 @@ if (!(window as any).chatHelperInitialized) {
       themeManager.apply()
       // 挂载到 window 对象，供 App.tsx 获取
       ;(window as any).__ghThemeManager = themeManager
+
+      // ⭐ 同步页面原生主题与settings
+      // 恢复备份后,面板主题会正确应用,但Gemini页面本身的主题可能不一致
+      // 需要检测当前页面主题,如果与settings不一致则同步
+      const syncPageTheme = async () => {
+        const targetTheme = settings.themeMode === "dark" ? "dark" : "light"
+
+        // 检测页面实际的主题状态
+        const bodyClass = document.body.className
+        const hasDarkClass = /\bdark-theme\b/i.test(bodyClass)
+        const pageColorScheme = document.body.style.colorScheme
+
+        // 判断页面实际主题
+        let actualPageTheme: "light" | "dark" = "light"
+        if (hasDarkClass || pageColorScheme === "dark") {
+          actualPageTheme = "dark"
+        }
+
+        console.log("[main.ts] Page theme sync check:", {
+          targetTheme,
+          actualPageTheme,
+          hasDarkClass,
+          pageColorScheme,
+        })
+
+        // 如果不一致，需要同步主题
+        if (actualPageTheme !== targetTheme) {
+          console.log("[main.ts] Page theme mismatch, syncing to:", targetTheme)
+
+          // 1. 先用 themeManager.apply() 快速应用主题（Gemini 标准版生效）
+          if (themeManager) {
+            themeManager.apply(targetTheme)
+          }
+
+          // 2. 再调用 adapter.toggleTheme()（Gemini Enterprise 需要模拟点击）
+          // adapter.toggleTheme 对标准版返回 false 不会有副作用
+          if (adapter && typeof adapter.toggleTheme === "function") {
+            await adapter.toggleTheme(targetTheme)
+          }
+        }
+      }
+
+      // 延迟执行同步,等待页面UI就绪
+      setTimeout(syncPageTheme, 1000)
 
       // 2. Markdown 修复 (仅 Gemini 标准版)
       if (settings.markdownFix && adapter.getSiteId() === "gemini") {

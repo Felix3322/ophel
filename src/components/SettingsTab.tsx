@@ -734,12 +734,9 @@ const RemoteBackupModal = ({
 }
 
 export const SettingsTab = () => {
-  const [settings, setSettings] = useStorage<Settings>(
-    {
-      key: STORAGE_KEYS.SETTINGS,
-      instance: localStorage,
-    },
-    (saved) => (saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved }),
+  // 使用与 App.tsx 相同的 storage 配置，确保状态同步
+  const [settings, setSettings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
+    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
   )
 
   const updateNestedSetting = <K extends keyof Settings>(
@@ -1065,52 +1062,62 @@ export const SettingsTab = () => {
                 border: "1px solid var(--gh-input-border, #d1d5db)",
               }}>
               <button
-                onClick={() => {
-                  if (settings.themeMode !== "light") {
-                    setSettings({ ...settings, themeMode: "light" })
-                    const themeManager = (window as any).__ghThemeManager
-                    if (themeManager) themeManager.toggle()
+                onClick={async () => {
+                  // 当前已是浅色模式则跳过
+                  if (settings.themeMode === "light") return
+                  const themeManager = (window as any).__ghThemeManager
+                  // 使用 toggle() 触发完整的主题切换流程（包括原网页切换和回调通知）
+                  // toggle() 内部会通过 onModeChange 回调更新 settings
+                  if (themeManager) {
+                    await themeManager.toggle()
                   }
                 }}
                 style={{
                   padding: "6px 16px",
-                  border: "none",
                   fontSize: "12px",
-                  fontWeight: 500,
+                  fontWeight: settings.themeMode === "light" ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  backgroundColor:
+                  backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
+                  color: "var(--gh-text, #374151)",
+                  // 使用边框和阴影突出选中状态，不依赖主题色
+                  border:
                     settings.themeMode === "light"
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-bg-secondary, #f9fafb)",
-                  color:
-                    settings.themeMode === "light"
-                      ? "#ffffff"
-                      : "var(--gh-text-secondary, #6b7280)",
+                      ? "2px solid var(--gh-text, #374151)"
+                      : "1px solid transparent",
+                  boxShadow: settings.themeMode === "light" ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                  transform: settings.themeMode === "light" ? "scale(1.02)" : "scale(1)",
+                  borderRadius: "6px",
                 }}>
                 ☀️ {t("themeLight") || "浅色"}
               </button>
               <button
-                onClick={() => {
-                  if (settings.themeMode !== "dark") {
-                    setSettings({ ...settings, themeMode: "dark" })
-                    const themeManager = (window as any).__ghThemeManager
-                    if (themeManager) themeManager.toggle()
+                onClick={async () => {
+                  // 当前已是深色模式则跳过
+                  if (settings.themeMode === "dark") return
+                  const themeManager = (window as any).__ghThemeManager
+                  // 使用 toggle() 触发完整的主题切换流程（包括原网页切换和回调通知）
+                  // toggle() 内部会通过 onModeChange 回调更新 settings
+                  if (themeManager) {
+                    await themeManager.toggle()
                   }
                 }}
                 style={{
                   padding: "6px 16px",
-                  border: "none",
                   fontSize: "12px",
-                  fontWeight: 500,
+                  fontWeight: settings.themeMode === "dark" ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  backgroundColor:
+                  backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
+                  color: "var(--gh-text, #374151)",
+                  // 使用边框和阴影突出选中状态，不依赖主题色
+                  border:
                     settings.themeMode === "dark"
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-bg-secondary, #f9fafb)",
-                  color:
-                    settings.themeMode === "dark" ? "#ffffff" : "var(--gh-text-secondary, #6b7280)",
+                      ? "2px solid var(--gh-text, #374151)"
+                      : "1px solid transparent",
+                  boxShadow: settings.themeMode === "dark" ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                  transform: settings.themeMode === "dark" ? "scale(1.02)" : "scale(1)",
+                  borderRadius: "6px",
                 }}>
                 🌙 {t("themeDark") || "深色"}
               </button>
@@ -2143,7 +2150,10 @@ export const SettingsTab = () => {
                     console.log("[SettingsTab] Starting Test Connection...")
                     try {
                       const manager = getWebDAVSyncManager()
-                      await manager.loadConfig()
+                      // 先将当前 UI 配置保存到 manager（确保使用最新的输入值）
+                      if (settings.webdav) {
+                        await manager.saveConfig(settings.webdav)
+                      }
                       console.log("[SettingsTab] Manager config loaded", manager.getConfig())
 
                       const result = await manager.testConnection()
@@ -2203,7 +2213,10 @@ export const SettingsTab = () => {
                     }
 
                     const manager = getWebDAVSyncManager()
-                    await manager.loadConfig()
+                    // 先将当前 UI 配置保存到 manager（确保使用最新的输入值）
+                    if (settings.webdav) {
+                      await manager.saveConfig(settings.webdav)
+                    }
                     setShowRemoteBackups(true)
                   }}
                   style={{
@@ -2248,8 +2261,20 @@ export const SettingsTab = () => {
 
                     console.log("[SettingsTab] Starting Backup Now...")
                     try {
+                      // ⭐ 备份前先将完整的 settings 写入 storage
+                      // 这确保备份包含所有设置（包括主题等），而不只是 webdav
+                      await new Promise<void>((resolve, reject) =>
+                        chrome.storage.local.set({ settings: JSON.stringify(settings) }, () =>
+                          chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                        ),
+                      )
+                      console.log("[SettingsTab] Full settings saved before backup:", settings)
+
                       const manager = getWebDAVSyncManager()
-                      await manager.loadConfig()
+                      // 确保 manager 使用最新的 webdav 配置
+                      if (settings.webdav) {
+                        await manager.saveConfig(settings.webdav)
+                      }
                       const result = await manager.upload()
                       console.log("[SettingsTab] Backup Result:", result)
 
@@ -2420,6 +2445,84 @@ export const SettingsTab = () => {
                 color: "var(--gh-text, #374151)",
               }}>
               {t("importBackupFile") || "备份文件导入"}
+            </button>
+            <button
+              onClick={() => {
+                setConfirmConfig({
+                  show: true,
+                  title: "清除全部数据",
+                  message:
+                    "确定要清除所有数据吗？此操作不可逆，所有设置、提示词、会话等数据都将被删除！",
+                  danger: true,
+                  onConfirm: async () => {
+                    setConfirmConfig((prev) => ({ ...prev, show: false }))
+                    try {
+                      // 同时清除 local 和 sync 两种存储区域
+                      await Promise.all([
+                        new Promise<void>((resolve, reject) =>
+                          chrome.storage.local.clear(() =>
+                            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                          ),
+                        ),
+                        new Promise<void>((resolve, reject) =>
+                          chrome.storage.sync.clear(() =>
+                            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                          ),
+                        ),
+                      ])
+                      showToast("所有数据已清除，即将刷新页面...", "success")
+                      setTimeout(() => window.location.reload(), 1000)
+                    } catch (err) {
+                      showToast("清除失败：" + String(err), "error")
+                    }
+                  },
+                })
+              }}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "6px",
+                border: "1px solid #ef4444",
+                background: "white",
+                cursor: "pointer",
+                fontSize: "13px",
+                color: "#ef4444",
+                fontWeight: 500,
+              }}>
+              ⚠️ 清除全部数据
+            </button>
+            <button
+              onClick={async () => {
+                const data = await new Promise<Record<string, any>>((resolve) =>
+                  chrome.storage.local.get("settings", resolve),
+                )
+                console.log("=== Settings Debug ===")
+                console.log("Settings type:", typeof data.settings)
+                console.log("Settings value:", data.settings)
+                if (typeof data.settings === "string") {
+                  try {
+                    const parsed = JSON.parse(data.settings)
+                    console.log("Parsed settings:", parsed)
+                    console.log("Language:", parsed.language)
+                    console.log("ThemeMode:", parsed.themeMode)
+                  } catch (e) {
+                    console.error("Parse error:", e)
+                  }
+                }
+                showToast("查看控制台输出", "info")
+              }}
+              style={{
+                width: "100%",
+                padding: "10px",
+                marginTop: "10px",
+                borderRadius: "6px",
+                border: "1px solid var(--gh-input-border, #d1d5db)",
+                background: "white",
+                cursor: "pointer",
+                fontSize: "13px",
+                color: "var(--gh-text, #374151)",
+              }}>
+              🔍 调试Settings
             </button>
           </div>
         </CollapsibleSection>

@@ -181,12 +181,33 @@ export const App = () => {
   }, [themeManager, setSettings])
 
   // 监听主题预置变化，动态更新 ThemeManager
+  // ⭐ 跳过页面加载后一段时间内的调用,因为:
+  // 1. main.ts 已经用正确的 storage 值初始化了 ThemeManager
+  // 2. Plasmo useStorage 有缓存机制,页面刷新后可能先返回缓存的旧值
+  // 3. 只有在页面稳定后用户手动修改设置时才应该调用 setPresets
+  const pageLoadTime = useRef(Date.now())
+  const hasInitializedPresets = useRef(false)
   useEffect(() => {
-    if (settings?.themePresets) {
-      themeManager.setPresets(
-        settings.themePresets.lightPresetId || "google-gradient",
-        settings.themePresets.darkPresetId || "classic-dark",
-      )
+    const lightId = settings?.themePresets?.lightPresetId
+    const darkId = settings?.themePresets?.darkPresetId
+    const timeSinceLoad = Date.now() - pageLoadTime.current
+
+    // 跳过页面加载后 3 秒内的所有调用（避免 useStorage 缓存值覆盖 main.ts 设置）
+    if (timeSinceLoad < 3000) {
+      console.log("[App] setPresets skipped: within 3s of page load")
+      hasInitializedPresets.current = true
+      return
+    }
+
+    if (!hasInitializedPresets.current) {
+      hasInitializedPresets.current = true
+      console.log("[App] setPresets skipped: first render after stabilization")
+      return
+    }
+
+    if (lightId && darkId) {
+      console.log("[App] setPresets called:", { lightId, darkId })
+      themeManager.setPresets(lightId, darkId)
     }
   }, [settings?.themePresets?.lightPresetId, settings?.themePresets?.darkPresetId, themeManager])
 
