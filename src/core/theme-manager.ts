@@ -128,15 +128,6 @@ export class ThemeManager {
     const mode = targetMode || this.mode
     const isGeminiStandard = window.location.host === "gemini.google.com"
 
-    // DEBUG: 显示应用的模式和预置
-    console.log("[ThemeManager] apply() called:", {
-      targetMode,
-      internalMode: this.mode,
-      appliedMode: mode,
-      lightPresetId: this.lightPresetId,
-      darkPresetId: this.darkPresetId,
-    })
-
     if (mode === "dark") {
       document.body.classList.add("dark-theme")
       document.body.classList.remove("light-theme")
@@ -175,8 +166,6 @@ export class ThemeManager {
    * 从主题预置读取 CSS 变量值，注入到 Shadow DOM
    */
   private syncPluginUITheme(mode?: ThemeMode) {
-    console.log("[ThemeManager] syncPluginUITheme ENTER:", { mode })
-
     const currentMode = mode || this.mode
     const root = document.documentElement
 
@@ -186,7 +175,6 @@ export class ThemeManager {
     try {
       const preset = getPreset(presetId, currentMode)
       vars = preset.variables
-      console.log("[ThemeManager] getPreset:", { presetId, varsCount: Object.keys(vars).length })
     } catch (e) {
       console.error("[ThemeManager] getPreset FAILED:", e)
       return
@@ -208,13 +196,6 @@ export class ThemeManager {
 
     // 查找 Plasmo 的 Shadow Host 并在其上设置变量
     const shadowHosts = document.querySelectorAll("plasmo-csui")
-
-    // DEBUG: 显示找到的Shadow Host数量
-    console.log("[ThemeManager] syncPluginUITheme:", {
-      mode: currentMode,
-      presetId,
-      shadowHostsCount: shadowHosts.length,
-    })
 
     shadowHosts.forEach((host) => {
       const shadowRoot = host.shadowRoot

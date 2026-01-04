@@ -174,7 +174,6 @@ export const App = () => {
     const darkId = settings?.themePresets?.darkPresetId
 
     if (lightId && darkId) {
-      console.log("[App] setPresets called:", { lightId, darkId })
       themeManager.setPresets(lightId, darkId)
     }
   }, [

@@ -62,12 +62,6 @@ if (!(window as any).chatHelperInitialized) {
       // 获取用户设置
       const settings = await getSetting(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS)
 
-      // DEBUG: 显示读取到的settings
-      console.log("[main.ts] Settings loaded:", {
-        themeMode: settings.themeMode,
-        themePresets: settings.themePresets,
-      })
-
       // 1. 主题管理 (优先应用)
       // ⭐ 创建全局唯一的 ThemeManager 实例，挂载到 window 供 App.tsx 使用
       themeManager = new ThemeManager(
@@ -98,17 +92,8 @@ if (!(window as any).chatHelperInitialized) {
           actualPageTheme = "dark"
         }
 
-        console.log("[main.ts] Page theme sync check:", {
-          targetTheme,
-          actualPageTheme,
-          hasDarkClass,
-          pageColorScheme,
-        })
-
         // 如果不一致，需要同步主题
         if (actualPageTheme !== targetTheme) {
-          console.log("[main.ts] Page theme mismatch, syncing to:", targetTheme)
-
           // 1. 先用 themeManager.apply() 快速应用主题（Gemini 标准版生效）
           if (themeManager) {
             themeManager.apply(targetTheme)

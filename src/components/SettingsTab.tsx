@@ -2126,25 +2126,15 @@ export const SettingsTab = () => {
                       // 继续尝试，可能是通信失败
                     }
 
-                    console.log("[SettingsTab] Starting Test Connection...")
                     try {
                       const manager = getWebDAVSyncManager()
                       // 先将当前 UI 配置保存到 manager（确保使用最新的输入值）
                       if (settings.webdav) {
                         await manager.saveConfig(settings.webdav)
                       }
-                      console.log("[SettingsTab] Manager config loaded", manager.getConfig())
 
                       const result = await manager.testConnection()
-                      console.log("[SettingsTab] Test Connection Result:", result)
-
                       const msg = t(result.messageKey) || result.messageKey
-                      console.log(
-                        "[SettingsTab] Showing toast:",
-                        msg,
-                        result.success ? "success" : "error",
-                      )
-
                       showToast(msg, result.success ? "success" : "error")
                     } catch (err) {
                       console.error("[SettingsTab] Test Connection Error:", err)
@@ -2238,16 +2228,13 @@ export const SettingsTab = () => {
                       }
                     }
 
-                    console.log("[SettingsTab] Starting Backup Now...")
                     try {
                       // ⭐ 备份前先将完整的 settings 写入 storage
-                      // 这确保备份包含所有设置（包括主题等），而不只是 webdav
                       await new Promise<void>((resolve, reject) =>
                         chrome.storage.local.set({ settings: JSON.stringify(settings) }, () =>
                           chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
                         ),
                       )
-                      console.log("[SettingsTab] Full settings saved before backup:", settings)
 
                       const manager = getWebDAVSyncManager()
                       // 确保 manager 使用最新的 webdav 配置
@@ -2255,15 +2242,7 @@ export const SettingsTab = () => {
                         await manager.saveConfig(settings.webdav)
                       }
                       const result = await manager.upload()
-                      console.log("[SettingsTab] Backup Result:", result)
-
                       const msg = t(result.messageKey) || result.messageKey
-                      console.log(
-                        "[SettingsTab] Showing toast:",
-                        msg,
-                        result.success ? "success" : "error",
-                      )
-
                       showToast(msg, result.success ? "success" : "error")
                     } catch (err) {
                       console.error("[SettingsTab] Backup Error:", err)
@@ -2309,12 +2288,6 @@ export const SettingsTab = () => {
                 try {
                   const localData = await new Promise<Record<string, any>>((resolve) =>
                     chrome.storage.local.get(null, resolve),
-                  )
-
-                  // DEBUG: Log types
-                  console.log(
-                    "Exporting Data Types:",
-                    Object.fromEntries(Object.entries(localData).map(([k, v]) => [k, typeof v])),
                   )
 
                   // Plasmo 存储的数据如果是对象，会作为 JSON 字符串存储

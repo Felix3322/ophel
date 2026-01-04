@@ -375,19 +375,8 @@ export class WebDAVSyncManager {
 
       // 1. 保存当前的WebDAV配置(避免被备份数据覆盖)
       const currentWebdavConfig = this.config
-      console.log("[WebDAV] Current config before restore:", currentWebdavConfig)
 
       // 2. Dehydrate: 将对象序列化回JSON字符串(Plasmo Storage需要JSON字符串)
-      console.log("[WebDAV] Restoring data keys:", Object.keys(backupData.data))
-      console.log(
-        "[WebDAV] Sample data types (before dehydrate):",
-        Object.fromEntries(
-          Object.entries(backupData.data)
-            .slice(0, 3)
-            .map(([k, v]) => [k, typeof v]),
-        ),
-      )
-
       const dehydratedData = Object.fromEntries(
         Object.entries(backupData.data).map(([k, v]) => {
           if (v !== null && typeof v === "object") {
@@ -397,25 +386,13 @@ export class WebDAVSyncManager {
         }),
       )
 
-      console.log(
-        "[WebDAV] Sample data types (after dehydrate):",
-        Object.fromEntries(
-          Object.entries(dehydratedData)
-            .slice(0, 3)
-            .map(([k, v]) => [k, typeof v]),
-        ),
-      )
-
       await new Promise<void>((resolve, reject) =>
         chrome.storage.local.set(dehydratedData, () =>
           chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
         ),
       )
-      console.log("[WebDAV] Data restored to storage")
 
       // 3. 恢复当前WebDAV配置(保持用户当前的WebDAV设置)
-      // 注意:不能使用saveConfig,因为它会读取并覆盖刚恢复的settings
-      // 需要直接操作storage中的settings JSON字符串
       const currentSettings = await new Promise<Record<string, any>>((resolve) =>
         chrome.storage.local.get("settings", resolve),
       )
@@ -429,28 +406,8 @@ export class WebDAVSyncManager {
               chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
             ),
           )
-          console.log("[WebDAV] WebDAV config restored:", currentWebdavConfig)
         } catch (e) {
           console.error("[WebDAV] Failed to restore WebDAV config:", e)
-        }
-      }
-
-      // 4. 验证恢复结果
-      const verifyData = await new Promise<Record<string, any>>((resolve) =>
-        chrome.storage.local.get(null, resolve),
-      )
-      console.log("[WebDAV] Verification - storage keys after restore:", Object.keys(verifyData))
-      console.log("[WebDAV] Verification - settings type:", typeof verifyData.settings)
-      if (verifyData.settings && typeof verifyData.settings === "string") {
-        try {
-          const parsedSettings = JSON.parse(verifyData.settings)
-          console.log("[WebDAV] Verification - settings sample:", {
-            language: parsedSettings?.language,
-            themeMode: parsedSettings?.themeMode,
-            themePresets: parsedSettings?.themePresets,
-          })
-        } catch (e) {
-          console.error("[WebDAV] Failed to parse settings for verification:", e)
         }
       }
 
