@@ -7,7 +7,6 @@ import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import { useDraggable } from "~hooks/useDraggable"
 import { useSettingsStore } from "~stores/settings-store"
-import type { Exporter } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import {
   getScrollInfo,
@@ -29,7 +28,6 @@ interface MainPanelProps {
   conversationManager: ConversationManager
   outlineManager: OutlineManager
   adapter?: SiteAdapter | null
-  exporter?: Exporter | null
   onThemeToggle?: () => void
   themeMode?: "light" | "dark"
   selectedPromptId?: string | null
@@ -50,7 +48,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   conversationManager,
   outlineManager,
   adapter,
-  exporter,
   onThemeToggle,
   themeMode,
   selectedPromptId,

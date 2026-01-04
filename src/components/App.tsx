@@ -6,7 +6,6 @@ import { OutlineManager } from "~core/outline-manager"
 import { PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { Exporter } from "~utils/exporter"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 
 import { MainPanel } from "./MainPanel"
@@ -126,10 +125,6 @@ export const App = () => {
       outlineManager.updateSettings(settings.outline)
     }
   }, [outlineManager, settings])
-
-  const exporter = useMemo(() => {
-    return adapter ? new Exporter(adapter) : null
-  }, [adapter])
 
   // ⭐ 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // 这样只有一个 ThemeManager 实例，避免竞争条件
@@ -444,7 +439,6 @@ export const App = () => {
         conversationManager={conversationManager}
         outlineManager={outlineManager}
         adapter={adapter}
-        exporter={exporter}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
         selectedPromptId={selectedPrompt?.id}
