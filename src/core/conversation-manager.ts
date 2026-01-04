@@ -1,15 +1,10 @@
 import type { ConversationInfo, ConversationObserverConfig, SiteAdapter } from "~adapters/base"
+import { DEFAULT_FOLDERS, type Folder } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { getLocalData, getSetting, setLocalData, setSetting, STORAGE_KEYS } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
-export interface Folder {
-  id: string
-  name: string
-  icon: string
-  isDefault?: boolean
-  color?: string
-}
+export type { Folder }
 
 export interface Tag {
   id: string
@@ -32,8 +27,6 @@ export interface ConversationData {
   lastUsedFolderId: string
   conversations: Record<string, Conversation>
 }
-
-const DEFAULT_FOLDERS: Folder[] = [{ id: "inbox", name: "📥 收件箱", icon: "📥", isDefault: true }]
 
 export class ConversationManager {
   public readonly siteAdapter: SiteAdapter

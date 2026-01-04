@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import { TAB_IDS, type TabId } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -76,15 +77,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
-  const getFirstTab = (order: string[]) => {
+  const getFirstTab = (order: string[]): string => {
     if (order && order.length > 0) {
       return order[0]
     }
-    return "prompts"
+    return TAB_IDS.PROMPTS
   }
 
   // 初始化 activeTab（先用默认值，等 settings 加载后更新）
-  const [activeTab, setActiveTab] = useState("prompts")
+  const [activeTab, setActiveTab] = useState<string>(TAB_IDS.PROMPTS)
   const [isInitialized, setIsInitialized] = useState(false)
 
   // settings 加载完成后，设置为用户设置的首个 tab
@@ -157,19 +158,20 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 过滤出启用的 Tab（设置页通过 header 按钮进入，不在 tab 栏显示）
   const visibleTabs = tabOrder.filter((tabId) => {
-    if (tabId === "settings") return false // 设置在 header 中
+    if (tabId === TAB_IDS.SETTINGS) return false // 设置在 header 中
     // 检查每个 Tab 的 enabled 状态
-    if (tabId === "prompts" && currentSettings.prompts?.enabled === false) return false
-    if (tabId === "conversations" && currentSettings.conversations?.enabled === false) return false
-    if (tabId === "outline" && currentSettings.outline?.enabled === false) return false
+    if (tabId === TAB_IDS.PROMPTS && currentSettings.prompts?.enabled === false) return false
+    if (tabId === TAB_IDS.CONVERSATIONS && currentSettings.conversations?.enabled === false)
+      return false
+    if (tabId === TAB_IDS.OUTLINE && currentSettings.outline?.enabled === false) return false
     return true
   })
 
   // Tab 图标定义
   const tabIcons: Record<string, string> = {
-    outline: "📑",
-    conversations: "💬",
-    prompts: "✏️",
+    [TAB_IDS.OUTLINE]: "📑",
+    [TAB_IDS.CONVERSATIONS]: "💬",
+    [TAB_IDS.PROMPTS]: "✏️",
   }
 
   // 获取主题图标
@@ -306,7 +308,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
           {/* 设置按钮 */}
           <button
-            onClick={() => setActiveTab(activeTab === "settings" ? "prompts" : "settings")}
+            onClick={() =>
+              setActiveTab(activeTab === TAB_IDS.SETTINGS ? TAB_IDS.PROMPTS : TAB_IDS.SETTINGS)
+            }
             title={t("tabSettings")}
             style={{
               background:
@@ -332,25 +336,25 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           <button
             onClick={() => {
               // 根据当前 Tab 执行对应的刷新逻辑
-              if (activeTab === "outline") {
+              if (activeTab === TAB_IDS.OUTLINE) {
                 outlineManager?.refresh()
-              } else if (activeTab === "prompts") {
+              } else if (activeTab === TAB_IDS.PROMPTS) {
                 // 重新加载提示词数据
                 promptManager?.loadPrompts()
-              } else if (activeTab === "conversations") {
+              } else if (activeTab === TAB_IDS.CONVERSATIONS) {
                 // 触发数据变更通知，刷新 UI
                 conversationManager?.notifyDataChange()
               }
               // settings 不需要刷新
             }}
             title={
-              activeTab === "outline"
+              activeTab === TAB_IDS.OUTLINE
                 ? t("refreshOutline")
-                : activeTab === "prompts"
+                : activeTab === TAB_IDS.PROMPTS
                   ? t("refreshPrompts")
-                  : activeTab === "conversations"
+                  : activeTab === TAB_IDS.CONVERSATIONS
                     ? t("refreshConversations")
-                    : activeTab === "settings"
+                    : activeTab === TAB_IDS.SETTINGS
                       ? t("refreshSettings")
                       : t("refresh")
             }
@@ -447,23 +451,23 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           scrollbarWidth: "none", // Firefox
           msOverflowStyle: "none", // IE/Edge
         }}>
-        {activeTab === "prompts" && (
+        {activeTab === TAB_IDS.PROMPTS && (
           <PromptsTab
             manager={promptManager}
             selectedPromptId={selectedPromptId}
             onPromptSelect={onPromptSelect}
           />
         )}
-        {activeTab === "conversations" && (
+        {activeTab === TAB_IDS.CONVERSATIONS && (
           <ConversationsTab
             manager={conversationManager}
             onInteractionStateChange={onInteractionStateChange}
           />
         )}
-        {activeTab === "outline" && (
+        {activeTab === TAB_IDS.OUTLINE && (
           <OutlineTab manager={outlineManager} onJumpBefore={saveAnchor} />
         )}
-        {activeTab === "settings" && (
+        {activeTab === TAB_IDS.SETTINGS && (
           <div style={{ padding: "0" }}>
             <SettingsTab />
           </div>

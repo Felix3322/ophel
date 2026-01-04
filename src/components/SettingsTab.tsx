@@ -2,28 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { ConfirmDialog, Switch } from "~components/ui"
 import { Toast } from "~components/ui/Toast"
+import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 import { DEFAULT_SETTINGS, localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
 import { darkPresets, getPreset, lightPresets } from "~utils/themes"
-
-// 快捷按钮定义
-const COLLAPSED_BUTTON_DEFS: Record<string, { icon: string; label: string }> = {
-  scrollTop: { icon: "⬆️", label: "scrollTop" },
-  panel: { icon: "✨", label: "panelTitle" },
-  anchor: { icon: "⚓", label: "showCollapsedAnchorLabel" },
-  theme: { icon: "🌗", label: "toggleTheme" },
-  manualAnchor: { icon: "📍", label: "manualAnchorLabel" },
-  scrollBottom: { icon: "⬇️", label: "scrollBottom" },
-}
-
-// Tab定义
-const TAB_DEFINITIONS: Record<string, { label: string }> = {
-  prompts: { label: "tabPrompts" },
-  conversations: { label: "tabConversations" },
-  outline: { label: "tabOutline" },
-}
 
 // 通用开关组件
 const ToggleRow: React.FC<{
@@ -994,7 +978,7 @@ export const SettingsTab = () => {
               <SortableItem
                 key={btn.id}
                 icon={def.icon}
-                label={t(def.label) || btn.id}
+                label={t(def.labelKey) || btn.id}
                 index={index}
                 total={settings.collapsedButtonsOrder.length}
                 enabled={btn.enabled}

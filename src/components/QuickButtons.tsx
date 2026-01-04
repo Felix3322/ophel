@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { getAdapter } from "~adapters/index"
+import { COLLAPSED_BUTTON_DEFS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import {
@@ -11,26 +12,6 @@ import {
   smartScrollToTop,
 } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
-
-// 折叠面板按钮定义
-// isPanelOnly: true 表示仅在面板折叠时显示，false 表示常显
-const COLLAPSED_BUTTON_DEFS: Record<
-  string,
-  { icon: string; labelKey: string; canToggle: boolean; isPanelOnly: boolean; isGroup?: boolean }
-> = {
-  scrollTop: { icon: "⬆", labelKey: "scrollTop", canToggle: false, isPanelOnly: false },
-  panel: { icon: "✨", labelKey: "panelTitle", canToggle: false, isPanelOnly: true },
-  anchor: { icon: "⚓", labelKey: "showCollapsedAnchorLabel", canToggle: true, isPanelOnly: true },
-  theme: { icon: "☀", labelKey: "showCollapsedThemeLabel", canToggle: true, isPanelOnly: true },
-  manualAnchor: {
-    icon: "📍",
-    labelKey: "manualAnchorLabel",
-    canToggle: true,
-    isPanelOnly: false,
-    isGroup: true,
-  },
-  scrollBottom: { icon: "⬇", labelKey: "scrollBottom", canToggle: false, isPanelOnly: false },
-}
 
 interface QuickButtonsProps {
   isPanelOpen: boolean

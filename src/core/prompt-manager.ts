@@ -1,20 +1,6 @@
 import type { SiteAdapter } from "~adapters/base"
+import { DEFAULT_PROMPTS } from "~constants"
 import { getLocalData, setLocalData, STORAGE_KEYS, type Prompt } from "~utils/storage"
-
-const DEFAULT_PROMPTS: Prompt[] = [
-  {
-    id: "default_1",
-    title: "代码优化",
-    content: "请帮我优化以下代码，提高性能和可读性：\n\n",
-    category: "编程",
-  },
-  {
-    id: "default_2",
-    title: "翻译助手",
-    content: "请将以下内容翻译成中文，保持专业术语的准确性：\n\n",
-    category: "翻译",
-  },
-]
 
 export class PromptManager {
   private prompts: Prompt[] = []
