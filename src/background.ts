@@ -1,7 +1,10 @@
 import {
+  MSG_CHECK_PERMISSION,
   MSG_FOCUS_TAB,
+  MSG_OPEN_PERMISSION_PAGE,
   MSG_PROXY_FETCH,
   MSG_SHOW_NOTIFICATION,
+  MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
 } from "~utils/messaging"
 
@@ -159,6 +162,72 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           reader.readAsDataURL(blob)
         } catch (err) {
           console.error("Proxy fetch failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_WEBDAV_REQUEST:
+      ;(async () => {
+        try {
+          const { method, url, body, headers, auth } = message as any
+          const fetchHeaders: Record<string, string> = { ...headers }
+
+          // 添加 Basic Auth
+          if (auth?.username && auth?.password) {
+            const credentials = btoa(`${auth.username}:${auth.password}`)
+            fetchHeaders["Authorization"] = `Basic ${credentials}`
+          }
+
+          const response = await fetch(url, {
+            method,
+            headers: fetchHeaders,
+            body: body || undefined,
+          })
+
+          // 获取响应文本
+          const responseText = await response.text()
+
+          sendResponse({
+            success: true,
+            status: response.status,
+            statusText: response.statusText,
+            body: responseText,
+            headers: Object.fromEntries(response.headers.entries()),
+          })
+        } catch (err) {
+          console.error("WebDAV request failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_CHECK_PERMISSION:
+      ;(async () => {
+        try {
+          const { origin } = message as any
+          const hasPermission = await chrome.permissions.contains({
+            origins: [origin],
+          })
+          sendResponse({ success: true, hasPermission })
+        } catch (err) {
+          console.error("Permission check failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_OPEN_PERMISSION_PAGE:
+      ;(async () => {
+        try {
+          const { origin } = message as any
+          const url = chrome.runtime.getURL(
+            `tabs/permission.html?origin=${encodeURIComponent(origin)}`,
+          )
+          await chrome.tabs.create({ url })
+          sendResponse({ success: true })
+        } catch (err) {
+          console.error("Open permission page failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

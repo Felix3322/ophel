@@ -100,6 +100,18 @@ export interface Settings {
     tableCopyEnabled: boolean
   }
   customCSS: string // 自定义 CSS
+  // WebDAV 同步配置
+  webdav?: {
+    enabled: boolean
+    url: string
+    username: string
+    password: string
+    syncMode: "manual" | "auto"
+    syncInterval: number
+    remoteDir: string
+    lastSyncTime?: number
+    lastSyncStatus?: "success" | "failed" | "syncing"
+  }
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -173,6 +185,15 @@ export const DEFAULT_SETTINGS: Settings = {
     tableCopyEnabled: true,
   },
   customCSS: "",
+  webdav: {
+    enabled: false,
+    url: "",
+    username: "",
+    password: "",
+    syncMode: "manual",
+    syncInterval: 30,
+    remoteDir: "ophel",
+  },
 }
 
 export interface Folder {
@@ -198,18 +219,18 @@ export interface Prompt {
 // ==================== 通用存储操作 ====================
 
 /**
- * 获取设置项
+ * 获取设置项（统一使用 local 存储）
  */
 export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
-  const value = await syncStorage.get(key)
+  const value = await localStorage.get(key)
   return (value !== undefined ? value : defaultValue) as T
 }
 
 /**
- * 保存设置项
+ * 保存设置项（统一使用 local 存储）
  */
 export async function setSetting<T>(key: string, value: T): Promise<void> {
-  await syncStorage.set(key, value)
+  await localStorage.set(key, value)
 }
 
 /**

@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-import { DEFAULT_SETTINGS, STORAGE_KEYS, syncStorage, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
 
 import {
   ConfirmDialog,
@@ -129,7 +129,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     setTags([...manager.getTags()])
     setLastUsedFolderId(manager.getLastUsedFolderId())
     // 加载设置
-    const saved = await syncStorage.get<Settings>(STORAGE_KEYS.SETTINGS)
+    const saved = await localStorage.get<Settings>(STORAGE_KEYS.SETTINGS)
     setSettings(saved ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS)
   }, [manager])
 

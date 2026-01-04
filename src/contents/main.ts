@@ -142,8 +142,8 @@ if (!(window as any).chatHelperInitialized) {
       scrollLockManager = new ScrollLockManager(adapter, settings)
 
       // 监听设置变化以支持动态开关 (合并所有模块的监听)
-      const { syncStorage } = await import("~utils/storage")
-      syncStorage.watch({
+      const { localStorage } = await import("~utils/storage")
+      localStorage.watch({
         [STORAGE_KEYS.SETTINGS]: (change) => {
           const newSettings = change.newValue
 

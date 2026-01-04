@@ -32,7 +32,50 @@ export interface ProxyFetchMessage extends ProxyFetchPayload {
   type: typeof MSG_PROXY_FETCH
 }
 
-export type ExtensionMessage = ShowNotificationMessage | FocusTabMessage | ProxyFetchMessage
+// WebDAV 代理请求（绕过 CORS）
+export const MSG_WEBDAV_REQUEST = "WEBDAV_REQUEST"
+
+export interface WebDAVRequestPayload {
+  method: string
+  url: string
+  body?: string | null
+  headers?: Record<string, string>
+  auth?: { username: string; password: string }
+}
+
+export interface WebDAVRequestMessage extends WebDAVRequestPayload {
+  type: typeof MSG_WEBDAV_REQUEST
+}
+
+// 检查权限
+export const MSG_CHECK_PERMISSION = "CHECK_PERMISSION"
+
+export interface CheckPermissionPayload {
+  origin: string
+}
+
+export interface CheckPermissionMessage extends CheckPermissionPayload {
+  type: typeof MSG_CHECK_PERMISSION
+}
+
+// 打开权限申请页
+export const MSG_OPEN_PERMISSION_PAGE = "OPEN_PERMISSION_PAGE"
+
+export interface OpenPermissionPagePayload {
+  origin: string
+}
+
+export interface OpenPermissionPageMessage extends OpenPermissionPagePayload {
+  type: typeof MSG_OPEN_PERMISSION_PAGE
+}
+
+export type ExtensionMessage =
+  | ShowNotificationMessage
+  | FocusTabMessage
+  | ProxyFetchMessage
+  | WebDAVRequestMessage
+  | CheckPermissionMessage
+  | OpenPermissionPageMessage
 
 /**
  * Send a message to the background service worker with type safety

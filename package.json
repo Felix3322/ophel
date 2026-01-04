@@ -45,6 +45,9 @@
       "https://*.google.com/*",
       "https://*.googleusercontent.com/*"
     ],
+    "optional_host_permissions": [
+      "<all_urls>"
+    ],
     "web_accessible_resources": [
       {
         "resources": [
