@@ -404,10 +404,39 @@ export class WebDAVSyncManager {
         ),
       )
 
-      // 3. 恢复当前WebDAV配置(保持用户当前的WebDAV设置)
-      // ⭐ 使用 Zustand store 更新，无需直接操作 storage
-      const { useSettingsStore } = await import("~stores/settings-store")
-      useSettingsStore.getState().setSettings({ webdav: currentWebdavConfig })
+      // 3. 恢复当前 WebDAV 配置（保持用户当前的 WebDAV 设置）
+      // ⭐ 直接操作 storage 而非 setSettings()，避免触发 Zustand persist
+      // 将旧主题设置写回 storage 覆盖刚恢复的备份数据
+      await new Promise<void>((resolve, reject) => {
+        chrome.storage.local.get("settings", (result) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError)
+            return
+          }
+
+          // 解析当前 storage 中的 settings（刚写入的备份数据）
+          let settingsWrapper = result.settings
+          if (typeof settingsWrapper === "string") {
+            try {
+              settingsWrapper = JSON.parse(settingsWrapper)
+            } catch {
+              // 解析失败，跳过 WebDAV 配置恢复
+              resolve()
+              return
+            }
+          }
+
+          // 更新 webdav 配置
+          if (settingsWrapper?.state?.settings) {
+            settingsWrapper.state.settings.webdav = currentWebdavConfig
+          }
+
+          // 写回 storage
+          chrome.storage.local.set({ settings: JSON.stringify(settingsWrapper) }, () =>
+            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+          )
+        })
+      })
 
       const now = Date.now()
       return { success: true, messageKey: "webdavDownloadSuccess", timestamp: now }

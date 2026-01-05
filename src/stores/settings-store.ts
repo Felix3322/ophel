@@ -42,7 +42,7 @@ const chromeStorageAdapter: StateStorage = {
           }
         }
 
-        // ⭐ 检测存储格式（更严格的判断）
+        // 检测存储格式
         // Zustand 格式: { state: { settings: {...} }, version: 0 }
         // 原始格式: { themeMode: "...", language: "...", ... }
         if (parsed && typeof parsed === "object") {
