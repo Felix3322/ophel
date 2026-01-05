@@ -86,9 +86,12 @@ export class WebDAVSyncManager {
 
   /**
    * 加载配置
+   * ⭐ 使用 Zustand store 读取 settings
    */
   async loadConfig(): Promise<WebDAVConfig> {
-    const settings = await localStorage.get<Settings>(STORAGE_KEYS.SETTINGS)
+    // 动态导入避免循环依赖
+    const { getSettingsState } = await import("~stores/settings-store")
+    const settings = getSettingsState()
     if (settings?.webdav) {
       this.config = { ...DEFAULT_WEBDAV_CONFIG, ...settings.webdav }
     }
@@ -97,14 +100,13 @@ export class WebDAVSyncManager {
 
   /**
    * 保存配置
+   * ⭐ 通过 Zustand store 保存，确保一致性
    */
   async saveConfig(config: Partial<WebDAVConfig>): Promise<void> {
     this.config = { ...this.config, ...config }
-    const settings = (await localStorage.get<Settings>(STORAGE_KEYS.SETTINGS)) || {}
-    await localStorage.set(STORAGE_KEYS.SETTINGS, {
-      ...settings,
-      webdav: this.config,
-    })
+    // 动态导入避免循环依赖
+    const { useSettingsStore } = await import("~stores/settings-store")
+    useSettingsStore.getState().setSettings({ webdav: this.config })
   }
 
   /**
@@ -165,11 +167,16 @@ export class WebDAVSyncManager {
         chrome.storage.local.get(null, resolve),
       )
 
-      // Hydrate data (Plasmo stores objects as JSON strings, we want clean JSON on cloud)
+      // Hydrate data：解析 JSON 字符串，并处理 Zustand persist 格式
       const hydratedData = Object.fromEntries(
         Object.entries(localData).map(([k, v]) => {
           try {
-            return [k, typeof v === "string" ? JSON.parse(v) : v]
+            let parsed = typeof v === "string" ? JSON.parse(v) : v
+            // ⭐ 特殊处理 settings key：提取 Zustand persist 格式中的 settings
+            if (k === "settings" && parsed?.state?.settings) {
+              parsed = parsed.state.settings
+            }
+            return [k, parsed]
           } catch {
             return [k, v]
           }
@@ -376,10 +383,15 @@ export class WebDAVSyncManager {
       // 1. 保存当前的WebDAV配置(避免被备份数据覆盖)
       const currentWebdavConfig = this.config
 
-      // 2. Dehydrate: 将对象序列化回JSON字符串(Plasmo Storage需要JSON字符串)
+      // 2. Dehydrate: 将对象序列化回JSON字符串
+      // settings 需要特殊处理，转换为 Zustand persist 格式
       const dehydratedData = Object.fromEntries(
         Object.entries(backupData.data).map(([k, v]) => {
           if (v !== null && typeof v === "object") {
+            // ⭐ settings key 需要包装为 Zustand persist 格式
+            if (k === "settings") {
+              return [k, JSON.stringify({ state: { settings: v }, version: 0 })]
+            }
             return [k, JSON.stringify(v)]
           }
           return [k, v]
@@ -393,23 +405,9 @@ export class WebDAVSyncManager {
       )
 
       // 3. 恢复当前WebDAV配置(保持用户当前的WebDAV设置)
-      const currentSettings = await new Promise<Record<string, any>>((resolve) =>
-        chrome.storage.local.get("settings", resolve),
-      )
-
-      if (currentSettings.settings && typeof currentSettings.settings === "string") {
-        try {
-          const settingsObj = JSON.parse(currentSettings.settings)
-          settingsObj.webdav = currentWebdavConfig
-          await new Promise<void>((resolve, reject) =>
-            chrome.storage.local.set({ settings: JSON.stringify(settingsObj) }, () =>
-              chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-            ),
-          )
-        } catch (e) {
-          console.error("[WebDAV] Failed to restore WebDAV config:", e)
-        }
-      }
+      // ⭐ 使用 Zustand store 更新，无需直接操作 storage
+      const { useSettingsStore } = await import("~stores/settings-store")
+      useSettingsStore.getState().setSettings({ webdav: currentWebdavConfig })
 
       const now = Date.now()
       return { success: true, messageKey: "webdavDownloadSuccess", timestamp: now }

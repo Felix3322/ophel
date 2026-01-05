@@ -6,9 +6,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
+import { useSettingsStore } from "~stores/settings-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-import { DEFAULT_SETTINGS, localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
+import { localStorage } from "~utils/storage"
 
 import {
   ConfirmDialog,
@@ -89,8 +90,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   manager,
   onInteractionStateChange,
 }) => {
-  // 设置
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
+  // 设置 - 使用 Zustand store，确保设置变更实时生效
+  const { settings } = useSettingsStore()
 
   // 数据状态
   const [folders, setFolders] = useState<Folder[]>([])
@@ -122,15 +123,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const tagFilterMenuRef = useRef<HTMLDivElement>(null)
   const tagFilterBtnRef = useRef<HTMLDivElement>(null)
 
-  // 加载数据
+  // 加载数据（设置由 Zustand store 管理，无需手动加载）
   const loadData = useCallback(async () => {
     setFolders([...manager.getFolders()])
     setConversations({ ...manager.getAllConversations() })
     setTags([...manager.getTags()])
     setLastUsedFolderId(manager.getLastUsedFolderId())
-    // 加载设置
-    const saved = await localStorage.get<Settings>(STORAGE_KEYS.SETTINGS)
-    setSettings(saved ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS)
   }, [manager])
 
   useEffect(() => {

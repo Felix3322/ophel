@@ -2282,12 +2282,16 @@ export const SettingsTab = () => {
                     chrome.storage.local.get(null, resolve),
                   )
 
-                  // Plasmo 存储的数据如果是对象，会作为 JSON 字符串存储
-                  // 导出时尝试解析这些字符串，以便生成干净的 JSON
+                  // Hydrate data：解析 JSON 字符串，并处理 Zustand persist 格式
                   const hydratedData = Object.fromEntries(
                     Object.entries(localData).map(([k, v]) => {
                       try {
-                        return [k, typeof v === "string" ? JSON.parse(v) : v]
+                        let parsed = typeof v === "string" ? JSON.parse(v) : v
+                        // ⭐ 特殊处理 settings key：提取 Zustand persist 格式中的 settings
+                        if (k === "settings" && parsed?.state?.settings) {
+                          parsed = parsed.state.settings
+                        }
+                        return [k, parsed]
                       } catch {
                         return [k, v]
                       }
@@ -2354,10 +2358,14 @@ export const SettingsTab = () => {
                       setConfirmConfig((prev) => ({ ...prev, show: false }))
                       try {
                         // ⭐ Dehydrate: 将对象序列化回 JSON 字符串
-                        // 与 WebDAV 恢复逻辑保持一致，确保 Plasmo storage.watch 能正确解析
+                        // settings 需要特殊处理，转换为 Zustand persist 格式
                         const dehydratedData = Object.fromEntries(
                           Object.entries(data.data).map(([k, v]) => {
                             if (v !== null && typeof v === "object") {
+                              // ⭐ settings key 需要包装为 Zustand persist 格式
+                              if (k === "settings") {
+                                return [k, JSON.stringify({ state: { settings: v }, version: 0 })]
+                              }
                               return [k, JSON.stringify(v)]
                             }
                             return [k, v]

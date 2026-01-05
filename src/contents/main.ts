@@ -17,7 +17,8 @@ import { ScrollLockManager } from "~core/scroll-lock-manager"
 import { TabManager } from "~core/tab-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { WatermarkRemover } from "~core/watermark-remover"
-import { DEFAULT_SETTINGS, getSetting, STORAGE_KEYS } from "~utils/storage"
+import { getSettingsState, subscribeSettings, useSettingsStore } from "~stores/settings-store"
+import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
 // Content Script 配置 - 匹配所有支持的站点
 export const config: PlasmoCSConfig = {
@@ -59,8 +60,22 @@ if (!window.chatHelperInitialized) {
 
     // 异步初始化所有功能模块
     ;(async () => {
-      // 获取用户设置
-      const settings = await getSetting(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS)
+      // ⭐ 等待 Zustand hydration 完成
+      await new Promise<void>((resolve) => {
+        if (useSettingsStore.getState()._hasHydrated) {
+          resolve()
+          return
+        }
+        const unsub = useSettingsStore.subscribe((state) => {
+          if (state._hasHydrated) {
+            unsub()
+            resolve()
+          }
+        })
+      })
+
+      // 获取用户设置（直接从 Zustand store 获取，无需处理格式）
+      const settings = getSettingsState()
 
       // 1. 主题管理 (优先应用)
       // ⭐ 创建全局唯一的 ThemeManager 实例，挂载到 window 供 App.tsx 使用
@@ -176,106 +191,100 @@ if (!window.chatHelperInitialized) {
       // 9. 滚动锁定（始终创建以支持动态开关）
       scrollLockManager = new ScrollLockManager(adapter, settings)
 
-      // 监听设置变化以支持动态开关 (合并所有模块的监听)
-      const { localStorage } = await import("~utils/storage")
-      localStorage.watch({
-        [STORAGE_KEYS.SETTINGS]: (change) => {
-          const newSettings = change.newValue
+      // ⭐ 订阅 Zustand store 变化（替代 localStorage.watch）
+      // 直接获取干净的 settings，无需处理 state.settings 格式
+      subscribeSettings((newSettings: Settings) => {
+        // 1. Theme Manager - 只更新主题预置，不处理 themeMode 变化
+        // ⭐ 不再调用 updateMode()，因为主题切换由 App.tsx 的 toggle() 统一处理
+        if (newSettings?.themePresets && themeManager) {
+          themeManager.setPresets(
+            newSettings.themePresets.lightPresetId || "google-gradient",
+            newSettings.themePresets.darkPresetId || "classic-dark",
+          )
+        }
 
-          // 1. Theme Manager - 只更新主题预置，不处理 themeMode 变化
-          // ⭐ 不再调用 updateMode()，因为主题切换由 App.tsx 的 toggle() 统一处理
-          // 这样可以避免绕过 View Transition 动画直接应用主题
-          if (newSettings?.themePresets && themeManager) {
-            themeManager.setPresets(
-              newSettings.themePresets.lightPresetId || "google-gradient",
-              newSettings.themePresets.darkPresetId || "classic-dark",
-            )
-          }
+        // 2. Model Locker update
+        const newSiteConfig = newSettings?.modelLockConfig?.[siteId]
+        if (newSiteConfig && modelLocker) {
+          modelLocker.updateConfig(newSiteConfig)
+        }
 
-          // 2. Model Locker update
-          const newSiteConfig = newSettings?.modelLockConfig?.[siteId]
-          if (newSiteConfig && modelLocker) {
-            modelLocker.updateConfig(newSiteConfig)
-          }
+        // 3. Scroll Lock update
+        if (newSettings && scrollLockManager) {
+          scrollLockManager.updateSettings(newSettings)
+        }
 
-          // 3. Scroll Lock update
-          if (newSettings && scrollLockManager) {
-            scrollLockManager.updateSettings(newSettings)
-          }
-
-          // 4. Markdown Fix update
-          if (newSettings && adapter.getSiteId() === "gemini") {
-            if (newSettings.markdownFix) {
-              if (!markdownFixer) {
-                markdownFixer = new MarkdownFixer()
-              }
-              markdownFixer.start()
-            } else {
-              markdownFixer?.stop()
+        // 4. Markdown Fix update
+        if (newSettings && adapter.getSiteId() === "gemini") {
+          if (newSettings.markdownFix) {
+            if (!markdownFixer) {
+              markdownFixer = new MarkdownFixer()
             }
+            markdownFixer.start()
+          } else {
+            markdownFixer?.stop()
           }
+        }
 
-          // 5. Layout Manager update
-          const newPageWidth = newSettings?.pageWidth
-          if (newPageWidth) {
-            if (layoutManager) {
-              layoutManager.updateConfig(newPageWidth)
-            } else if (newPageWidth.enabled) {
-              layoutManager = new LayoutManager(adapter, newPageWidth)
-              layoutManager.apply()
+        // 5. Layout Manager update
+        const newPageWidth = newSettings?.pageWidth
+        if (newPageWidth) {
+          if (layoutManager) {
+            layoutManager.updateConfig(newPageWidth)
+          } else if (newPageWidth.enabled) {
+            layoutManager = new LayoutManager(adapter, newPageWidth)
+            layoutManager.apply()
+          }
+        }
+
+        // 6. Watermark Remover update
+        if (
+          newSettings &&
+          (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-enterprise")
+        ) {
+          if (newSettings.watermarkRemoval) {
+            if (!watermarkRemover) {
+              watermarkRemover = new WatermarkRemover()
             }
+            watermarkRemover.start()
+          } else {
+            watermarkRemover?.stop()
           }
+        }
 
-          // 6. Watermark Remover update
-          if (
-            newSettings &&
-            (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-enterprise")
+        // 7. Tab Manager update
+        if (newSettings?.tabSettings) {
+          if (tabManager) {
+            tabManager.updateSettings(newSettings.tabSettings)
+          } else if (
+            newSettings.tabSettings.autoRenameTab ||
+            newSettings.tabSettings.showNotification
           ) {
-            if (newSettings.watermarkRemoval) {
-              if (!watermarkRemover) {
-                watermarkRemover = new WatermarkRemover()
-              }
-              watermarkRemover.start()
-            } else {
-              watermarkRemover?.stop()
-            }
+            tabManager = new TabManager(adapter, newSettings.tabSettings)
+            tabManager.start()
           }
+        }
 
-          // 7. Tab Manager update
-          if (newSettings?.tabSettings) {
-            if (tabManager) {
-              tabManager.updateSettings(newSettings.tabSettings)
-            } else if (
-              newSettings.tabSettings.autoRenameTab ||
-              newSettings.tabSettings.showNotification
-            ) {
-              tabManager = new TabManager(adapter, newSettings.tabSettings)
-              tabManager.start()
-            }
+        // 8. Reading History update
+        if (newSettings?.readingHistory) {
+          if (readingHistoryManager) {
+            readingHistoryManager.updateSettings(newSettings.readingHistory)
+          } else if (newSettings.readingHistory.persistence) {
+            readingHistoryManager = new ReadingHistoryManager(adapter, newSettings.readingHistory)
+            readingHistoryManager.startRecording()
           }
+        }
 
-          // 8. Reading History update
-          if (newSettings?.readingHistory) {
-            if (readingHistoryManager) {
-              readingHistoryManager.updateSettings(newSettings.readingHistory)
-            } else if (newSettings.readingHistory.persistence) {
-              readingHistoryManager = new ReadingHistoryManager(adapter, newSettings.readingHistory)
-              readingHistoryManager.startRecording()
-            }
+        // 9. Copy Manager update
+        if (newSettings?.copy) {
+          if (copyManager) {
+            copyManager.updateSettings(newSettings.copy)
+          } else {
+            copyManager = new CopyManager(newSettings.copy)
+            if (newSettings.copy.formulaCopyEnabled) copyManager.initFormulaCopy()
+            if (newSettings.copy.tableCopyEnabled) copyManager.initTableCopy()
           }
-
-          // 9. Copy Manager update
-          if (newSettings?.copy) {
-            if (copyManager) {
-              copyManager.updateSettings(newSettings.copy)
-            } else {
-              copyManager = new CopyManager(newSettings.copy)
-              // 首次创建需收到初始化 (因为 Constructor 不会自动 Init)
-              if (newSettings.copy.formulaCopyEnabled) copyManager.initFormulaCopy()
-              if (newSettings.copy.tableCopyEnabled) copyManager.initTableCopy()
-            }
-          }
-        },
+        }
       })
     })()
   } else {

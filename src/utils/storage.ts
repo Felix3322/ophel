@@ -123,7 +123,7 @@ export const DEFAULT_SETTINGS: Settings = {
   edgeSnapHide: true,
   preventAutoScroll: false,
   watermarkRemoval: true,
-  pageWidth: { enabled: false, value: "100", unit: "%" },
+  pageWidth: { enabled: false, value: "81", unit: "%" },
   modelLockConfig: {
     gemini: { enabled: false, keyword: "" },
     "gemini-enterprise": { enabled: false, keyword: "" },
@@ -220,10 +220,22 @@ export interface Prompt {
 
 /**
  * 获取设置项（统一使用 local 存储）
+ * ⭐ 自动处理 Zustand persist 格式
  */
 export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
   const value = await localStorage.get(key)
-  return (value !== undefined ? value : defaultValue) as T
+  if (value === undefined) return defaultValue
+
+  // ⭐ 处理 Zustand persist 格式 (settings key 特殊处理)
+  // Zustand 存储格式: { state: { settings: {...} }, version: 0 }
+  if (key === STORAGE_KEYS.SETTINGS) {
+    const parsed = value as any
+    if (parsed?.state?.settings) {
+      return parsed.state.settings as T
+    }
+  }
+
+  return value as T
 }
 
 /**
