@@ -472,7 +472,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         )}
         {activeTab === TAB_IDS.SETTINGS && (
           <div style={{ padding: "0" }}>
-            <SettingsTab />
+            <SettingsTab siteId={adapter?.getSiteId()} />
           </div>
         )}
       </div>

@@ -26,6 +26,12 @@ export const App = () => {
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light")
   const hasInitializedTheme = useRef(false)
 
+  // ⭐ 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
+  const settingsRef = useRef(settings)
+  useEffect(() => {
+    settingsRef.current = settings
+  }, [settings])
+
   // 当设置加载完成后，同步面板初始状态（只执行一次）
   useEffect(() => {
     // 只有当 Zustand hydration 完成且尚未初始化时才执行
@@ -68,7 +74,12 @@ export const App = () => {
   useEffect(() => {
     if (!isSettingsHydrated) return // 等待 settings 加载完成
 
-    const siteTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
+    // ⭐ 使用当前站点的配置而非 _default
+    const currentAdapter = getAdapter()
+    const siteId = currentAdapter?.getSiteId() || "_default"
+    const siteTheme =
+      settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
+      settings?.theme?.sites?._default
     const savedMode = siteTheme?.mode
 
     // 首次加载时，从 settings 同步主题模式
@@ -84,11 +95,7 @@ export const App = () => {
     if (savedMode && savedMode !== themeMode) {
       setThemeMode(savedMode)
     }
-  }, [
-    isSettingsHydrated,
-    settings?.theme?.sites?._default?.mode,
-    settings?.theme?.sites?.gemini?.mode,
-  ])
+  }, [isSettingsHydrated, settings?.theme?.sites])
 
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -154,7 +161,12 @@ export const App = () => {
     }
     // 降级：如果 main.ts 还没创建，则临时创建一个（不应该发生）
     console.warn("[App] Global ThemeManager not found, creating fallback instance")
-    const fallbackTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
+    // ⭐ 使用当前站点的配置
+    const currentAdapter = getAdapter()
+    const siteId = currentAdapter?.getSiteId() || "_default"
+    const fallbackTheme =
+      settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
+      settings?.theme?.sites?._default
     return new ThemeManager(
       themeMode,
       undefined,
@@ -169,20 +181,33 @@ export const App = () => {
   useEffect(() => {
     const handleThemeModeChange = (mode: "light" | "dark") => {
       setThemeMode(mode)
-      // 同时保存到 Zustand Store - 更新站点主题配置
-      const sites = settings?.theme?.sites || {}
-      const defaultSite = sites._default || sites.gemini || {}
+      // ⭐ 使用 ref 获取最新 settings，避免闭包捕获过期值
+      const currentSettings = settingsRef.current
+      const sites = currentSettings?.theme?.sites || {}
+
+      // ⭐ 获取当前站点 ID
+      const currentAdapter = getAdapter()
+      const siteId = currentAdapter?.getSiteId() || "_default"
+
+      // ⭐ 确保站点配置有完整的默认值，但优先使用已有配置
+      const existingSite = sites[siteId as keyof typeof sites] || sites._default
+      const siteConfig = {
+        enabledStyleIds: [] as string[],
+        lightPresetId: "google-gradient",
+        darkPresetId: "classic-dark",
+        mode: "light" as const,
+        ...existingSite, // 已有配置覆盖默认值
+      }
+
+      // ⭐ 只更新 mode 字段，保留用户已有的主题配置
       setSettings({
         theme: {
-          ...settings?.theme,
+          ...currentSettings?.theme,
           sites: {
             ...sites,
-            _default: {
-              enabledStyleIds: [],
-              lightPresetId: "google-gradient",
-              darkPresetId: "classic-dark",
-              ...defaultSite,
-              mode,
+            [siteId]: {
+              ...siteConfig,
+              mode, // 最后更新 mode，确保生效
             },
           },
         },
@@ -194,14 +219,19 @@ export const App = () => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings, settings?.theme])
+  }, [themeManager, setSettings]) // ⭐ 移除 settings?.theme 依赖，通过 ref 访问最新值
 
   // 监听主题预置变化，动态更新 ThemeManager
   // Zustand 不存在 Plasmo useStorage 的缓存问题，无需启动保护期
   useEffect(() => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
-    const siteTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
+    // ⭐ 使用当前站点的配置而非 _default
+    const currentAdapter = getAdapter()
+    const siteId = currentAdapter?.getSiteId() || "_default"
+    const siteTheme =
+      settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
+      settings?.theme?.sites?._default
     const lightId = siteTheme?.lightPresetId
     const darkId = siteTheme?.darkPresetId
 

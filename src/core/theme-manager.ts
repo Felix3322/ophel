@@ -171,6 +171,7 @@ export class ThemeManager {
   /**
    * 同步插件 UI 的主题状态
    * 从主题预置读取 CSS 变量值，注入到 Shadow DOM
+   * ⭐ 暂停 MutationObserver 以避免循环触发
    */
   private syncPluginUITheme(mode?: ThemeMode) {
     const currentMode = mode || this.mode
@@ -185,6 +186,13 @@ export class ThemeManager {
     } catch (e) {
       console.error("[ThemeManager] getPreset FAILED:", e)
       return
+    }
+
+    // ⭐ 暂时断开 MutationObserver，避免循环触发
+    // 因为下面的 DOM 修改会触发 observer，导致 onModeChange 被意外调用
+    const wasObserving = this.themeObserver !== null
+    if (wasObserving) {
+      this.themeObserver?.disconnect()
     }
 
     // 设置 body 属性
@@ -220,13 +228,13 @@ export class ThemeManager {
         // 同时设置 data-theme 属性以便 CSS 选择器使用
         // 并添加强制覆盖的样式
         styleEl.textContent = `:host {
-  ${cssVars}
-  color-scheme: ${currentMode};
+${cssVars}
+color-scheme: ${currentMode};
 }
 
 :host([data-theme="dark"]),
 :host .gh-root[data-theme="dark"] {
-  ${cssVars}
+${cssVars}
 }
 `
         // 设置 host 元素的 data-theme 属性
@@ -237,6 +245,19 @@ export class ThemeManager {
         shadowRoot.append(styleEl)
       }
     })
+
+    // ⭐ 恢复 MutationObserver
+    if (wasObserving && this.themeObserver) {
+      // 重新观察 body 和 html 元素
+      this.themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme", "style"],
+      })
+      this.themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      })
+    }
   }
 
   /**

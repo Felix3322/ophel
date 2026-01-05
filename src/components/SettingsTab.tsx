@@ -700,13 +700,22 @@ const RemoteBackupModal = ({
   )
 }
 
-export const SettingsTab = () => {
+interface SettingsTabProps {
+  siteId?: string
+}
+
+export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
   // 使用 Zustand Store 管理 settings
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
 
-  // 辅助变量：获取默认站点的配置（Settings 面板中使用 _default）
-  const currentPageWidth = settings?.pageWidth?._default || settings?.pageWidth?.gemini
-  const currentTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
+  // ⭐ 动态获取当前站点配置，siteId 由父组件传入（如 "gemini"、"gemini-enterprise"）
+  // 如果站点特定配置不存在，回退到 _default
+  const currentPageWidth =
+    settings?.pageWidth?.[siteId as keyof typeof settings.pageWidth] ||
+    settings?.pageWidth?._default
+  const currentTheme =
+    settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
+    settings?.theme?.sites?._default
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
@@ -742,8 +751,8 @@ export const SettingsTab = () => {
     const finalVal = val.toString()
     setTempWidth(finalVal)
     if (finalVal !== currentPageWidth?.value) {
-      // 更新默认站点的 pageWidth
-      updateDeepSetting("pageWidth", "_default", "value", finalVal)
+      // 更新当前站点的 pageWidth
+      updateDeepSetting("pageWidth", siteId, "value", finalVal)
     }
   }
 
@@ -764,7 +773,7 @@ export const SettingsTab = () => {
       setSettings({
         pageWidth: {
           ...settings.pageWidth,
-          _default: newPageWidth,
+          [siteId]: newPageWidth,
         },
       })
     }
@@ -1097,17 +1106,18 @@ export const SettingsTab = () => {
                   t={t}
                   onClick={() => {
                     const sites = settings?.theme?.sites || {}
-                    const defaultSite = sites._default || sites.gemini || {}
+                    // ⭐ 使用当前站点的配置，如果不存在则回退到 _default
+                    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
                     setSettings({
                       theme: {
                         ...settings?.theme,
                         sites: {
                           ...settings?.theme?.sites,
-                          _default: {
+                          [siteId]: {
                             enabledStyleIds: [],
                             darkPresetId: "classic-dark",
                             mode: "light",
-                            ...defaultSite,
+                            ...currentSite,
                             lightPresetId: preset.id,
                           },
                         },
@@ -1150,17 +1160,18 @@ export const SettingsTab = () => {
                   t={t}
                   onClick={() => {
                     const sites = settings?.theme?.sites || {}
-                    const defaultSite = sites._default || sites.gemini || {}
+                    // ⭐ 使用当前站点的配置，如果不存在则回退到 _default
+                    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
                     setSettings({
                       theme: {
                         ...settings?.theme,
                         sites: {
                           ...settings?.theme?.sites,
-                          _default: {
+                          [siteId]: {
                             enabledStyleIds: [],
                             lightPresetId: "google-gradient",
                             mode: "light",
-                            ...defaultSite,
+                            ...currentSite,
                             darkPresetId: preset.id,
                           },
                         },
@@ -1308,7 +1319,7 @@ export const SettingsTab = () => {
             label={t("enablePageWidth") || "启用页面宽度"}
             checked={currentPageWidth?.enabled ?? false}
             onChange={() =>
-              updateDeepSetting("pageWidth", "_default", "enabled", !currentPageWidth?.enabled)
+              updateDeepSetting("pageWidth", siteId, "enabled", !currentPageWidth?.enabled)
             }
           />
           <div
