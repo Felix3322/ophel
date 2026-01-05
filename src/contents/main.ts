@@ -286,6 +286,65 @@ if (!window.chatHelperInitialized) {
           }
         }
       })
+
+      // ⭐ SPA 导航监听：URL 变化时重新初始化相关模块
+      // 参考油猴脚本 initUrlChangeObserver (15845行)
+      let lastUrl = window.location.href
+
+      const handleUrlChange = async () => {
+        const currentUrl = window.location.href
+        if (currentUrl !== lastUrl) {
+          lastUrl = currentUrl
+          console.log("[Chat Helper] URL changed, reinitializing modules...")
+
+          // 1. 阅读历史：停止录制 → 延迟恢复并重启
+          if (readingHistoryManager) {
+            readingHistoryManager.stopRecording()
+            setTimeout(async () => {
+              const { showToast } = await import("~utils/toast")
+              const restored = await readingHistoryManager?.restoreProgress((msg) =>
+                showToast(msg, 3000),
+              )
+              if (restored) {
+                showToast("阅读进度已恢复", 2000)
+              }
+              readingHistoryManager?.startRecording()
+            }, 1500)
+          }
+
+          // 2. 大纲刷新 - 通过全局事件通知 App.tsx
+          window.dispatchEvent(new Event("gh-url-change"))
+
+          // 3. 标签页标题更新 - 先清除会话缓存，再多次尝试更新
+          if (tabManager) {
+            tabManager.resetSessionCache()
+            ;[300, 800, 1500].forEach((delay) =>
+              setTimeout(() => tabManager?.updateTabName(true), delay),
+            )
+          }
+
+          // 4. Textarea 重新查找（切换会话后引用可能失效）
+          adapter.findTextarea()
+        }
+      }
+
+      // 监听 popstate (后退/前进)
+      window.addEventListener("popstate", handleUrlChange)
+
+      // Monkey-patch pushState / replaceState
+      const originalPushState = history.pushState
+      const originalReplaceState = history.replaceState
+      history.pushState = function (...args) {
+        originalPushState.apply(this, args as any)
+        handleUrlChange()
+      }
+      history.replaceState = function (...args) {
+        originalReplaceState.apply(this, args as any)
+        handleUrlChange()
+      }
+
+      // 兜底定时器（防止某些框架绕过 history API）
+      setInterval(handleUrlChange, 1000)
     })()
   } else {
     console.log("[Chat Helper] No adapter found for:", window.location.hostname)

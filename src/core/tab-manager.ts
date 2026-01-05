@@ -165,7 +165,19 @@ export class TabManager {
     return this.settings.privacyMode
   }
 
-  private updateTabName(force = false) {
+  /**
+   * 重置会话名称缓存
+   * 用于 SPA 切换会话时清除旧的会话标题
+   */
+  resetSessionCache() {
+    this.lastSessionName = null
+  }
+
+  /**
+   * 更新标签页标题
+   * 设为 public 以支持 SPA 导航切换时外部调用
+   */
+  updateTabName(force = false) {
     if (!this.isRunning && !force) return
 
     // 检查适配器是否支持标签页重命名
