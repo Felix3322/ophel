@@ -6,10 +6,11 @@
 
 ## 🐛 Bug 修复
 
-- [ ] **提示词分类选择问题**
+- [x] **提示词分类选择问题** ✅
 
   - 问题：更改提示词分类名后，没有默认选中的分类，所有提示词都查不出来，必须手动选一下分类
-  - 优先级：高
+  - 修复：在 `handleRenameCategory` 中同步更新 `selectedCategory` 状态
+  - 文件：`src/components/PromptsTab.tsx`
 
 - [ ] **阅读历史恢复不准确**
 

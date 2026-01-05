@@ -189,6 +189,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               newName.trim(),
             ),
           )
+          // ⭐ 如果当前选中的分类被重命名，同步更新选中状态
+          if (selectedCategory === oldName) {
+            setSelectedCategory(newName.trim())
+          }
           loadData()
         }
       },
