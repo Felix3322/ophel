@@ -453,6 +453,45 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 根据 queryIndex 和文本查找用户提问元素
+   * 用于大纲跳转时元素失效后的重新查找
+   * @param queryIndex 用户提问的序号（从 1 开始）
+   * @param text 用户提问文本（用于验证和回退搜索）
+   * @returns 匹配的元素，未找到返回 null
+   */
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    const selector = this.getUserQuerySelector()
+    if (!selector) return null
+
+    const elements = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]
+    if (!elements || elements.length === 0) return null
+
+    // 1. 尝试按索引查找并验证文本
+    if (elements.length >= queryIndex) {
+      const candidate = elements[queryIndex - 1]
+      const candidateText = this.extractUserQueryText(candidate)
+      // 验证：文本匹配或包含关系（大纲可能显示截断的文本）
+      if (
+        candidateText === text ||
+        candidateText.startsWith(text) ||
+        text.startsWith(candidateText)
+      ) {
+        return candidate
+      }
+    }
+
+    // 2. 回退：按文本内容搜索所有用户提问
+    for (const el of elements) {
+      const elText = this.extractUserQueryText(el)
+      if (elText === text || elText.startsWith(text) || text.startsWith(elText)) {
+        return el
+      }
+    }
+
+    return null
+  }
+
   /** 是否支持滚动锁定功能 */
   supportsScrollLock(): boolean {
     return false

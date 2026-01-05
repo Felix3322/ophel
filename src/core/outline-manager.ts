@@ -255,6 +255,16 @@ export class OutlineManager {
     return this.siteAdapter.findElementByHeading(level, text)
   }
 
+  /**
+   * 根据 queryIndex 和文本查找用户提问元素
+   * 用于大纲跳转时元素失效后的重新查找
+   * @param queryIndex 用户提问的序号（从 1 开始）
+   * @param text 用户提问文本（用于验证和回退搜索）
+   */
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    return this.siteAdapter.findUserQueryElement(queryIndex, text)
+  }
+
   getState() {
     // 根据是否开启用户提问，确定 minRelativeLevel
     const minRelativeLevel = this.settings.showUserQueries ? 0 : 1

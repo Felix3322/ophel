@@ -542,15 +542,23 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     (node: OutlineNode) => {
       let targetElement = node.element
 
-      // ⭐ 关键修复：元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
+      // ⭐ 关键修复：元素失效时重新查找
       if (!targetElement || !targetElement.isConnected) {
-        // 使用 manager.findElementByHeading 代理到 siteAdapter
-        // GeminiEnterprise 会使用 DOMToolkit 穿透 Shadow DOM
-        const found = manager.findElementByHeading(node.level, node.text)
-        if (found) {
-          targetElement = found as HTMLElement
-          // 更新节点引用以便下次使用
-          node.element = targetElement
+        // 用户提问节点（level=0）需要使用专门的查找逻辑
+        if (node.isUserQuery && node.level === 0) {
+          // 按 queryIndex 和文本查找用户提问元素
+          const found = manager.findUserQueryElement(node.queryIndex!, node.text)
+          if (found) {
+            targetElement = found as HTMLElement
+            node.element = targetElement
+          }
+        } else {
+          // 普通标题使用 findElementByHeading
+          const found = manager.findElementByHeading(node.level, node.text)
+          if (found) {
+            targetElement = found as HTMLElement
+            node.element = targetElement
+          }
         }
       }
 
