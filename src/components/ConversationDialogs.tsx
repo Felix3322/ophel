@@ -545,6 +545,8 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
   const [loading, setLoading] = useState(false)
   const [colorExpanded, setColorExpanded] = useState(false) // 颜色选择器折叠状态
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null) // 待删除的标签 ID
+  // 本地状态跟踪当前会话已选标签，确保 UI 反映最新状态
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set(conv?.tagIds || []))
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const colorPickerRef = useRef<HTMLInputElement>(null)
@@ -552,6 +554,11 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
   useEffect(() => {
     nameInputRef.current?.focus()
   }, [])
+
+  // 当 conv 变化时同步本地状态
+  useEffect(() => {
+    setSelectedTagIds(new Set(conv?.tagIds || []))
+  }, [conv?.id, conv?.tagIds])
 
   // 更新颜色选择
   const updateColorSelection = (color: string, source: "click" | "input" | "picker" = "click") => {
@@ -627,13 +634,18 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
   // 切换会话标签
   const handleToggleConvTag = async (tagId: string, checked: boolean) => {
     if (!conv || !onSetConversationTags) return
-    let newTagIds = [...(conv.tagIds || [])]
+
+    // 更新本地状态（立即反映在 UI）
+    const newTagIds = new Set(selectedTagIds)
     if (checked) {
-      if (!newTagIds.includes(tagId)) newTagIds.push(tagId)
+      newTagIds.add(tagId)
     } else {
-      newTagIds = newTagIds.filter((id) => id !== tagId)
+      newTagIds.delete(tagId)
     }
-    await onSetConversationTags(conv.id, newTagIds)
+    setSelectedTagIds(newTagIds)
+
+    // 同步到存储
+    await onSetConversationTags(conv.id, Array.from(newTagIds))
     onRefresh()
   }
 
@@ -709,7 +721,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             </div>
           ) : (
             tags.map((tag) => {
-              const isSelected = conv?.tagIds?.includes(tag.id) || false
+              const isSelected = selectedTagIds.has(tag.id)
               const isEditing = editingId === tag.id
 
               return (

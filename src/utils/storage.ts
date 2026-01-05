@@ -1,33 +1,24 @@
 /**
  * Chat Helper - 存储抽象层
  *
- * 区分云同步 (sync) 和本地存储 (local)
+ * 使用 local 存储
  */
 
 import { Storage } from "@plasmohq/storage"
 
-// 云同步存储 - 设置项
-export const syncStorage = new Storage({ area: "sync" })
-
-// 本地存储 - 大数据
+// 本地存储 - 用于非 Zustand 管理的数据
 export const localStorage = new Storage({ area: "local" })
 
 // ==================== 存储键定义 ====================
 
 export const STORAGE_KEYS = {
-  // 云同步 (sync) - 设置类 (Monolithic object)
+  // Zustand 存储的 keys (统一在 local)
   SETTINGS: "settings",
-
-  // 云同步 (sync) - 尝试同步的轻量数据
   FOLDERS: "folders",
   TAGS: "tags",
-
-  // 本地存储 (local) - 大数据
-  LOCAL: {
-    PROMPTS: "prompts",
-    CONVERSATIONS: "conversations",
-    READING_HISTORY: "readingHistory",
-  },
+  PROMPTS: "prompts",
+  CONVERSATIONS: "conversations",
+  READING_HISTORY: "readingHistory",
 } as const
 
 // ==================== 类型定义 ====================
@@ -214,48 +205,4 @@ export interface Prompt {
   title: string
   content: string
   category: string
-}
-
-// ==================== 通用存储操作 ====================
-
-/**
- * 获取设置项（统一使用 local 存储）
- * ⭐ 自动处理 Zustand persist 格式
- */
-export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
-  const value = await localStorage.get(key)
-  if (value === undefined) return defaultValue
-
-  // ⭐ 处理 Zustand persist 格式 (settings key 特殊处理)
-  // Zustand 存储格式: { state: { settings: {...} }, version: 0 }
-  if (key === STORAGE_KEYS.SETTINGS) {
-    const parsed = value as any
-    if (parsed?.state?.settings) {
-      return parsed.state.settings as T
-    }
-  }
-
-  return value as T
-}
-
-/**
- * 保存设置项（统一使用 local 存储）
- */
-export async function setSetting<T>(key: string, value: T): Promise<void> {
-  await localStorage.set(key, value)
-}
-
-/**
- * 获取本地数据
- */
-export async function getLocalData<T>(key: string, defaultValue: T): Promise<T> {
-  const value = await localStorage.get(key)
-  return (value !== undefined ? value : defaultValue) as T
-}
-
-/**
- * 保存本地数据
- */
-export async function setLocalData<T>(key: string, value: T): Promise<void> {
-  await localStorage.set(key, value)
 }

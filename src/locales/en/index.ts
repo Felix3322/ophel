@@ -346,6 +346,7 @@ export const en = {
   conversationsUpdateTag: "Update Tag",
   conversationsNoTags: "No tags",
   conversationsManageTags: "Manage Tags",
+  conversationsDeleteTag: "Delete Tag",
   conversationsPin: "Pin 📌",
   conversationsUnpin: "Unpin",
   conversationsPinned: "Pinned",

@@ -6,93 +6,11 @@
  */
 
 import { create } from "zustand"
-import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
 
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
-// ==================== Chrome Storage 适配器 ====================
-
-/**
- * chrome.storage.local 适配器
- * 用于 Zustand persist 中间件
- *
- * ⭐ 兼容性处理：
- * - Zustand persist 存储格式: { state: { settings: ... }, version: 0 }
- * - 原始格式（WebDAV 恢复/旧数据）: { themeMode: "light", ... }
- */
-const chromeStorageAdapter: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(name, (result) => {
-        const value = result[name]
-        if (value === undefined) {
-          resolve(null)
-          return
-        }
-
-        // 解析值（可能是字符串或对象）
-        let parsed: any = value
-        if (typeof value === "string") {
-          try {
-            parsed = JSON.parse(value)
-          } catch {
-            // 如果解析失败，保持原始字符串
-            resolve(value)
-            return
-          }
-        }
-
-        // 检测存储格式
-        // Zustand 格式: { state: { settings: {...} }, version: 0 }
-        // 原始格式: { themeMode: "...", language: "...", ... }
-        if (parsed && typeof parsed === "object") {
-          // 1. 先检查是否是完整的 Zustand persist 格式
-          if (parsed.state && typeof parsed.state === "object" && "settings" in parsed.state) {
-            resolve(JSON.stringify(parsed))
-          }
-          // 2. 再检查是否是原始 Settings 格式（排除残缺的 Zustand 格式）
-          else if (
-            ("themeMode" in parsed || "language" in parsed || "tabOrder" in parsed) &&
-            !("state" in parsed)
-          ) {
-            // 转换为 Zustand persist 期望的格式
-            const zustandFormat = {
-              state: { settings: parsed },
-              version: 0,
-            }
-            resolve(JSON.stringify(zustandFormat))
-          }
-          // 3. 未知格式，尝试直接返回
-          else {
-            resolve(JSON.stringify(parsed))
-          }
-        } else {
-          resolve(typeof value === "string" ? value : JSON.stringify(value))
-        }
-      })
-    })
-  },
-
-  setItem: async (name: string, value: string): Promise<void> => {
-    return new Promise((resolve) => {
-      // ⭐ 直接存储 JSON 字符串，确保与 Plasmo storage.watch 兼容
-      // Plasmo 的 parseValue 会调用 JSON.parse，期望收到字符串
-      // 如果存储对象，watch 回调收到对象后 parseValue 会报错：
-      // SyntaxError: "[object Object]" is not valid JSON
-      chrome.storage.local.set({ [name]: value }, () => {
-        resolve()
-      })
-    })
-  },
-
-  removeItem: async (name: string): Promise<void> => {
-    return new Promise((resolve) => {
-      chrome.storage.local.remove(name, () => {
-        resolve()
-      })
-    })
-  },
-}
+import { chromeStorageAdapter } from "./chrome-adapter"
 
 // ==================== Store 类型定义 ====================
 

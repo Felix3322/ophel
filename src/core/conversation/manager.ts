@@ -1,5 +1,8 @@
 import type { ConversationInfo, ConversationObserverConfig, SiteAdapter } from "~adapters/base"
-import { DEFAULT_FOLDERS, type Folder } from "~constants"
+import { type Folder } from "~constants"
+import { getConversationsStore, useConversationsStore } from "~stores/conversations-store"
+import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
+import { getTagsStore, useTagsStore } from "~stores/tags-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createExportMetadata,
@@ -10,7 +13,6 @@ import {
   htmlToMarkdown,
   type ExportFormat,
 } from "~utils/exporter"
-import { getLocalData, getSetting, setLocalData, setSetting, STORAGE_KEYS } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import type { Conversation, ConversationData, Tag } from "./types"
@@ -19,9 +21,6 @@ export type { Conversation, ConversationData, Folder, Tag }
 
 export class ConversationManager {
   public readonly siteAdapter: SiteAdapter
-  private folders: Folder[] = []
-  private conversations: Record<string, Conversation> = {}
-  private lastUsedFolderId: string = "inbox"
 
   // Observer state
   private observerConfig: ConversationObserverConfig | null = null
@@ -30,9 +29,7 @@ export class ConversationManager {
   private titleWatcher: any = null // DOMToolkit watcher instance
   private pollInterval: NodeJS.Timeout | null = null
 
-  // Settings (passed in or fetched?)
-  // We assume settings regarding 'syncUnpin' are passed or fetched.
-  // Ideally passed in constructor or updated via method.
+  // Settings
   private syncUnpin: boolean = false
 
   // 数据变更回调（用于通知 UI 刷新）
@@ -40,6 +37,24 @@ export class ConversationManager {
 
   constructor(adapter: SiteAdapter) {
     this.siteAdapter = adapter
+  }
+
+  // ==================== Store 访问器 ====================
+
+  private get folders(): Folder[] {
+    return getFoldersStore().folders
+  }
+
+  private get conversations(): Record<string, Conversation> {
+    return getConversationsStore().conversations
+  }
+
+  private get lastUsedFolderId(): string {
+    return getConversationsStore().lastUsedFolderId
+  }
+
+  private get tags(): Tag[] {
+    return getTagsStore().tags
   }
 
   /**
@@ -61,9 +76,31 @@ export class ConversationManager {
   }
 
   async init() {
-    await this.loadData()
-    await this.loadTags()
+    // 等待所有 stores hydration 完成
+    await this.waitForHydration()
     this.startSidebarObserver()
+  }
+
+  private async waitForHydration() {
+    const stores = [useFoldersStore, useTagsStore, useConversationsStore]
+
+    await Promise.all(
+      stores.map(
+        (store) =>
+          new Promise<void>((resolve) => {
+            if (store.getState()._hasHydrated) {
+              resolve()
+              return
+            }
+            const unsubscribe = store.subscribe((state) => {
+              if (state._hasHydrated) {
+                unsubscribe()
+                resolve()
+              }
+            })
+          }),
+      ),
+    )
   }
 
   destroy() {
@@ -74,52 +111,10 @@ export class ConversationManager {
     this.syncUnpin = settings.syncUnpin
   }
 
-  // ================= Data Loading =================
+  // ================= Data Loading（已迁移到 Zustand stores）=================
 
-  async loadData() {
-    // Load Folders (Sync)
-    this.folders = await getSetting<Folder[]>(STORAGE_KEYS.FOLDERS, DEFAULT_FOLDERS)
-    if (this.folders.length === 0) {
-      this.folders = [...DEFAULT_FOLDERS]
-      await this.saveFolders()
-    }
-
-    // Load Last Used Folder
-    // We can store this in Sync or Local? Sync likely.
-    // For now, let's assume it's part of settings or stored separately?
-    // Original script stored it in one object.
-    // We'll store it in local storage to avoid sync conflicts on different devices?
-    // Actually, user preference should probably sync.
-    // Let's use a separate key or group it?
-    // I'll put it in local storage for now as "state".
-    // Or store it with conversations?
-    // Let's store it with conversations in LOCAL since it's UI state.
-
-    // Load Conversations (Local)
-    const savedConvos = await getLocalData<{
-      conversations: Record<string, Conversation>
-      lastUsedFolderId: string
-    } | null>(STORAGE_KEYS.LOCAL.CONVERSATIONS, null)
-
-    if (savedConvos) {
-      this.conversations = savedConvos.conversations || {}
-      this.lastUsedFolderId = savedConvos.lastUsedFolderId || "inbox"
-    } else {
-      this.conversations = {}
-      this.lastUsedFolderId = "inbox"
-    }
-  }
-
-  async saveFolders() {
-    await setSetting(STORAGE_KEYS.FOLDERS, this.folders)
-  }
-
-  async saveConversations() {
-    await setLocalData(STORAGE_KEYS.LOCAL.CONVERSATIONS, {
-      conversations: this.conversations,
-      lastUsedFolderId: this.lastUsedFolderId,
-    })
-  }
+  // 不再需要 loadData / loadTags / saveFolders / saveConversations / saveTags
+  // 数据加载由 Zustand persist 自动处理
 
   // ================= Observer Logic =================
 
@@ -202,12 +197,12 @@ export class ConversationManager {
   }
 
   private updateConversationFromObservation(info: ConversationInfo, isNew: boolean) {
-    const existing = this.conversations[info.id]
-    let needsSave = false
+    const conversations = this.conversations
+    const existing = conversations[info.id]
 
     if (isNew && !existing) {
-      // New Conversation
-      this.conversations[info.id] = {
+      // 新会话
+      getConversationsStore().addConversation({
         id: info.id,
         siteId: this.siteAdapter.getSiteId(),
         cid: info.cid,
@@ -217,26 +212,19 @@ export class ConversationManager {
         pinned: info.isPinned || false,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-      }
-      needsSave = true
+      })
+      this.notifyDataChange()
     } else if (existing) {
-      // Update existing
+      // 更新现有会话
       if (info.isPinned !== undefined && info.isPinned !== existing.pinned) {
         if (info.isPinned) {
-          existing.pinned = true
-          existing.updatedAt = Date.now()
-          needsSave = true
+          getConversationsStore().updateConversation(info.id, { pinned: true })
+          this.notifyDataChange()
         } else if (!info.isPinned && this.syncUnpin) {
-          existing.pinned = false
-          existing.updatedAt = Date.now()
-          needsSave = true
+          getConversationsStore().updateConversation(info.id, { pinned: false })
+          this.notifyDataChange()
         }
       }
-    }
-
-    if (needsSave) {
-      this.saveConversations()
-      this.notifyDataChange()
     }
   }
 
@@ -295,28 +283,26 @@ export class ConversationManager {
       const existing = this.conversations[id]
       if (!existing) return
 
-      let needsSave = false
+      let needsUpdate = false
+      const updates: Partial<Conversation> = {}
 
       if (currentInfo.title && currentInfo.title !== existing.title) {
-        existing.title = currentInfo.title
-        existing.updatedAt = Date.now()
-        needsSave = true
+        updates.title = currentInfo.title
+        needsUpdate = true
       }
 
       if (currentInfo.isPinned !== undefined && currentInfo.isPinned !== existing.pinned) {
         if (currentInfo.isPinned) {
-          existing.pinned = true
-          existing.updatedAt = Date.now()
-          needsSave = true
+          updates.pinned = true
+          needsUpdate = true
         } else if (!currentInfo.isPinned && this.syncUnpin) {
-          existing.pinned = false
-          existing.updatedAt = Date.now()
-          needsSave = true
+          updates.pinned = false
+          needsUpdate = true
         }
       }
 
-      if (needsSave) {
-        this.saveConversations()
+      if (needsUpdate) {
+        getConversationsStore().updateConversation(id, updates)
         this.notifyDataChange()
       }
     })
@@ -341,187 +327,74 @@ export class ConversationManager {
     return result
   }
 
-  async createFolder(name: string, icon: string) {
-    const newFolder: Folder = {
-      id: "folder_" + Date.now(),
-      name,
-      icon,
-    }
-    this.folders.push(newFolder)
-    await this.saveFolders()
-    return newFolder
+  createFolder(name: string, icon: string) {
+    return getFoldersStore().addFolder(name, icon)
   }
 
-  async updateFolder(id: string, updates: Partial<Folder>) {
-    const folder = this.folders.find((f) => f.id === id)
-    if (folder) {
-      Object.assign(folder, updates)
-      await this.saveFolders()
-    }
+  updateFolder(id: string, updates: Partial<Folder>) {
+    getFoldersStore().updateFolder(id, updates)
   }
 
-  async deleteFolder(id: string) {
-    if (id === "inbox") return // prevent delete inbox
+  deleteFolder(id: string) {
+    if (id === "inbox") return // 禁止删除 inbox
 
-    // Move conversations to inbox
-    let changed = false
-    Object.values(this.conversations).forEach((c) => {
-      if (c.folderId === id) {
-        c.folderId = "inbox"
-        changed = true
-      }
-    })
+    // 将会话移动到 inbox
+    getConversationsStore().moveConversationsToInbox(id)
 
-    this.folders = this.folders.filter((f) => f.id !== id)
-    await this.saveFolders()
-
-    if (changed) {
-      await this.saveConversations()
-    }
+    getFoldersStore().deleteFolder(id)
   }
 
-  async moveFolder(id: string, direction: "up" | "down") {
-    const index = this.folders.findIndex((f) => f.id === id)
-    if (index === -1) return
-    if (index === 0) return // Inbox fixed
-
-    const newIndex = direction === "up" ? index - 1 : index + 1
-    if (newIndex <= 0 || newIndex >= this.folders.length) return
-
-    // Swap
-    const temp = this.folders[index]
-    this.folders[index] = this.folders[newIndex]
-    this.folders[newIndex] = temp
-
-    await this.saveFolders()
+  moveFolder(id: string, direction: "up" | "down") {
+    getFoldersStore().moveFolder(id, direction)
   }
 
   // ================= Conversation Operations =================
 
-  async deleteConversation(id: string) {
-    if (this.conversations[id]) {
-      delete this.conversations[id]
-      await this.saveConversations()
-    }
+  deleteConversation(id: string) {
+    getConversationsStore().deleteConversation(id)
   }
 
-  async moveConversation(id: string, targetFolderId: string) {
-    if (this.conversations[id] && this.conversations[id].folderId !== targetFolderId) {
-      this.conversations[id].folderId = targetFolderId
-      this.conversations[id].updatedAt = Date.now()
-      await this.saveConversations()
-    }
+  moveConversation(id: string, targetFolderId: string) {
+    getConversationsStore().moveToFolder(id, targetFolderId)
   }
 
-  async setLastUsedFolder(folderId: string) {
-    if (this.lastUsedFolderId !== folderId) {
-      this.lastUsedFolderId = folderId
-      await this.saveConversations() // stored in local
-    }
+  setLastUsedFolder(folderId: string) {
+    getConversationsStore().setLastUsedFolderId(folderId)
   }
 
   // ================= Tag Operations =================
-
-  private tags: Tag[] = []
 
   getTags() {
     return this.tags
   }
 
-  async createTag(name: string, color: string): Promise<Tag | null> {
-    // 检查重复
-    const exists = this.tags.some((t) => t.name.toLowerCase() === name.toLowerCase())
-    if (exists) {
-      return null
-    }
-
-    const tag: Tag = {
-      id: "tag_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
-      name,
-      color,
-    }
-    this.tags.push(tag)
-    await this.saveTags()
-    return tag
+  createTag(name: string, color: string): Tag | null {
+    return getTagsStore().addTag(name, color)
   }
 
-  async updateTag(tagId: string, name: string, color: string): Promise<Tag | null> {
-    // 检查重复（排除自己）
-    const exists = this.tags.some(
-      (t) => t.id !== tagId && t.name.toLowerCase() === name.toLowerCase(),
-    )
-    if (exists) {
-      return null
-    }
-
-    const tag = this.tags.find((t) => t.id === tagId)
-    if (tag) {
-      tag.name = name
-      tag.color = color
-      await this.saveTags()
-    }
-    return tag || null
+  updateTag(tagId: string, name: string, color: string): Tag | null {
+    return getTagsStore().updateTag(tagId, name, color)
   }
 
-  async deleteTag(tagId: string) {
-    this.tags = this.tags.filter((t) => t.id !== tagId)
-
+  deleteTag(tagId: string) {
+    getTagsStore().deleteTag(tagId)
     // 从所有会话中移除该标签引用
-    let changed = false
-    Object.values(this.conversations).forEach((conv) => {
-      if (conv.tagIds) {
-        const before = conv.tagIds.length
-        conv.tagIds = conv.tagIds.filter((id) => id !== tagId)
-        if (conv.tagIds.length === 0) delete conv.tagIds
-        if (conv.tagIds?.length !== before) changed = true
-      }
-    })
-
-    await this.saveTags()
-    if (changed) {
-      await this.saveConversations()
-    }
+    getConversationsStore().removeTagFromAll(tagId)
   }
 
-  async setConversationTags(convId: string, tagIds: string[]) {
-    const conv = this.conversations[convId]
-    if (conv) {
-      if (tagIds && tagIds.length > 0) {
-        conv.tagIds = tagIds
-      } else {
-        delete conv.tagIds
-      }
-      await this.saveConversations()
-    }
-  }
-
-  private async saveTags() {
-    await setSetting(STORAGE_KEYS.TAGS, this.tags)
-  }
-
-  private async loadTags() {
-    this.tags = await getSetting<Tag[]>(STORAGE_KEYS.TAGS, [])
+  setConversationTags(convId: string, tagIds: string[]) {
+    getConversationsStore().setConversationTags(convId, tagIds)
   }
 
   // ================= Conversation Operations Extended =================
 
-  async togglePin(convId: string): Promise<boolean> {
-    const conv = this.conversations[convId]
-    if (conv) {
-      conv.pinned = !conv.pinned
-      conv.updatedAt = Date.now()
-      await this.saveConversations()
-      return conv.pinned
-    }
-    return false
+  togglePin(convId: string): boolean {
+    return getConversationsStore().togglePin(convId)
   }
 
-  async renameConversation(convId: string, newTitle: string) {
-    const conv = this.conversations[convId]
-    if (conv && newTitle) {
-      conv.title = newTitle
-      conv.updatedAt = Date.now()
-      await this.saveConversations()
+  renameConversation(convId: string, newTitle: string) {
+    if (newTitle) {
+      getConversationsStore().updateConversation(convId, { title: newTitle })
     }
   }
 
@@ -548,54 +421,58 @@ export class ConversationManager {
     return result
   }
 
-  // ================= Sync Logic =================
-
   /**
    * 从侧边栏同步会话（增量）
    */
-  async syncConversations(
+  syncConversations(
     targetFolderId: string | null = null,
     silent = false,
-  ): Promise<{ newCount: number; updatedCount: number }> {
+  ): { newCount: number; updatedCount: number } {
     const sidebarItems = this.siteAdapter.getConversationList()
 
     if (!sidebarItems || sidebarItems.length === 0) {
       return { newCount: 0, updatedCount: 0 }
     }
 
-    const currentCid = sidebarItems[0]?.cid || null
+    const conversations = this.conversations
     let newCount = 0
     let updatedCount = 0
     const now = Date.now()
     const folderId = targetFolderId || this.lastUsedFolderId || "inbox"
+    const store = getConversationsStore()
 
     sidebarItems.forEach((item) => {
       const storageKey = item.id
-      const existing = this.conversations[storageKey]
+      const existing = conversations[storageKey]
 
       if (existing) {
-        // 更新已有会话的标题
+        // 更新已有会话
+        const updates: Partial<Conversation> = {}
+        let needsUpdate = false
+
         if (existing.title !== item.title) {
-          existing.title = item.title
-          existing.updatedAt = now
+          updates.title = item.title
+          needsUpdate = true
           updatedCount++
         }
-        // 同步云端置顶状态
         if (item.isPinned && !existing.pinned) {
-          existing.pinned = true
-          existing.updatedAt = now
+          updates.pinned = true
+          needsUpdate = true
           updatedCount++
         } else if (!item.isPinned && existing.pinned && this.syncUnpin) {
-          existing.pinned = false
-          existing.updatedAt = now
+          updates.pinned = false
+          needsUpdate = true
           updatedCount++
         }
-        // 确保 siteId 和 cid 是最新的
-        if (!existing.siteId) existing.siteId = this.siteAdapter.getSiteId()
-        if (item.cid && !existing.cid) existing.cid = item.cid
+        if (!existing.siteId) updates.siteId = this.siteAdapter.getSiteId()
+        if (item.cid && !existing.cid) updates.cid = item.cid
+
+        if (needsUpdate) {
+          store.updateConversation(storageKey, updates)
+        }
       } else {
         // 新会话
-        this.conversations[storageKey] = {
+        store.addConversation({
           id: item.id,
           siteId: this.siteAdapter.getSiteId(),
           cid: item.cid,
@@ -605,18 +482,14 @@ export class ConversationManager {
           pinned: item.isPinned || false,
           createdAt: now,
           updatedAt: now,
-        }
+        })
         newCount++
       }
     })
 
     // 记住用户选择
     if (targetFolderId) {
-      this.lastUsedFolderId = targetFolderId
-    }
-
-    if (newCount > 0 || updatedCount > 0) {
-      await this.saveConversations()
+      store.setLastUsedFolderId(targetFolderId)
     }
 
     return { newCount, updatedCount }

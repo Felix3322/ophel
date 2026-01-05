@@ -1,109 +1,86 @@
+/**
+ * Prompt Manager
+ *
+ * 提供 DOM 相关操作（插入提示词到输入框）
+ * 数据存储已迁移到 prompts-store.ts
+ */
+
 import type { SiteAdapter } from "~adapters/base"
-import { DEFAULT_PROMPTS } from "~constants"
-import { getLocalData, setLocalData, STORAGE_KEYS, type Prompt } from "~utils/storage"
+import {
+  filterPrompts,
+  getCategories,
+  getPromptsStore,
+  usePromptsStore,
+} from "~stores/prompts-store"
+import type { Prompt } from "~utils/storage"
 
 export class PromptManager {
-  private prompts: Prompt[] = []
   private adapter: SiteAdapter
 
   constructor(adapter: SiteAdapter) {
     this.adapter = adapter
   }
 
+  /**
+   * 初始化 - 等待 Zustand hydration 完成
+   */
   async init() {
-    this.prompts = await this.loadPrompts()
-  }
-
-  async loadPrompts(): Promise<Prompt[]> {
-    const saved = await getLocalData<Prompt[] | null>(STORAGE_KEYS.LOCAL.PROMPTS, null)
-    if (!saved) {
-      // Initialize with defaults if empty
-      await setLocalData(STORAGE_KEYS.LOCAL.PROMPTS, DEFAULT_PROMPTS)
-      return [...DEFAULT_PROMPTS]
+    // 等待 hydration 完成
+    if (!usePromptsStore.getState()._hasHydrated) {
+      await new Promise<void>((resolve) => {
+        const unsubscribe = usePromptsStore.subscribe((state) => {
+          if (state._hasHydrated) {
+            unsubscribe()
+            resolve()
+          }
+        })
+      })
     }
-    return saved
   }
 
-  async savePrompts() {
-    await setLocalData(STORAGE_KEYS.LOCAL.PROMPTS, this.prompts)
-  }
+  // ==================== 数据访问（委托给 store）====================
 
   getPrompts(): Prompt[] {
-    return this.prompts
+    return getPromptsStore().prompts
   }
 
-  async addPrompt(data: Omit<Prompt, "id">): Promise<Prompt> {
-    const newPrompt: Prompt = {
-      id: "custom_" + Date.now(),
-      ...data,
-    }
-    this.prompts.push(newPrompt)
-    await this.savePrompts()
-    return newPrompt
+  addPrompt(data: Omit<Prompt, "id">): Prompt {
+    return getPromptsStore().addPrompt(data)
   }
 
-  async updatePrompt(id: string, data: Partial<Omit<Prompt, "id">>) {
-    const index = this.prompts.findIndex((p) => p.id === id)
-    if (index !== -1) {
-      this.prompts[index] = { ...this.prompts[index], ...data }
-      await this.savePrompts()
-    }
+  updatePrompt(id: string, data: Partial<Omit<Prompt, "id">>) {
+    getPromptsStore().updatePrompt(id, data)
   }
 
-  async deletePrompt(id: string) {
-    this.prompts = this.prompts.filter((p) => p.id !== id)
-    await this.savePrompts()
+  deletePrompt(id: string) {
+    getPromptsStore().deletePrompt(id)
   }
 
   getCategories(): string[] {
-    const categories = new Set<string>()
-    this.prompts.forEach((p) => {
-      if (p.category) categories.add(p.category)
-    })
-    return Array.from(categories)
+    return getCategories()
   }
 
-  async renameCategory(oldName: string, newName: string) {
-    let changed = false
-    this.prompts.forEach((p) => {
-      if (p.category === oldName) {
-        p.category = newName
-        changed = true
-      }
-    })
-    if (changed) {
-      await this.savePrompts()
-    }
+  renameCategory(oldName: string, newName: string) {
+    getPromptsStore().renameCategory(oldName, newName)
   }
 
-  async deleteCategory(name: string, defaultCategoryName: string = "未分类") {
-    let changed = false
-    this.prompts.forEach((p) => {
-      if (p.category === name) {
-        p.category = defaultCategoryName
-        changed = true
-      }
-    })
-    if (changed) {
-      await this.savePrompts()
-    }
+  deleteCategory(name: string, defaultCategoryName: string = "未分类") {
+    getPromptsStore().deleteCategory(name, defaultCategoryName)
   }
 
-  async updateOrder(newOrderIds: string[]) {
-    const ordered: Prompt[] = []
-    newOrderIds.forEach((id) => {
-      const p = this.prompts.find((x) => x.id === id)
-      if (p) ordered.push(p)
-    })
-    // Append any missing ones (safety)
-    this.prompts.forEach((p) => {
-      if (!ordered.find((x) => x.id === p.id)) ordered.push(p)
-    })
-
-    this.prompts = ordered
-    await this.savePrompts()
+  updateOrder(newOrderIds: string[]) {
+    getPromptsStore().updateOrder(newOrderIds)
   }
 
+  filterPrompts(filter: string = "", category: string = "all"): Prompt[] {
+    return filterPrompts(filter, category)
+  }
+
+  // ==================== DOM 操作 ====================
+
+  /**
+   * 插入提示词到输入框
+   */
   async insertPrompt(content: string): Promise<boolean> {
     // 首次尝试插入
     let result = this.adapter.insertPrompt(content)
@@ -117,21 +94,5 @@ export class PromptManager {
     }
 
     return result
-  }
-
-  filterPrompts(filter: string = "", category: string = "all"): Prompt[] {
-    let filtered = this.prompts
-    if (category !== "all") {
-      filtered = filtered.filter((p) => p.category === category)
-    }
-    if (filter) {
-      const lowerFilter = filter.toLowerCase()
-      filtered = filtered.filter(
-        (p) =>
-          p.title.toLowerCase().includes(lowerFilter) ||
-          p.content.toLowerCase().includes(lowerFilter),
-      )
-    }
-    return filtered
   }
 }

@@ -2260,15 +2260,32 @@ export const SettingsTab = () => {
                     chrome.storage.local.get(null, resolve),
                   )
 
-                  // Hydrate data：解析 JSON 字符串，并处理 Zustand persist 格式
+                  // Zustand persist 使用的 storage keys
+                  const ZUSTAND_KEYS = [
+                    "settings",
+                    "prompts",
+                    "folders",
+                    "tags",
+                    "conversations",
+                    "readingHistory",
+                  ]
+
+                  // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
                   const hydratedData = Object.fromEntries(
                     Object.entries(localData).map(([k, v]) => {
                       try {
                         let parsed = typeof v === "string" ? JSON.parse(v) : v
-                        // ⭐ 特殊处理 settings key：提取 Zustand persist 格式中的 settings
-                        if (k === "settings" && parsed?.state?.settings) {
-                          parsed = parsed.state.settings
+
+                        // ⭐ 处理 Zustand persist 格式：提取 state 中的数据
+                        if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
+                          const stateKeys = Object.keys(parsed.state)
+                          if (stateKeys.length === 1) {
+                            parsed = parsed.state[stateKeys[0]]
+                          } else if (stateKeys.length > 1) {
+                            parsed = parsed.state
+                          }
                         }
+
                         return [k, parsed]
                       } catch {
                         return [k, v]
@@ -2277,7 +2294,7 @@ export const SettingsTab = () => {
                   )
 
                   const exportData = {
-                    version: 2,
+                    version: 3, // 升级版本号
                     timestamp: new Date().toISOString(),
                     data: hydratedData,
                   }
@@ -2335,15 +2352,35 @@ export const SettingsTab = () => {
                     onConfirm: async () => {
                       setConfirmConfig((prev) => ({ ...prev, show: false }))
                       try {
-                        // ⭐ Dehydrate: 将对象序列化回 JSON 字符串
-                        // settings 需要特殊处理，转换为 Zustand persist 格式
+                        // Zustand stores 的 key 和对应的 state 属性名映射
+                        const ZUSTAND_STORE_MAPPING: Record<string, string | string[]> = {
+                          settings: "settings",
+                          prompts: "prompts",
+                          folders: "folders",
+                          tags: "tags",
+                          conversations: ["conversations", "lastUsedFolderId"],
+                          readingHistory: ["history", "lastCleanupRun"],
+                        }
+
+                        // ⭐ Dehydrate: 将对象序列化回 Zustand persist 格式
                         const dehydratedData = Object.fromEntries(
                           Object.entries(data.data).map(([k, v]) => {
-                            if (v !== null && typeof v === "object") {
-                              // ⭐ settings key 需要包装为 Zustand persist 格式
-                              if (k === "settings") {
-                                return [k, JSON.stringify({ state: { settings: v }, version: 0 })]
+                            if (v === null || v === undefined) {
+                              return [k, v]
+                            }
+
+                            const stateKey = ZUSTAND_STORE_MAPPING[k]
+                            if (stateKey) {
+                              let state: Record<string, any>
+                              if (Array.isArray(stateKey)) {
+                                state = typeof v === "object" ? v : {}
+                              } else {
+                                state = { [stateKey]: v }
                               }
+                              return [k, JSON.stringify({ state, version: 0 })]
+                            }
+
+                            if (typeof v === "object") {
                               return [k, JSON.stringify(v)]
                             }
                             return [k, v]
