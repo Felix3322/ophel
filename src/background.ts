@@ -1,3 +1,4 @@
+import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CHECK_PERMISSION,
   MSG_FOCUS_TAB,
@@ -9,7 +10,7 @@ import {
 } from "~utils/messaging"
 
 /**
- * Chat Helper - Background Service Worker
+ * Ophel - Background Service Worker
  *
  * 后台服务，处理：
  * - 桌面通知
@@ -115,7 +116,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       chrome.notifications.create({
         type: "basic",
         iconUrl: chrome.runtime.getURL("assets/icon.png"),
-        title: message.title || "Chat Helper",
+        title: message.title || APP_DISPLAY_NAME,
         message: message.body || "",
         silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
       })

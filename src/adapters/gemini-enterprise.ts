@@ -255,7 +255,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     // 排除脚本自己的 UI
     if (element.classList.contains("prompt-search-input")) return false
     if (element.id === "prompt-search") return false
-    if (element.closest("#chat-helper-panel")) return false
+    if (element.closest(".gh-main-panel")) return false
 
     // 必须是 contenteditable 或者 ProseMirror
     const isVisible = element.offsetParent !== null

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react"
 
+import { APP_DISPLAY_NAME } from "~utils/config"
+
 import "./permission.css"
 
 const PermissionPage = () => {
@@ -44,7 +46,7 @@ const PermissionPage = () => {
     <div className="permission-container">
       <div className="permission-card">
         <h2>WebDAV Access Request</h2>
-        <p>Chat Helper needs permission to access your WebDAV server:</p>
+        <p>{APP_DISPLAY_NAME} needs permission to access your WebDAV server:</p>
         <code className="origin-display">{origin || "Unknown Origin"}</code>
 
         {status === "idle" && (

@@ -1271,7 +1271,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                 onClick={async () => {
                   // 当前已是浅色模式则跳过
                   if (currentTheme?.mode === "light") return
-                  const themeManager = window.__ghThemeManager
+                  const themeManager = window.__ophelThemeManager
                   // 使用 toggle() 触发完整的主题切换流程（包括原网页切换和回调通知）
                   // toggle() 内部会通过 onModeChange 回调更新 settings
                   if (themeManager) {
@@ -1301,7 +1301,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                 onClick={async () => {
                   // 当前已是深色模式则跳过
                   if (currentTheme?.mode === "dark") return
-                  const themeManager = window.__ghThemeManager
+                  const themeManager = window.__ophelThemeManager
                   // 使用 toggle() 触发完整的主题切换流程（包括原网页切换和回调通知）
                   // toggle() 内部会通过 onModeChange 回调更新 settings
                   if (themeManager) {

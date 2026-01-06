@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "Chat Helper",
+    "message": "Ophel",
     "description": "Extension name"
   },
   "extensionDescription": {
@@ -8,7 +8,7 @@
     "description": "Extension description"
   },
   "panelTitle": {
-    "message": "Chat Helper",
+    "message": "Ophel",
     "description": "Panel title"
   },
   "tabPrompts": {

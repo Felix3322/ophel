@@ -1,4 +1,4 @@
-# Chat Helper Extension 疑难杂症排查手册
+# Ophel Extension 疑难杂症排查手册
 
 > 记录浏览器扩展开发过程中遇到的问题及其解决方案，供后续参考。
 
@@ -304,7 +304,7 @@ document.documentElement.animate(
 Element.prototype.scrollIntoView.toString()
 // 返回: "function scrollIntoView() { [native code] }"
 
-window.__chatHelperScrollLockEnabled
+window.__ophelScrollLockEnabled
 // 返回: undefined
 ```
 
@@ -394,8 +394,8 @@ export const config: PlasmoCSConfig = {
 }
 
 // 防止重复初始化
-if (!(window as any).__chatHelperScrollLockInitialized) {
-  ;(window as any).__chatHelperScrollLockInitialized = true
+if (!(window as any).__ophelScrollLockInitialized) {
+  ;(window as any).__ophelScrollLockInitialized = true
 
   // 保存原始 API
   const originalApis =
@@ -403,18 +403,18 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
       scrollIntoView: Element.prototype.scrollIntoView,
       scrollTo: window.scrollTo.bind(window),
       scrollTopDescriptor: Object.getOwnPropertyDescriptor(Element.prototype, "scrollTop"),
-    }(window as any).__chatHelperOriginalApis =
-    originalApis(window as any).__chatHelperScrollLockEnabled =
+    }(window as any).__ophelOriginalApis =
+    originalApis(window as any).__ophelScrollLockEnabled =
       false) // 默认禁用
 
   // 1. 劫持 scrollIntoView
   Element.prototype.scrollIntoView = function (options) {
-    if (!(window as any).__chatHelperScrollLockEnabled) {
+    if (!(window as any).__ophelScrollLockEnabled) {
       return originalApis.scrollIntoView.call(this, options)
     }
     const shouldBypass = options?.__bypassLock
     if (!shouldBypass) {
-      console.log("[Chat Helper] Blocked scrollIntoView (Main World)")
+      console.log("[Ophel] Blocked scrollIntoView (Main World)")
       return
     }
     return originalApis.scrollIntoView.call(this, options)
@@ -427,7 +427,7 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
   // 监听来自 Content Script 的消息
   window.addEventListener("message", (event) => {
     if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
-      ;(window as any).__chatHelperScrollLockEnabled = event.data.enabled
+      ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })
 }
@@ -463,16 +463,16 @@ export class ScrollLockManager {
 
 ```javascript
 // 验证主世界脚本加载
-window.__chatHelperScrollLockEnabled // true ✓
-window.__chatHelperOriginalApis // {scrollIntoView: ƒ, ...} ✓
+window.__ophelScrollLockEnabled // true ✓
+window.__ophelOriginalApis // {scrollIntoView: ƒ, ...} ✓
 
 // 验证 API 劫持
 Element.prototype.scrollIntoView.toString()
 // 不再是 "[native code]"，而是劫持后的函数代码 ✓
 
 // 控制台日志
-// [Chat Helper] Blocked scrollTop setter (Main World), value: 3106 current: 0
-// [Chat Helper] Blocked scrollIntoView (Main World)
+// [Ophel] Blocked scrollTop setter (Main World), value: 3106 current: 0
+// [Ophel] Blocked scrollIntoView (Main World)
 ```
 
 在 AI 生成长回复期间，手动向上滚动后页面位置保持稳定，功能恢复正常。

@@ -7,21 +7,21 @@ import type { ThemeManager } from "~core/theme-manager"
 
 declare global {
   interface Window {
-    /** Chat Helper 初始化标记 */
-    chatHelperInitialized?: boolean
+    /** Ophel 初始化标记 */
+    ophelInitialized?: boolean
     /** 全局 ThemeManager 实例 */
-    __ghThemeManager?: ThemeManager
+    __ophelThemeManager?: ThemeManager
     /** 滚动锁定初始化标记 */
-    __chatHelperScrollLockInitialized?: boolean
+    __ophelScrollLockInitialized?: boolean
     /** 滚动锁定是否启用 */
-    __chatHelperScrollLockEnabled?: boolean
+    __ophelScrollLockEnabled?: boolean
     /** 原始滚动 API 备份 */
-    __chatHelperOriginalApis?: {
+    __ophelOriginalApis?: {
       scrollIntoView: typeof Element.prototype.scrollIntoView
       scrollTo: typeof window.scrollTo
     }
     /** iframe 滚动初始化标记 */
-    __chatHelperIframeScrollInitialized?: boolean
+    __ophelIframeScrollInitialized?: boolean
   }
 }
 

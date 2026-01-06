@@ -15,8 +15,8 @@ export const config: PlasmoCSConfig = {
 }
 
 // 防止重复初始化
-if (!(window as any).__chatHelperScrollLockInitialized) {
-  ;(window as any).__chatHelperScrollLockInitialized = true
+if (!(window as any).__ophelScrollLockInitialized) {
+  ;(window as any).__ophelScrollLockInitialized = true
 
   // 保存原始 API
   const originalApis = {
@@ -28,10 +28,10 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
   }
 
   // 保存原始 API 供恢复使用
-  ;(window as any).__chatHelperOriginalApis = originalApis
+  ;(window as any).__ophelOriginalApis = originalApis
 
   // 默认禁用，等待 Content Script 通过消息启用
-  ;(window as any).__chatHelperScrollLockEnabled = false
+  ;(window as any).__ophelScrollLockEnabled = false
 
   // 1. 劫持 Element.prototype.scrollIntoView
   Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
@@ -39,7 +39,7 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
 
     // 如果劫持未启用，直接调用原始 API
-    if (!(window as any).__chatHelperScrollLockEnabled) {
+    if (!(window as any).__ophelScrollLockEnabled) {
       return originalApis.scrollIntoView.call(this, options as any)
     }
 
@@ -53,7 +53,7 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
   // 2. 劫持 window.scrollTo
   ;(window as any).scrollTo = function (x?: ScrollToOptions | number, y?: number) {
     // 如果劫持未启用，直接调用原始 API
-    if (!(window as any).__chatHelperScrollLockEnabled) {
+    if (!(window as any).__ophelScrollLockEnabled) {
       return originalApis.scrollTo.apply(window, arguments as any)
     }
 
@@ -82,7 +82,7 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
       },
       set: function (value: number) {
         // 如果劫持未启用，直接设置
-        if (!(window as any).__chatHelperScrollLockEnabled) {
+        if (!(window as any).__ophelScrollLockEnabled) {
           if (descriptor.set) {
             descriptor.set.call(this, value)
           }
@@ -108,7 +108,7 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
     if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
-      ;(window as any).__chatHelperScrollLockEnabled = event.data.enabled
+      ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })
 }

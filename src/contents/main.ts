@@ -1,5 +1,5 @@
 /**
- * Chat Helper - Content Script 入口
+ * Ophel - Content Script 入口
  *
  * 多站点 AI 对话增强工具
  * 核心模块初始化入口
@@ -53,13 +53,13 @@ let themeManager: ThemeManager | null = null
 let scrollLockManager: ScrollLockManager | null = null
 
 // 防止重复初始化
-if (!window.chatHelperInitialized) {
-  window.chatHelperInitialized = true
+if (!window.ophelInitialized) {
+  window.ophelInitialized = true
 
   const adapter = getAdapter()
 
   if (adapter) {
-    console.log(`[Chat Helper] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
+    console.log(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
 
     // 初始化适配器
     adapter.afterPropertiesSet({})
@@ -96,7 +96,7 @@ if (!window.chatHelperInitialized) {
       )
       themeManager.apply()
       // 挂载到 window 对象，供 App.tsx 获取
-      window.__ghThemeManager = themeManager
+      window.__ophelThemeManager = themeManager
 
       // ⭐ 同步页面原生主题与settings
       // 恢复备份后,面板主题会正确应用,但Gemini页面本身的主题可能不一致
@@ -298,7 +298,7 @@ if (!window.chatHelperInitialized) {
         const currentUrl = window.location.href
         if (currentUrl !== lastUrl) {
           lastUrl = currentUrl
-          console.log("[Chat Helper] URL changed, reinitializing modules...")
+          console.log("[Ophel] URL changed, reinitializing modules...")
 
           // 1. 阅读历史：停止录制 → 延迟恢复并重启
           if (readingHistoryManager) {
@@ -350,6 +350,6 @@ if (!window.chatHelperInitialized) {
       setInterval(handleUrlChange, 1000)
     })()
   } else {
-    console.log("[Chat Helper] No adapter found for:", window.location.hostname)
+    console.log("[Ophel] No adapter found for:", window.location.hostname)
   }
 }

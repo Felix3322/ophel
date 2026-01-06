@@ -180,7 +180,7 @@ export class GeminiAdapter extends SiteAdapter {
     if (element.offsetParent === null) return false
     const isContentEditable = element.getAttribute("contenteditable") === "true"
     const isTextbox = element.getAttribute("role") === "textbox"
-    if (element.closest("#chat-helper-panel")) return false
+    if (element.closest(".gh-main-panel")) return false
     return isContentEditable || isTextbox || element.classList.contains("ql-editor")
   }
 
@@ -195,7 +195,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     editor.focus()
     if (document.activeElement !== editor && !editor.contains(document.activeElement)) {
-      console.warn("[Chat Helper] insertPrompt: focus failed")
+      console.warn("[Ophel] insertPrompt: focus failed")
       return false
     }
 

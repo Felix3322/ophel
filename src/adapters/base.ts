@@ -311,7 +311,7 @@ export abstract class SiteAdapter {
           }
         }
       } catch (e) {
-        console.warn("[Chat Helper] Failed to access iframe:", (e as Error).message)
+        console.warn("[Ophel] Failed to access iframe:", (e as Error).message)
       }
     }
 
@@ -575,7 +575,7 @@ export abstract class SiteAdapter {
     const timer = setInterval(() => {
       attempts++
       if (attempts > maxAttempts) {
-        console.warn(`Chat Helper: Model lock timed out for "${targetModelKeyword}"`)
+        console.warn(`Ophel: Model lock timed out for "${targetModelKeyword}"`)
         clearInterval(timer)
         return
       }
@@ -616,9 +616,7 @@ export abstract class SiteAdapter {
           }
 
           if (!found) {
-            console.warn(
-              `Chat Helper: Target model "${targetModelKeyword}" not found in menu. Aborting.`,
-            )
+            console.warn(`Ophel: Target model "${targetModelKeyword}" not found in menu. Aborting.`)
             clearInterval(timer)
             document.body.click()
             isSelecting = false
