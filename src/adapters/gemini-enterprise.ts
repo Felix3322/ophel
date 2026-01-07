@@ -412,16 +412,16 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     // 查找 ucs-fast-markdown 元素
     const markdown = element.querySelector("ucs-fast-markdown")
     if (!markdown || !markdown.shadowRoot) {
-      return element.textContent?.trim() || ""
+      return this.extractTextWithLineBreaks(element)
     }
 
     // 在 Shadow DOM 中查找完整文本
     const markdownDoc = markdown.shadowRoot.querySelector(".markdown-document")
     if (markdownDoc) {
-      return markdownDoc.textContent?.trim() || ""
+      return this.extractTextWithLineBreaks(markdownDoc)
     }
 
-    return element.textContent?.trim() || ""
+    return this.extractTextWithLineBreaks(element)
   }
 
   /**

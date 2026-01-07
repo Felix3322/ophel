@@ -430,9 +430,71 @@ export abstract class SiteAdapter {
     return null
   }
 
-  /** 从用户提问元素中提取文本 */
+  /**
+   * 提取文本，保留块级元素和 <br> 的换行
+   * 用于复制用户提问时保留原始格式
+   */
+  protected extractTextWithLineBreaks(element: Element): string {
+    const result: string[] = []
+    const blockTags = new Set([
+      "div",
+      "p",
+      "li",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "pre",
+      "blockquote",
+      "tr",
+      "section",
+      "article",
+    ])
+
+    const walk = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        // 文本节点：直接追加
+        const text = node.textContent || ""
+        result.push(text)
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as Element
+        const tag = el.tagName.toLowerCase()
+
+        // <br> 直接换行
+        if (tag === "br") {
+          result.push("\n")
+          return
+        }
+
+        // 遍历子节点
+        for (const child of el.childNodes) {
+          walk(child)
+        }
+
+        // 块级元素结束后加换行（避免连续换行）
+        if (blockTags.has(tag) && result.length > 0) {
+          const lastChar = result[result.length - 1]
+          if (!lastChar.endsWith("\n")) {
+            result.push("\n")
+          }
+        }
+      }
+    }
+
+    walk(element)
+
+    // 清理：合并连续换行（最多两个），去掉首尾空白
+    return result
+      .join("")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  }
+
+  /** 从用户提问元素中提取文本（保留换行） */
   extractUserQueryText(element: Element): string {
-    return element.textContent?.trim() || ""
+    return this.extractTextWithLineBreaks(element)
   }
 
   /**

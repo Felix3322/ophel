@@ -275,10 +275,8 @@ export class GeminiAdapter extends SiteAdapter {
 
   extractUserQueryText(element: Element): string {
     const queryText = element.querySelector(".query-text")
-    if (queryText) {
-      return queryText.textContent?.trim() || ""
-    }
-    return element.textContent?.trim() || ""
+    const target = queryText || element
+    return this.extractTextWithLineBreaks(target)
   }
 
   /**
