@@ -5,6 +5,7 @@
  * 包含强大的 HTML 转 Markdown 功能
  */
 
+import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
 // ==================== 类型定义 ====================
@@ -201,18 +202,18 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
 
   // 元数据头
   lines.push("---")
-  lines.push("# 📤 导出信息")
-  lines.push(`- **会话标题**: ${metadata.title}`)
-  lines.push(`- **导出时间**: ${metadata.exportTime}`)
-  lines.push(`- **来源**: ${metadata.source}`)
-  lines.push(`- **链接**: ${metadata.url}`)
+  lines.push(`# 📤 ${t("exportMetaTitle")}`)
+  lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
+  lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
+  lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
+  lines.push(`- **${t("exportMetaUrl")}**: ${metadata.url}`)
   lines.push("---")
   lines.push("")
 
   // 对话内容
   messages.forEach((msg) => {
     if (msg.role === "user") {
-      lines.push("## 🙋 用户")
+      lines.push(`## 🙋 ${t("exportUserLabel")}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
@@ -257,17 +258,17 @@ export function formatToJSON(metadata: ExportMetadata, messages: ExportMessage[]
 export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[]): string {
   const lines: string[] = []
 
-  lines.push(`会话标题: ${metadata.title}`)
-  lines.push(`导出时间: ${metadata.exportTime}`)
-  lines.push(`来源: ${metadata.source}`)
-  lines.push(`链接: ${metadata.url}`)
+  lines.push(`${t("exportMetaConvTitle")}: ${metadata.title}`)
+  lines.push(`${t("exportMetaTime")}: ${metadata.exportTime}`)
+  lines.push(`${t("exportMetaSource")}: ${metadata.source}`)
+  lines.push(`${t("exportMetaUrl")}: ${metadata.url}`)
   lines.push("")
   lines.push("=".repeat(50))
   lines.push("")
 
   messages.forEach((msg) => {
     if (msg.role === "user") {
-      lines.push("[用户]")
+      lines.push(`[${t("exportUserLabel")}]`)
     } else {
       lines.push(`[${metadata.source}]`)
     }
@@ -325,7 +326,7 @@ export async function copyToClipboard(content: string): Promise<boolean> {
  */
 export function createExportMetadata(title: string, source: string, id?: string): ExportMetadata {
   return {
-    title: title || "未命名",
+    title: title || t("exportUntitled"),
     id,
     url: window.location.href,
     exportTime: new Date().toLocaleString(),

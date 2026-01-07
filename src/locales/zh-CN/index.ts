@@ -371,6 +371,7 @@ export const zhCN = {
   exportNotSupported: "当前站点不支持导出",
   exportToTXT: "TXT",
   exportMetaUrl: "链接",
+  exportUntitled: "未命名",
   exportToClipboard: "复制 Markdown",
   conversationsRefresh: "刷新会话列表",
   conversationsSearchPlaceholder: "搜索会话...",

@@ -347,6 +347,7 @@ export const zhTW = {
   exportNotSupported: "目前站點不支援匯出",
   exportToTXT: "TXT",
   exportMetaUrl: "連結",
+  exportUntitled: "未命名",
   exportToClipboard: "複製 Markdown",
   conversationsRefresh: "刷新會話列表",
   conversationsSearchPlaceholder: "搜尋會話...",

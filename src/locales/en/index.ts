@@ -365,6 +365,7 @@ export const en = {
   exportNotSupported: "Export not supported on this site",
   exportToTXT: "TXT",
   exportMetaUrl: "URL",
+  exportUntitled: "Untitled",
   exportToClipboard: "Copy Markdown",
   conversationsRefresh: "Refresh conversations",
   conversationsSearchFolder: "Search folder...",

@@ -13,6 +13,7 @@ import {
   htmlToMarkdown,
   type ExportFormat,
 } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
 import type { Conversation, ConversationData, Tag } from "./types"
@@ -614,7 +615,7 @@ export class ConversationManager {
       if (format === "clipboard") {
         content = formatToMarkdown(metadata, messages)
         await navigator.clipboard.writeText(content)
-        showToast("已复制到剪贴板")
+        showToast(t("copySuccess"))
         return true
       } else if (format === "markdown") {
         content = formatToMarkdown(metadata, messages)
@@ -631,7 +632,7 @@ export class ConversationManager {
       }
 
       await downloadFile(content, filename, mimeType)
-      showToast(`已导出为 ${format.toUpperCase()}`)
+      showToast(t("exportSuccess"))
       return true
     } catch (error) {
       console.error("[ConversationManager] Export failed:", error)
@@ -671,7 +672,8 @@ export class ConversationManager {
     const maxLen = Math.max(userMessages.length, aiMessages.length)
     for (let i = 0; i < maxLen; i++) {
       if (userMessages[i]) {
-        const userContent = userMessages[i].textContent?.trim() || ""
+        // 使用适配器方法提取文本，保留换行并过滤掉 gh-user-query-markdown 节点
+        const userContent = this.siteAdapter.extractUserQueryText(userMessages[i])
         messages.push({ role: "user", content: userContent })
       }
       if (aiMessages[i]) {
