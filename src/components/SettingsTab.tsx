@@ -719,8 +719,8 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
   // ⭐ 动态获取当前站点配置，siteId 由父组件传入（如 "gemini"、"gemini-enterprise"）
   // 如果站点特定配置不存在，回退到 _default
   const currentPageWidth =
-    settings?.pageWidth?.[siteId as keyof typeof settings.pageWidth] ||
-    settings?.pageWidth?._default
+    settings?.layout?.pageWidth?.[siteId as keyof typeof settings.layout.pageWidth] ||
+    settings?.layout?.pageWidth?._default
   const currentUserQueryWidth =
     settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
     settings?.layout?.userQueryWidth?._default
@@ -765,9 +765,18 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
 
     const finalVal = val.toString()
     setTempWidth(finalVal)
-    if (finalVal !== currentPageWidth?.value) {
-      // 更新当前站点的 pageWidth
-      updateDeepSetting("pageWidth", siteId, "value", finalVal)
+    if (finalVal !== currentPageWidth?.value && settings) {
+      // 更新当前站点的 layout.pageWidth
+      const current = currentPageWidth || { enabled: true, value: finalVal, unit: "%" }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          pageWidth: {
+            ...settings.layout?.pageWidth,
+            [siteId]: { ...current, value: finalVal },
+          },
+        },
+      })
     }
   }
 
@@ -786,9 +795,12 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
         enabled: currentPageWidth?.enabled ?? false,
       }
       setSettings({
-        pageWidth: {
-          ...settings.pageWidth,
-          [siteId]: newPageWidth,
+        layout: {
+          ...settings.layout,
+          pageWidth: {
+            ...settings.layout?.pageWidth,
+            [siteId]: newPageWidth,
+          },
         },
       })
     }
@@ -1687,9 +1699,18 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
           <ToggleRow
             label={t("enablePageWidth") || "启用页面宽度"}
             checked={currentPageWidth?.enabled ?? false}
-            onChange={() =>
-              updateDeepSetting("pageWidth", siteId, "enabled", !currentPageWidth?.enabled)
-            }
+            onChange={() => {
+              const current = currentPageWidth || { enabled: false, value: "81", unit: "%" }
+              setSettings({
+                layout: {
+                  ...settings?.layout,
+                  pageWidth: {
+                    ...settings?.layout?.pageWidth,
+                    [siteId]: { ...current, enabled: !current.enabled },
+                  },
+                },
+              })
+            }}
           />
           <div
             style={{

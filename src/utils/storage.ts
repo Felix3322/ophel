@@ -85,11 +85,9 @@ export interface Settings {
     customStyles: CustomStyle[] // 自定义样式列表
   }
 
-  // 页面宽度（按站点独立）
-  pageWidth: Record<SiteId, PageWidthConfig>
-
-  // 布局设置（用户问题宽度等）
+  // 布局设置（页面宽度、用户问题宽度等）
   layout: {
+    pageWidth: Record<SiteId, PageWidthConfig>
     userQueryWidth: Record<SiteId, PageWidthConfig>
   }
 
@@ -169,8 +167,8 @@ const DEFAULT_SITE_THEME: SiteThemeConfig = {
 // 默认页面宽度配置
 const DEFAULT_PAGE_WIDTH: PageWidthConfig = {
   enabled: false,
-  value: "81",
-  unit: "%",
+  value: "1280",
+  unit: "px",
 }
 
 // 默认用户问题宽度配置（使用 px 防止随页面宽度缩放）
@@ -209,13 +207,12 @@ export const DEFAULT_SETTINGS: Settings = {
     customStyles: [], // 空数组，用户可以添加自定义样式
   },
 
-  pageWidth: {
-    gemini: { ...DEFAULT_PAGE_WIDTH },
-    "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
-    _default: { ...DEFAULT_PAGE_WIDTH },
-  },
-
   layout: {
+    pageWidth: {
+      gemini: { ...DEFAULT_PAGE_WIDTH },
+      "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
+      _default: { ...DEFAULT_PAGE_WIDTH },
+    },
     userQueryWidth: {
       gemini: { ...DEFAULT_USER_QUERY_WIDTH },
       "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
@@ -327,7 +324,7 @@ export function getSiteTheme(settings: Settings, siteId: string): SiteThemeConfi
 }
 
 export function getSitePageWidth(settings: Settings, siteId: string): PageWidthConfig {
-  const pageWidth = settings.pageWidth
+  const pageWidth = settings.layout?.pageWidth
   if (pageWidth && siteId in pageWidth) {
     return pageWidth[siteId as SiteId]
   }
