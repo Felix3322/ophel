@@ -2,16 +2,29 @@
  * 外观主题页面
  * 包含：主题预置 | 自定义样式
  */
+import hljs from "highlight.js/lib/core"
+import css from "highlight.js/lib/languages/css"
 import { nanoid } from "nanoid"
 import React, { useState } from "react"
+import Editor from "react-simple-code-editor"
 
+import { AppearanceIcon } from "~components/icons"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import type { CustomStyle } from "~utils/storage"
-import { darkPresets, lightPresets, type ThemePreset } from "~utils/themes"
+import {
+  darkPresets,
+  lightPresets,
+  parseThemeVariablesFromCSS,
+  type ThemePreset,
+  type ThemeVariables,
+} from "~utils/themes"
 import { showToast as showDomToast } from "~utils/toast"
 
-import { SettingCard, TabGroup } from "../components"
+import { PageTitle, SettingCard, TabGroup } from "../components"
+import { ThemePreview } from "../components/ThemePreview"
+
+hljs.registerLanguage("css", css)
 
 interface AppearancePageProps {
   siteId: string
@@ -45,21 +58,14 @@ const ThemeCard: React.FC<{
   isActive: boolean
   onClick: () => void
 }> = ({ preset, isActive, onClick }) => {
-  // 获取预览背景色
-  const bgColor = preset.variables["--gh-bg"] || "#ffffff"
-  const headerBg =
-    preset.variables["--gh-header-bg"] || preset.variables["--gh-primary"] || "#4285f4"
+  const key = `themePreset_${preset.id}`
+  const translation = t(key)
+  const displayName = translation && translation !== key ? translation : preset.name
 
   return (
     <div className={`settings-theme-card ${isActive ? "active" : ""}`} onClick={onClick}>
-      <div
-        className="settings-theme-preview"
-        style={{
-          background: headerBg,
-          border: `1px solid ${preset.variables["--gh-border"] || "#e5e7eb"}`,
-        }}
-      />
-      <div className="settings-theme-name">{t(`themePreset_${preset.id}`) || preset.name}</div>
+      <ThemePreview preset={preset} />
+      <div className="settings-theme-name">{displayName}</div>
     </div>
   )
 }
@@ -84,6 +90,9 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
     { id: "custom", label: t("customStylesTab") || "自定义样式" },
   ]
 
+  // 动画时长常量（与 ThemeManager 中的动画时长一致）
+  const THEME_ANIMATION_DURATION = 550
+
   // 切换主题
   const handleThemeToggle = async () => {
     const themeManager = (window as any).__ophelThemeManager
@@ -92,44 +101,64 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
     }
   }
 
-  // 选择浅色主题预置
+  // 选择浅色主题预置（如果当前不是浅色模式，先切换模式，动画完成后再更新）
   const selectLightPreset = (presetId: string) => {
-    const sites = settings?.theme?.sites || {}
-    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
-    setSettings({
-      theme: {
-        ...settings?.theme,
-        sites: {
-          ...settings?.theme?.sites,
-          [siteId]: {
-            darkStyleId: "classic-dark",
-            mode: "light",
-            ...currentSite,
-            lightStyleId: presetId,
+    const updateStyleId = () => {
+      const sites = settings?.theme?.sites || {}
+      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+      setSettings({
+        theme: {
+          ...settings?.theme,
+          sites: {
+            ...settings?.theme?.sites,
+            [siteId]: {
+              ...currentSite,
+              lightStyleId: presetId,
+            },
           },
         },
-      },
-    })
+      })
+    }
+
+    if (currentTheme?.mode !== "light") {
+      // 先切换模式
+      handleThemeToggle()
+      // 动画完成后再更新主题（延迟略长于动画时长）
+      setTimeout(updateStyleId, THEME_ANIMATION_DURATION)
+    } else {
+      // 已经是浅色模式，直接更新
+      updateStyleId()
+    }
   }
 
-  // 选择深色主题预置
+  // 选择深色主题预置（如果当前不是深色模式，先切换模式，动画完成后再更新）
   const selectDarkPreset = (presetId: string) => {
-    const sites = settings?.theme?.sites || {}
-    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
-    setSettings({
-      theme: {
-        ...settings?.theme,
-        sites: {
-          ...settings?.theme?.sites,
-          [siteId]: {
-            lightStyleId: "google-gradient",
-            mode: "light",
-            ...currentSite,
-            darkStyleId: presetId,
+    const updateStyleId = () => {
+      const sites = settings?.theme?.sites || {}
+      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+      setSettings({
+        theme: {
+          ...settings?.theme,
+          sites: {
+            ...settings?.theme?.sites,
+            [siteId]: {
+              ...currentSite,
+              darkStyleId: presetId,
+            },
           },
         },
-      },
-    })
+      })
+    }
+
+    if (currentTheme?.mode !== "dark") {
+      // 先切换模式
+      handleThemeToggle()
+      // 动画完成后再更新主题（延迟略长于动画时长）
+      setTimeout(updateStyleId, THEME_ANIMATION_DURATION)
+    } else {
+      // 已经是深色模式，直接更新
+      updateStyleId()
+    }
   }
 
   // 保存自定义样式
@@ -181,9 +210,47 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
     }
   }
 
+  const customStyles = settings?.theme?.customStyles || []
+
+  // 将自定义样式转换为 ThemePreset 格式以兼容 UI 显示
+  const customStyleToPreset = (style: CustomStyle): ThemePreset => {
+    // 解析用户输入的 CSS 变量
+    const parsedVariables = parseThemeVariablesFromCSS(style.css)
+
+    // 默认变量（作为回退）
+    const defaults = {
+      "--gh-bg": style.mode === "light" ? "#f3f4f6" : "#1f2937",
+      "--gh-header-bg": style.mode === "light" ? "#e5e7eb" : "#374151",
+      "--gh-border": style.mode === "light" ? "#d1d5db" : "#4b5563",
+      "--gh-primary": "#4285f4",
+      "--gh-text": style.mode === "light" ? "#374151" : "#f9fafb",
+      "--gh-text-secondary": style.mode === "light" ? "#6b7280" : "#9ca3af",
+      "--gh-bg-secondary": style.mode === "light" ? "#ffffff" : "#1f2937",
+    }
+
+    return {
+      id: style.id,
+      name: style.name,
+      variables: {
+        ...defaults,
+        ...parsedVariables,
+      } as ThemeVariables,
+    }
+  }
+
+  const displayLightPresets = [
+    ...lightPresets,
+    ...customStyles.filter((s) => s.mode === "light").map(customStyleToPreset),
+  ]
+
+  const displayDarkPresets = [
+    ...darkPresets,
+    ...customStyles.filter((s) => s.mode === "dark").map(customStyleToPreset),
+  ]
+
   return (
     <div>
-      <h1 className="settings-page-title">{t("navAppearance") || "外观主题"}</h1>
+      <PageTitle title={t("navAppearance") || "外观主题"} Icon={AppearanceIcon} />
       <p className="settings-page-desc">
         {t("appearancePageDesc") || "自定义扩展的视觉样式和主题"}
       </p>
@@ -192,30 +259,12 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
 
       {activeTab === "presets" && (
         <>
-          {/* 当前模式切换 */}
-          <SettingCard title={t("currentThemeMode") || "当前模式"}>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <button
-                className={`settings-btn ${currentTheme?.mode === "light" ? "settings-btn-primary" : "settings-btn-secondary"}`}
-                onClick={handleThemeToggle}
-                style={{ flex: 1 }}>
-                ☀️ {t("themeLight") || "浅色"}
-              </button>
-              <button
-                className={`settings-btn ${currentTheme?.mode === "dark" ? "settings-btn-primary" : "settings-btn-secondary"}`}
-                onClick={handleThemeToggle}
-                style={{ flex: 1 }}>
-                🌙 {t("themeDark") || "深色"}
-              </button>
-            </div>
-          </SettingCard>
-
           {/* 浅色模式预置 */}
           <SettingCard
             title={t("lightModePreset") || "浅色模式预置"}
             description={t("lightModePresetDesc") || "仅在浅色模式生效"}>
             <div className="settings-theme-grid">
-              {lightPresets.map((preset) => (
+              {displayLightPresets.map((preset) => (
                 <ThemeCard
                   key={preset.id}
                   preset={preset}
@@ -231,7 +280,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
             title={t("darkModePreset") || "深色模式预置"}
             description={t("darkModePresetDesc") || "仅在深色模式生效"}>
             <div className="settings-theme-grid">
-              {darkPresets.map((preset) => (
+              {displayDarkPresets.map((preset) => (
                 <ThemeCard
                   key={preset.id}
                   preset={preset}
@@ -351,9 +400,9 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
             style={{
               background: "var(--gh-bg, white)",
               borderRadius: "12px",
-              width: "500px",
-              maxWidth: "90%",
-              maxHeight: "80vh",
+              width: "800px",
+              maxWidth: "95%",
+              height: "85vh",
               display: "flex",
               flexDirection: "column",
               boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
@@ -384,7 +433,14 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
             </div>
 
             {/* 内容 */}
-            <div style={{ padding: "16px", overflowY: "auto", flex: 1 }}>
+            <div
+              style={{
+                padding: "16px",
+                overflowY: "auto",
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+              }}>
               {/* 样式名称 */}
               <div style={{ marginBottom: "16px" }}>
                 <label
@@ -450,7 +506,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
               </div>
 
               {/* CSS 代码 */}
-              <div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                 <label
                   style={{
                     fontSize: "13px",
@@ -460,13 +516,28 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
                   }}>
                   CSS {t("code") || "代码"}
                 </label>
-                <textarea
+                <div
                   className="settings-textarea"
-                  value={editingStyle.css}
-                  onChange={(e) => setEditingStyle({ ...editingStyle, css: e.target.value })}
-                  placeholder="/* 输入自定义 CSS */"
-                  spellCheck={false}
-                />
+                  style={{
+                    flex: 1,
+                    padding: 0,
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}>
+                  <Editor
+                    value={editingStyle.css}
+                    onValueChange={(code) => setEditingStyle({ ...editingStyle, css: code })}
+                    highlight={(code) => hljs.highlight(code, { language: "css" }).value}
+                    padding={12}
+                    style={{
+                      fontFamily: '"Menlo", "Monaco", "Consolas", monospace',
+                      fontSize: 13,
+                      minHeight: "100%",
+                    }}
+                    textareaClassName="focus-outline-none"
+                  />
+                </div>
               </div>
             </div>
 

@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useState } from "react"
 
+import { PermissionsIcon } from "~components/icons"
 import { t } from "~utils/i18n"
 import {
   MSG_CHECK_PERMISSIONS,
@@ -13,7 +14,7 @@ import {
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 
-import { SettingCard, SettingRow } from "../components"
+import { PageTitle, SettingCard, SettingRow } from "../components"
 
 // 必需权限（在 manifest 中声明，无法动态修改）
 const REQUIRED_PERMISSIONS = [
@@ -210,7 +211,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
   return (
     <div>
-      <h1 className="settings-page-title">{t("navPermissions") || "权限管理"}</h1>
+      <PageTitle title={t("navPermissions") || "权限管理"} Icon={PermissionsIcon} />
       <p className="settings-page-desc">{t("permissionsPageDesc") || "查看和管理扩展的权限。"}</p>
 
       {/* 可选权限 */}

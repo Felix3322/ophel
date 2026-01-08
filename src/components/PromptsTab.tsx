@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { ExportIcon, ImportIcon } from "~components/icons"
 import { Button, ConfirmDialog, InputDialog } from "~components/ui"
 import {
   extractVariables,
@@ -1172,7 +1173,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             fontSize: "16px",
             flexShrink: 0,
           }}>
-          📥
+          <ImportIcon size={16} />
         </button>
         {/* 导出按钮 */}
         <button
@@ -1191,7 +1192,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             fontSize: "16px",
             flexShrink: 0,
           }}>
-          📤
+          <ExportIcon size={16} />
         </button>
       </div>
 

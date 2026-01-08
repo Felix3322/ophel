@@ -19,4 +19,5 @@ export {
   findPreset,
   getPreset,
   themeVariablesToCSS,
+  parseThemeVariablesFromCSS,
 } from "./helpers"

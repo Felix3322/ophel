@@ -1,6 +1,20 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import {
+  AnchorIcon,
+  ConversationIcon,
+  MinimizeIcon,
+  NewTabIcon,
+  OutlineIcon,
+  PromptIcon,
+  RefreshIcon,
+  ScrollBottomIcon,
+  ScrollTopIcon,
+  SettingsIcon,
+  ThemeDarkIcon,
+  ThemeLightIcon,
+} from "~components/icons"
 import { TAB_IDS, type TabId } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
@@ -172,39 +186,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     return true
   })
 
-  // Tab 图标定义
-  const tabIcons: Record<string, string> = {
-    [TAB_IDS.OUTLINE]: "📑",
-    [TAB_IDS.CONVERSATIONS]: "💬",
-    [TAB_IDS.PROMPTS]: "✏️",
-  }
-
   // 获取主题图标
   const getThemeIcon = () => {
     if (themeMode === "dark") {
       // 深色模式时显示太阳图标（点击切换到浅色）
-      return (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="20px"
-          viewBox="0 -960 960 960"
-          width="20px"
-          fill="currentColor">
-          <path d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z" />
-        </svg>
-      )
+      return <ThemeLightIcon size={20} />
     }
     // 浅色模式时显示月亮图标（点击切换到深色）
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        height="20px"
-        viewBox="0 -960 960 960"
-        width="20px"
-        fill="currentColor">
-        <path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z" />
-      </svg>
-    )
+    return <ThemeDarkIcon size={20} />
   }
 
   return (
@@ -325,7 +314,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontSize: "16px",
               transition: "all 0.2s",
             }}>
-            +
+            <NewTabIcon size={16} />
           </button>
 
           {/* 设置按钮 - 打开设置模态框 */}
@@ -348,7 +337,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontSize: "14px",
               transition: "all 0.2s",
             }}>
-            ⚙
+            <SettingsIcon size={16} />
           </button>
 
           {/* 刷新按钮 - 根据当前 Tab 智能刷新 */}
@@ -390,7 +379,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontSize: "14px",
               transition: "all 0.2s",
             }}>
-            ⟳
+            <RefreshIcon size={16} />
           </button>
 
           {/* 折叠按钮（收起面板） */}
@@ -412,7 +401,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontWeight: 600,
               transition: "all 0.2s",
             }}>
-            −
+            <MinimizeIcon size={16} />
           </button>
         </div>
       </div>
@@ -426,37 +415,46 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           padding: "0",
           background: "var(--gh-bg-secondary, #f9fafb)",
         }}>
-        {visibleTabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: "10px 8px",
-              border: "none",
-              background: "transparent",
-              borderBottom:
-                activeTab === tab
-                  ? "3px solid var(--gh-primary, #4285f4)"
-                  : "3px solid transparent",
-              color:
-                activeTab === tab
-                  ? "var(--gh-primary, #4285f4)"
-                  : "var(--gh-text-secondary, #6b7280)",
-              fontWeight: activeTab === tab ? 600 : 400,
-              cursor: "pointer",
-              fontSize: "13px",
-              whiteSpace: "nowrap",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
-              transition: "all 0.2s",
-            }}>
-            <span>{tabIcons[tab] || ""}</span>
-            <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
-          </button>
-        ))}
+        {visibleTabs.map((tab) => {
+          let IconComp: React.FC<{ size?: number }> | null = null
+          if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
+          else if (tab === TAB_IDS.PROMPTS) IconComp = PromptIcon
+          else if (tab === TAB_IDS.CONVERSATIONS) IconComp = ConversationIcon
+
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1,
+                padding: "10px 8px",
+                border: "none",
+                background: "transparent",
+                borderBottom:
+                  activeTab === tab
+                    ? "3px solid var(--gh-primary, #4285f4)"
+                    : "3px solid transparent",
+                color:
+                  activeTab === tab
+                    ? "var(--gh-primary, #4285f4)"
+                    : "var(--gh-text-secondary, #6b7280)",
+                fontWeight: activeTab === tab ? 600 : 400,
+                cursor: "pointer",
+                fontSize: "13px",
+                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
+                transition: "all 0.2s",
+              }}>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                {IconComp && <IconComp size={16} />}
+              </span>
+              <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Content - 内容区 */}
@@ -529,7 +527,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             e.currentTarget.style.transform = "translateY(0)"
             e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
-          <span>↑</span>
+          <ScrollTopIcon size={14} />
           <span>{t("scrollTop")}</span>
         </button>
 
@@ -562,24 +560,26 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               e.currentTarget.style.transform = "scale(1.1)"
               e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
               // 旋转特效
-              const span = e.currentTarget.querySelector("span")
-              if (span) span.style.transform = "rotate(360deg)"
+              const div = e.currentTarget.querySelector("div")
+              if (div) div.style.transform = "rotate(360deg)"
             }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)"
             e.currentTarget.style.boxShadow = hasAnchor ? "var(--gh-btn-shadow)" : "none"
             // 恢复旋转
-            const span = e.currentTarget.querySelector("span")
-            if (span) span.style.transform = "rotate(0deg)"
+            const div = e.currentTarget.querySelector("div")
+            if (div) div.style.transform = "rotate(0deg)"
           }}>
-          <span
+          <div
             style={{
-              display: "inline-block",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}>
-            ⚓
-          </span>
+            <AnchorIcon size={14} />
+          </div>
         </button>
 
         {/* 底部按钮 */}
@@ -612,7 +612,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             e.currentTarget.style.transform = "translateY(0)"
             e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
-          <span>↓</span>
+          <ScrollBottomIcon size={14} />
           <span>{t("scrollBottom")}</span>
         </button>
       </div>

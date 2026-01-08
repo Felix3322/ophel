@@ -22,30 +22,10 @@ import { ConversationMenu, ExportMenu, FolderMenu } from "./ConversationMenus"
 
 import "~styles/conversations.css"
 
-// ==================== SVG Path 常量 ====================
+import { BatchIcon, FolderPlusIcon, HourglassIcon, LocateIcon, SyncIcon } from "~components/icons"
 
-const SYNC_PATH =
-  "M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
-const HOURGLASS_PATH =
-  "M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6V22h12v-5.99h-.01L18 16l-4-4 4-3.99-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zm-4-5l-4-4V4h8v3.5l-4 4z"
-const CHECK_BOX_PATH =
-  "M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
 const LOCATE_PATH =
   "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
-const ADD_FOLDER_PATH =
-  "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"
-
-// SVG 图标组件
-const SvgIcon: React.FC<{ path: string; size?: number }> = ({ path, size = 18 }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    width={size}
-    height={size}
-    style={{ display: "block" }}>
-    <path d={path} />
-  </svg>
-)
 
 // ==================== 类型定义 ====================
 
@@ -464,7 +444,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             title={t("conversationsSync") || "同步"}
             disabled={syncing}
             onClick={handleSync}>
-            <SvgIcon path={syncing ? HOURGLASS_PATH : SYNC_PATH} />
+            {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
           </button>
 
           {/* 3. 定位按钮 */}
@@ -472,7 +452,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             className="conversations-toolbar-btn locate"
             title={t("conversationsLocate") || "定位当前对话"}
             onClick={handleLocate}>
-            <SvgIcon path={LOCATE_PATH} />
+            <LocateIcon size={18} />
           </button>
 
           {/* 4. 批量模式 */}
@@ -480,7 +460,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             className={`conversations-toolbar-btn batch-mode ${batchMode ? "active" : ""}`}
             title={t("conversationsBatchMode") || "批量操作"}
             onClick={toggleBatchMode}>
-            <SvgIcon path={CHECK_BOX_PATH} />
+            <BatchIcon size={18} />
           </button>
 
           {/* 5. 新建文件夹 */}
@@ -491,7 +471,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               onInteractionStateChange?.(true)
               setDialog({ type: "folder" })
             }}>
-            <SvgIcon path={ADD_FOLDER_PATH} />
+            <FolderPlusIcon size={18} />
           </button>
         </div>
 

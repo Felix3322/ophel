@@ -5,7 +5,7 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
-import type { Settings } from "~utils/storage"
+import type { CustomStyle, Settings } from "~utils/storage"
 import {
   getPreset,
   themeVariablesToCSS,
@@ -29,9 +29,11 @@ export class ThemeManager {
   private mode: ThemeMode
   private lightPresetId: string
   private darkPresetId: string
+  private cleanPresetId: string // Purely for debugging or tracking
   private themeObserver: MutationObserver | null = null
   private onModeChange?: ThemeModeChangeCallback
   private adapter?: SiteAdapter | null
+  private customStyles: CustomStyle[] = [] // 存储自定义样式列表
 
   constructor(
     mode: ThemeMode | string,
@@ -169,6 +171,19 @@ export class ThemeManager {
   }
 
   /**
+   * 设置自定义样式列表
+   */
+  setCustomStyles(styles: CustomStyle[]) {
+    this.customStyles = styles || []
+    // 如果当前正在使用自定义样式，需要立即刷新
+    const currentId = this.mode === "dark" ? this.darkPresetId : this.lightPresetId
+    const isUsingCustom = this.customStyles.some((s) => s.id === currentId)
+    if (isUsingCustom) {
+      this.syncPluginUITheme()
+    }
+  }
+
+  /**
    * 同步插件 UI 的主题状态
    * 从主题预置读取 CSS 变量值，注入到 Shadow DOM
    * ⭐ 暂停 MutationObserver 以避免循环触发
@@ -179,13 +194,25 @@ export class ThemeManager {
 
     // 从预置系统获取当前主题的 CSS 变量
     const presetId = currentMode === "dark" ? this.darkPresetId : this.lightPresetId
-    let vars: ThemeVariables
-    try {
-      const preset = getPreset(presetId, currentMode)
-      vars = preset.variables
-    } catch (e) {
-      console.error("[ThemeManager] getPreset FAILED:", e)
-      return
+
+    // 尝试在自定义样式中查找
+    const customStyle = this.customStyles.find((s) => s.id === presetId)
+
+    // 预置变量（如果不是自定义样式）
+    let vars: ThemeVariables | null = null
+
+    if (customStyle) {
+      // 如果是自定义样式，直接使用其 CSS
+      // 不需要获取 vars，因为我们会直接注入 CSS
+    } else {
+      // 否则从预置系统获取
+      try {
+        const preset = getPreset(presetId, currentMode)
+        vars = preset.variables
+      } catch (e) {
+        console.error("[ThemeManager] getPreset FAILED:", e)
+        return
+      }
     }
 
     // ⭐ 暂时断开 MutationObserver，避免循环触发
@@ -204,9 +231,12 @@ export class ThemeManager {
       document.body.style.colorScheme = "light"
     }
 
-    // 在 :root 上设置变量
-    for (const [key, value] of Object.entries(vars)) {
-      root.style.setProperty(key, value)
+    // 在 :root 上设置变量（仅对预置主题有效）
+    // 自定义样式通常包含选择器，可能直接覆盖 :root 这里的变量，或者通过 CSS 规则生效
+    if (vars) {
+      for (const [key, value] of Object.entries(vars)) {
+        root.style.setProperty(key, value)
+      }
     }
 
     // 查找 Plasmo 的 Shadow Host 并在其上设置变量
@@ -222,12 +252,16 @@ export class ThemeManager {
           styleEl.id = "gh-theme-vars"
         }
 
-        // 生成 :host 上的变量定义
-        const cssVars = themeVariablesToCSS(vars)
+        if (customStyle) {
+          // 自定义样式：直接注入 CSS
+          styleEl.textContent = customStyle.css
+        } else if (vars) {
+          // 预置主题：生成变量定义
+          const cssVars = themeVariablesToCSS(vars)
 
-        // 同时设置 data-theme 属性以便 CSS 选择器使用
-        // 并添加强制覆盖的样式
-        styleEl.textContent = `:host {
+          // 同时设置 data-theme 属性以便 CSS 选择器使用
+          // 并添加强制覆盖的样式
+          styleEl.textContent = `:host {
 ${cssVars}
 color-scheme: ${currentMode};
 }
@@ -237,6 +271,7 @@ color-scheme: ${currentMode};
 ${cssVars}
 }
 `
+        }
         // 设置 host 元素的 data-theme 属性
         ;(host as HTMLElement).dataset.theme = currentMode
 

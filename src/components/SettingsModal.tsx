@@ -4,7 +4,17 @@
  */
 import React, { useEffect, useState } from "react"
 
+import {
+  AboutIcon,
+  AppearanceIcon,
+  BackupIcon,
+  FeaturesIcon,
+  GeneralIcon,
+  PageContentIcon,
+  PermissionsIcon,
+} from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
+import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
 import AboutPage from "~tabs/options/pages/AboutPage"
 import AppearancePage from "~tabs/options/pages/AppearancePage"
 import BackupPage from "~tabs/options/pages/BackupPage"
@@ -17,13 +27,33 @@ import { setLanguage, t } from "~utils/i18n"
 
 // 导航菜单定义
 const NAV_ITEMS = [
-  { id: "general", icon: "⚙️", labelKey: "navGeneral", label: "基本设置" },
-  { id: "appearance", icon: "🎨", labelKey: "navAppearance", label: "外观主题" },
-  { id: "pageContent", icon: "📄", labelKey: "navPageContent", label: "页面与内容" },
-  { id: "features", icon: "📑", labelKey: "navFeatures", label: "功能模块" },
-  { id: "backup", icon: "☁️", labelKey: "navBackup", label: "备份与同步" },
-  { id: "permissions", icon: "🔐", labelKey: "navPermissions", label: "权限管理" },
-  { id: "about", icon: "ℹ️", labelKey: "navAbout", label: "关于" },
+  {
+    id: "general",
+    Icon: GeneralIcon,
+    labelKey: "navGeneral",
+    label: "基本设置",
+  },
+  {
+    id: "appearance",
+    Icon: AppearanceIcon,
+    labelKey: "navAppearance",
+    label: "外观主题",
+  },
+  {
+    id: "pageContent",
+    Icon: PageContentIcon,
+    labelKey: "navPageContent",
+    label: "页面与内容",
+  },
+  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
+  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
+  {
+    id: "permissions",
+    Icon: PermissionsIcon,
+    labelKey: "navPermissions",
+    label: "权限管理",
+  },
+  { id: "about", Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
 ]
 
 interface SettingsModalProps {
@@ -120,11 +150,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                 key={item.id}
                 className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}
                 onClick={() => setActivePage(item.id)}>
-                <span className="settings-nav-item-icon">{item.icon}</span>
+                <span className="settings-nav-item-icon">
+                  <item.Icon size={22} />
+                </span>
                 <span>{t(item.labelKey) || item.label}</span>
               </button>
             ))}
           </nav>
+
+          {/* 侧边栏底部快捷设置 */}
+          <SidebarFooter siteId={siteId} />
         </aside>
 
         {/* 内容区 */}

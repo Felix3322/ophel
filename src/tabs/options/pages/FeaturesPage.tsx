@@ -5,11 +5,12 @@
  */
 import React from "react"
 
+import { FeaturesIcon } from "~components/icons"
 import { Switch } from "~components/ui"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 
-import { SettingCard, SettingRow, ToggleRow } from "../components"
+import { PageTitle, SettingCard, SettingRow, ToggleRow } from "../components"
 
 interface FeaturesPageProps {
   siteId: string
@@ -53,7 +54,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
 
   return (
     <div>
-      <h1 className="settings-page-title">{t("navFeatures") || "功能模块"}</h1>
+      <PageTitle title={t("navFeatures") || "功能模块"} Icon={FeaturesIcon} />
       <p className="settings-page-desc">{t("featuresPageDesc") || "配置扩展的各项功能模块"}</p>
 
       {/* 大纲设置卡片 */}
@@ -157,36 +158,21 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
       {/* 模型锁定卡片 */}
       <SettingCard
         title={t("modelLockTitle") || "模型锁定"}
-        description={t("modelLockDesc") || "锁定特定模型，防止自动切换"}>
+        description={t("modelLockDesc") || "进入页面后自动切换到指定模型"}>
         {/* Gemini Enterprise */}
-        <div style={{ marginBottom: "16px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "8px",
-            }}>
-            <span style={{ fontSize: "14px", fontWeight: 500 }}>Gemini Enterprise</span>
-            <Switch
-              checked={settings.modelLock?.["gemini-enterprise"]?.enabled ?? false}
-              onChange={() => {
-                const current = settings.modelLock?.["gemini-enterprise"] || {
-                  enabled: false,
-                  keyword: "",
-                }
-                setSettings({
-                  modelLock: {
-                    ...settings.modelLock,
-                    "gemini-enterprise": { ...current, enabled: !current.enabled },
-                  },
-                })
-              }}
-            />
-          </div>
-          <ModelKeywordInput
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "12px",
+          }}>
+          <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>Gemini Enterprise</span>
+          <input
+            type="text"
+            className="settings-input"
             value={settings.modelLock?.["gemini-enterprise"]?.keyword || ""}
-            onChange={(value) => {
+            onChange={(e) => {
               const current = settings.modelLock?.["gemini-enterprise"] || {
                 enabled: false,
                 keyword: "",
@@ -194,51 +180,73 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
               setSettings({
                 modelLock: {
                   ...settings.modelLock,
-                  "gemini-enterprise": { ...current, keyword: value },
+                  "gemini-enterprise": { ...current, keyword: e.target.value },
                 },
               })
             }}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
             disabled={!settings.modelLock?.["gemini-enterprise"]?.enabled}
+            style={{
+              width: "200px",
+              opacity: settings.modelLock?.["gemini-enterprise"]?.enabled ? 1 : 0.5,
+            }}
+          />
+          <Switch
+            checked={settings.modelLock?.["gemini-enterprise"]?.enabled ?? false}
+            onChange={() => {
+              const current = settings.modelLock?.["gemini-enterprise"] || {
+                enabled: false,
+                keyword: "",
+              }
+              setSettings({
+                modelLock: {
+                  ...settings.modelLock,
+                  "gemini-enterprise": { ...current, enabled: !current.enabled },
+                },
+              })
+            }}
           />
         </div>
 
         {/* Gemini */}
-        <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "8px",
-            }}>
-            <span style={{ fontSize: "14px", fontWeight: 500 }}>Gemini</span>
-            <Switch
-              checked={settings.modelLock?.gemini?.enabled ?? false}
-              onChange={() => {
-                const current = settings.modelLock?.gemini || { enabled: false, keyword: "" }
-                setSettings({
-                  modelLock: {
-                    ...settings.modelLock,
-                    gemini: { ...current, enabled: !current.enabled },
-                  },
-                })
-              }}
-            />
-          </div>
-          <ModelKeywordInput
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}>
+          <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>Gemini</span>
+          <input
+            type="text"
+            className="settings-input"
             value={settings.modelLock?.gemini?.keyword || ""}
-            onChange={(value) => {
+            onChange={(e) => {
               const current = settings.modelLock?.gemini || { enabled: false, keyword: "" }
               setSettings({
                 modelLock: {
                   ...settings.modelLock,
-                  gemini: { ...current, keyword: value },
+                  gemini: { ...current, keyword: e.target.value },
                 },
               })
             }}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
             disabled={!settings.modelLock?.gemini?.enabled}
+            style={{
+              width: "200px",
+              opacity: settings.modelLock?.gemini?.enabled ? 1 : 0.5,
+            }}
+          />
+          <Switch
+            checked={settings.modelLock?.gemini?.enabled ?? false}
+            onChange={() => {
+              const current = settings.modelLock?.gemini || { enabled: false, keyword: "" }
+              setSettings({
+                modelLock: {
+                  ...settings.modelLock,
+                  gemini: { ...current, enabled: !current.enabled },
+                },
+              })
+            }}
           />
         </div>
       </SettingCard>

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { getAdapter } from "~adapters/index"
+import { ClearIcon, ReturnIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import { COLLAPSED_BUTTON_DEFS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -221,20 +222,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const getThemeIcon = () => {
     const isDark = themeMode === "dark"
     // 深色模式显示太阳（点击切换到浅色），浅色模式显示月亮（点击切换到深色）
-    const pathD = isDark
-      ? "M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z"
-      : "M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"
-
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        height="20px"
-        viewBox="0 -960 960 960"
-        width="20px"
-        fill="currentColor">
-        <path d={pathD} />
-      </svg>
-    )
+    return isDark ? <ThemeLightIcon size={20} /> : <ThemeDarkIcon size={20} />
   }
 
   // 按钮点击处理器
@@ -263,7 +251,17 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const shouldHide = isDisabled || (isPanelOnly && isPanelOpen)
     if (shouldHide) return null
 
-    const icon = id === "theme" ? getThemeIcon() : def.icon
+    // 优先使用 IconComponent，否则用 emoji
+    let icon: React.ReactNode
+    if (id === "theme") {
+      icon = getThemeIcon()
+    } else if (def.IconComponent) {
+      const IconComp = def.IconComponent
+      icon = <IconComp size={18} />
+    } else {
+      icon = def.icon
+    }
+
     const isAnchorBtn = id === "anchor"
     const anchorDisabled = isAnchorBtn && !hasAnchor
 
@@ -288,6 +286,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     if (!enabled) return null
 
     const hasManualAnchor = savedAnchorTop !== null
+    const anchorDef = COLLAPSED_BUTTON_DEFS.manualAnchor
+    const AnchorIcon = anchorDef?.IconComponent
 
     return (
       <React.Fragment key="manualAnchor">
@@ -296,7 +296,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
           onClick={setAnchorManually}
           title={t("setAnchor") || "设置锚点"}>
-          📍
+          {AnchorIcon ? <AnchorIcon size={18} /> : "📍"}
         </button>
         {/* 返回锚点 */}
         <button
@@ -308,7 +308,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             cursor: hasManualAnchor ? "pointer" : "default",
           }}
           disabled={!hasManualAnchor}>
-          ↩
+          <ReturnIcon size={18} />
         </button>
         {/* 清除锚点 */}
         <button
@@ -320,7 +320,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             cursor: hasManualAnchor ? "pointer" : "default",
           }}
           disabled={!hasManualAnchor}>
-          ✕
+          <ClearIcon size={18} />
         </button>
       </React.Fragment>
     )

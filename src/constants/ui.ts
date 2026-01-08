@@ -1,6 +1,17 @@
 /**
  * UI 相关常量
  */
+import type React from "react"
+
+import {
+  AnchorIcon,
+  ConversationIcon,
+  ManualAnchorIcon,
+  OutlineIcon,
+  PromptIcon,
+  ScrollBottomIcon,
+  ScrollTopIcon,
+} from "~components/icons"
 
 // ==================== Tab ID 常量 ====================
 // 用于 Tab 切换判断，避免字符串字面量拼写错误
@@ -15,22 +26,53 @@ export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
 
 // ==================== Tab 定义 ====================
 // Tab 标签的显示配置
-export const TAB_DEFINITIONS: Record<string, { label: string; icon?: string }> = {
-  [TAB_IDS.PROMPTS]: { label: "tabPrompts", icon: "✏️" },
-  [TAB_IDS.CONVERSATIONS]: { label: "tabConversations", icon: "💬" },
-  [TAB_IDS.OUTLINE]: { label: "tabOutline", icon: "📑" },
+export const TAB_DEFINITIONS: Record<
+  string,
+  {
+    label: string
+    icon: string
+    IconComponent?: React.ComponentType<{ size?: number; color?: string }>
+  }
+> = {
+  [TAB_IDS.PROMPTS]: { label: "tabPrompts", icon: "✏️", IconComponent: PromptIcon },
+  [TAB_IDS.CONVERSATIONS]: {
+    label: "tabConversations",
+    icon: "💬",
+    IconComponent: ConversationIcon,
+  },
+  [TAB_IDS.OUTLINE]: { label: "tabOutline", icon: "📑", IconComponent: OutlineIcon },
   [TAB_IDS.SETTINGS]: { label: "tabSettings", icon: "⚙️" },
 }
 
 // ==================== 折叠面板按钮定义 ====================
 // isPanelOnly: true 表示仅在面板折叠时显示，false 表示常显
+// IconComponent: React 组件形式的图标（优先于 icon）
 export const COLLAPSED_BUTTON_DEFS: Record<
   string,
-  { icon: string; labelKey: string; canToggle: boolean; isPanelOnly: boolean; isGroup?: boolean }
+  {
+    icon: string
+    labelKey: string
+    canToggle: boolean
+    isPanelOnly: boolean
+    isGroup?: boolean
+    IconComponent?: React.ComponentType<{ size?: number; color?: string }>
+  }
 > = {
-  scrollTop: { icon: "⬆", labelKey: "scrollTop", canToggle: false, isPanelOnly: false },
+  scrollTop: {
+    icon: "⬆",
+    labelKey: "scrollTop",
+    canToggle: false,
+    isPanelOnly: false,
+    IconComponent: ScrollTopIcon,
+  },
   panel: { icon: "✨", labelKey: "panelTitle", canToggle: false, isPanelOnly: true },
-  anchor: { icon: "⚓", labelKey: "showCollapsedAnchorLabel", canToggle: true, isPanelOnly: true },
+  anchor: {
+    icon: "⚓",
+    labelKey: "showCollapsedAnchorLabel",
+    canToggle: true,
+    isPanelOnly: true,
+    IconComponent: AnchorIcon,
+  },
   theme: { icon: "☀", labelKey: "showCollapsedThemeLabel", canToggle: true, isPanelOnly: true },
   manualAnchor: {
     icon: "📍",
@@ -38,8 +80,15 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     canToggle: true,
     isPanelOnly: false,
     isGroup: true,
+    IconComponent: ManualAnchorIcon,
   },
-  scrollBottom: { icon: "⬇", labelKey: "scrollBottom", canToggle: false, isPanelOnly: false },
+  scrollBottom: {
+    icon: "⬇",
+    labelKey: "scrollBottom",
+    canToggle: false,
+    isPanelOnly: false,
+    IconComponent: ScrollBottomIcon,
+  },
 }
 
 // ==================== Emoji 预设 ====================

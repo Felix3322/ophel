@@ -11,6 +11,8 @@ export interface SettingCardProps {
   description?: string
   /** 子元素 */
   children: React.ReactNode
+  /** 自定义类名 */
+  className?: string
   /** 自定义样式 */
   style?: React.CSSProperties
 }
@@ -19,10 +21,11 @@ export const SettingCard: React.FC<SettingCardProps> = ({
   title,
   description,
   children,
+  className = "",
   style,
 }) => {
   return (
-    <div className="settings-card" style={style}>
+    <div className={`settings-card ${className}`} style={style}>
       {title && <div className="settings-card-title">{title}</div>}
       {description && <div className="settings-card-desc">{description}</div>}
       {children}

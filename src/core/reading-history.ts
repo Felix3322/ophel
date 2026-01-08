@@ -11,6 +11,7 @@ import {
   useReadingHistoryStore,
   type ReadingPosition,
 } from "~stores/reading-history-store"
+import { t } from "~utils/i18n"
 import type { Settings } from "~utils/storage"
 
 // 重新导出类型供其他模块使用
@@ -202,7 +203,9 @@ export class ReadingHistoryManager {
 
         if (needsMoreHistory && canLoadMore) {
           if (onProgress)
-            onProgress(`Loading history (${historyLoadAttempts + 1}/${maxHistoryLoadAttempts})...`)
+            onProgress(
+              `${t("exportLoading")} (${historyLoadAttempts + 1}/${maxHistoryLoadAttempts})`,
+            )
 
           // Scroll to top to trigger lazy load
           this.rawScroll(scrollContainer, 0)

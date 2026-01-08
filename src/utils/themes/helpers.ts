@@ -31,3 +31,24 @@ export const themeVariablesToCSS = (variables: ThemeVariables): string => {
     .map(([key, value]) => `${key}: ${value} !important;`)
     .join("\n  ")
 }
+
+/**
+ * 从 CSS 字符串中解析主题变量
+ * 用于自定义样式的实时预览
+ */
+export const parseThemeVariablesFromCSS = (css: string): Partial<ThemeVariables> => {
+  const variables: Partial<ThemeVariables> = {}
+
+  // 匹配 CSS 变量声明: --variable-name: value;
+  // 兼容多行和不同格式
+  const regex = /(--[\w-]+)\s*:\s*([^;]+);/g
+
+  let match
+  while ((match = regex.exec(css)) !== null) {
+    const key = match[1] as keyof ThemeVariables
+    const value = match[2].trim()
+    variables[key] = value
+  }
+
+  return variables
+}

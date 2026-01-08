@@ -2,14 +2,15 @@
  * 基本设置页面
  * 包含：通用设置 | 标签页设置
  */
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useRef, useState } from "react"
 
+import { DragIcon, GeneralIcon } from "~components/icons"
 import { Switch } from "~components/ui"
 import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 
-import { SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
+import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
 interface GeneralPageProps {
   siteId: string
@@ -17,45 +18,62 @@ interface GeneralPageProps {
 
 // 可排序项目组件
 const SortableItem: React.FC<{
-  icon?: string
+  iconNode?: React.ReactNode
   label: string
   index: number
   total: number
   enabled?: boolean
   showToggle?: boolean
   onToggle?: () => void
-  onMoveUp: () => void
-  onMoveDown: () => void
+  onDragStart: (e: React.DragEvent, index: number) => void
+  onDragOver: (e: React.DragEvent, index: number) => void
+  onDragEnd?: () => void
+  onDrop: (e: React.DragEvent, index: number) => void
+  isDragging?: boolean
 }> = ({
-  icon,
+  iconNode,
   label,
   index,
   total,
   enabled = true,
   showToggle = false,
   onToggle,
-  onMoveUp,
-  onMoveDown,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  onDrop,
+  isDragging = false,
 }) => (
-  <div className="settings-sortable-item">
-    {icon && <span className="settings-sortable-item-icon">{icon}</span>}
+  <div
+    className={`settings-sortable-item ${isDragging ? "dragging" : ""}`}
+    draggable
+    onDragStart={(e) => onDragStart(e, index)}
+    onDragOver={(e) => onDragOver(e, index)}
+    onDragEnd={onDragEnd}
+    onDrop={(e) => onDrop(e, index)}
+    style={{
+      opacity: isDragging ? 0.4 : 1,
+      cursor: "grab",
+      border: isDragging ? "1px dashed var(--gh-primary)" : undefined,
+    }}>
+    {/* 拖拽手柄 */}
+    <div
+      className="settings-sortable-handle"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "4px 8px 4px 0",
+        cursor: "grab",
+        color: "var(--gh-text-secondary, #9ca3af)",
+      }}>
+      <DragIcon size={16} />
+    </div>
+
+    {iconNode && <span className="settings-sortable-item-icon">{iconNode}</span>}
     <span className="settings-sortable-item-label">{label}</span>
     <div className="settings-sortable-item-actions">
       {showToggle && <Switch checked={enabled} onChange={() => onToggle?.()} size="sm" />}
-      <button
-        className="settings-sortable-btn"
-        onClick={onMoveUp}
-        disabled={index === 0}
-        title={t("moveUp") || "上移"}>
-        ▲
-      </button>
-      <button
-        className="settings-sortable-btn"
-        onClick={onMoveDown}
-        disabled={index === total - 1}
-        title={t("moveDown") || "下移"}>
-        ▼
-      </button>
     </div>
   </div>
 )
@@ -64,33 +82,56 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
   const [activeTab, setActiveTab] = useState("general")
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
 
-  // Tab 排序
-  const moveTab = useCallback(
-    (index: number, direction: number) => {
-      if (!settings) return
-      const newOrder = [...(settings.features?.order || [])]
-      const newIndex = index + direction
-      if (newIndex >= 0 && newIndex < newOrder.length) {
-        ;[newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]]
-        updateNestedSetting("features", "order", newOrder)
-      }
-    },
-    [settings, updateNestedSetting],
+  // 拖拽状态
+  const [draggedItem, setDraggedItem] = useState<{ type: "tab" | "button"; index: number } | null>(
+    null,
   )
 
-  // 快捷按钮排序
-  const moveButton = useCallback(
-    (index: number, direction: number) => {
-      if (!settings) return
-      const newOrder = [...(settings.collapsedButtons || [])]
-      const newIndex = index + direction
-      if (newIndex >= 0 && newIndex < newOrder.length) {
-        ;[newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]]
-        setSettings({ collapsedButtons: newOrder })
-      }
-    },
-    [settings, setSettings],
-  )
+  // 处理拖拽开始
+  const handleDragStart = (e: React.DragEvent, type: "tab" | "button", index: number) => {
+    setDraggedItem({ type, index })
+    e.dataTransfer.effectAllowed = "move"
+    // 设置拖拽图像，避免默认的大片白色背景（可选，视浏览器表现而定）
+  }
+
+  // 处理拖拽经过（需要阻止默认行为以允许放置）
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+  }
+
+  // 处理拖拽结束（清理状态）
+  const handleDragEnd = () => {
+    setDraggedItem(null)
+  }
+
+  // 处理放置 - Tab 排序
+  const handleTabDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault()
+    if (!settings || !draggedItem || draggedItem.type !== "tab") return
+    if (draggedItem.index === targetIndex) return
+
+    const newOrder = [...(settings.features?.order || [])]
+    const [movedItem] = newOrder.splice(draggedItem.index, 1)
+    newOrder.splice(targetIndex, 0, movedItem)
+
+    updateNestedSetting("features", "order", newOrder)
+    setDraggedItem(null)
+  }
+
+  // 处理放置 - 按钮排序
+  const handleButtonDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault()
+    if (!settings || !draggedItem || draggedItem.type !== "button") return
+    if (draggedItem.index === targetIndex) return
+
+    const newOrder = [...(settings.collapsedButtons || [])]
+    const [movedItem] = newOrder.splice(draggedItem.index, 1)
+    newOrder.splice(targetIndex, 0, movedItem)
+
+    setSettings({ collapsedButtons: newOrder })
+    setDraggedItem(null)
+  }
 
   const toggleButton = useCallback(
     (index: number) => {
@@ -118,7 +159,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
 
   return (
     <div>
-      <h1 className="settings-page-title">{t("navGeneral") || "基本设置"}</h1>
+      <PageTitle title={t("navGeneral") || "基本设置"} Icon={GeneralIcon} />
       <p className="settings-page-desc">{t("generalPageDesc") || "配置扩展的基本行为和界面"}</p>
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
@@ -169,7 +210,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
           {/* 界面排版卡片 */}
           <SettingCard
             title={t("tabOrderSettings") || "界面排版"}
-            description={t("tabOrderDesc") || "调整面板标签页的显示顺序"}>
+            description={t("tabOrderDesc") || "调整面板标签页的显示顺序 (拖拽排序)"}>
             {settings.features?.order
               ?.filter((id) => TAB_DEFINITIONS[id])
               .map((tabId, index) => {
@@ -185,6 +226,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 return (
                   <SortableItem
                     key={tabId}
+                    iconNode={
+                      def.IconComponent ? (
+                        <def.IconComponent size={18} color="currentColor" />
+                      ) : (
+                        def.icon
+                      )
+                    }
                     label={t(def.label) || tabId}
                     index={index}
                     total={settings.features?.order.filter((id) => TAB_DEFINITIONS[id]).length}
@@ -198,8 +246,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                       else if (tabId === "conversations")
                         updateDeepSetting("features", "conversations", "enabled", !isEnabled)
                     }}
-                    onMoveUp={() => moveTab(index, -1)}
-                    onMoveDown={() => moveTab(index, 1)}
+                    onDragStart={(e) => handleDragStart(e, "tab", index)}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                    onDrop={handleTabDrop}
+                    isDragging={draggedItem?.type === "tab" && draggedItem?.index === index}
                   />
                 )
               })}
@@ -208,22 +259,31 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
           {/* 快捷按钮排序卡片 */}
           <SettingCard
             title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
-            description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用"}>
+            description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
             {settings.collapsedButtons?.map((btn, index) => {
               const def = COLLAPSED_BUTTON_DEFS[btn.id]
               if (!def) return null
               return (
                 <SortableItem
                   key={btn.id}
-                  icon={def.icon}
+                  iconNode={
+                    def.IconComponent ? (
+                      <def.IconComponent size={18} color="currentColor" />
+                    ) : (
+                      def.icon
+                    )
+                  }
                   label={t(def.labelKey) || btn.id}
                   index={index}
                   total={settings.collapsedButtons.length}
                   enabled={btn.enabled}
                   showToggle={["anchor", "theme", "manualAnchor"].includes(btn.id)}
                   onToggle={() => toggleButton(index)}
-                  onMoveUp={() => moveButton(index, -1)}
-                  onMoveDown={() => moveButton(index, 1)}
+                  onDragStart={(e) => handleDragStart(e, "button", index)}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleButtonDrop}
+                  isDragging={draggedItem?.type === "button" && draggedItem?.index === index}
                 />
               )
             })}

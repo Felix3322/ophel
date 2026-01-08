@@ -105,6 +105,8 @@ export const App = () => {
     // 后续更新时，仅当 mode 真的变化时同步
     if (savedMode && savedMode !== themeMode) {
       setThemeMode(savedMode)
+      // ⭐ 当设置中的 mode 发生变化（例如在设置页切换），强制应用到 ThemeManager
+      themeManager.apply(savedMode)
     }
   }, [isSettingsHydrated, settings?.theme?.sites])
 
@@ -247,6 +249,12 @@ export const App = () => {
       themeManager.setPresets(lightId, darkId)
     }
   }, [settings?.theme?.sites, themeManager, isSettingsHydrated])
+
+  // 监听自定义样式变化，同步到 ThemeManager
+  useEffect(() => {
+    if (!isSettingsHydrated) return
+    themeManager.setCustomStyles(settings?.theme?.customStyles || [])
+  }, [settings?.theme?.customStyles, themeManager, isSettingsHydrated])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
   // ⭐ 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理

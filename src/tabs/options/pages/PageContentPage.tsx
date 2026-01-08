@@ -1,15 +1,16 @@
 /**
  * 页面与内容页面
- * 包含：页面布局 | 内容样式
+ * 包含：页面布局 | 内容处理
  */
 import React, { useEffect, useState } from "react"
 
+import { PageContentIcon } from "~components/icons"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 
-import { SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
+import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
 interface PageContentPageProps {
   siteId: string
@@ -153,12 +154,12 @@ const PageContentPage: React.FC<PageContentPageProps> = ({ siteId }) => {
 
   const tabs = [
     { id: "layout", label: t("layoutTab") || "页面布局" },
-    { id: "content", label: t("contentStyleTab") || "内容样式" },
+    { id: "content", label: t("contentStyleTab") || "内容处理" },
   ]
 
   return (
     <div>
-      <h1 className="settings-page-title">{t("navPageContent") || "页面与内容"}</h1>
+      <PageTitle title={t("navPageContent") || "页面与内容"} Icon={PageContentIcon} />
       <p className="settings-page-desc">
         {t("pageContentPageDesc") || "调整页面布局和内容显示样式"}
       </p>
