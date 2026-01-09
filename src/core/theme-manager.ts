@@ -25,6 +25,9 @@ declare global {
 // 主题变化回调类型
 export type ThemeModeChangeCallback = (mode: ThemeMode) => void
 
+// 订阅者类型
+type Listener = () => void
+
 export class ThemeManager {
   private mode: ThemeMode
   private lightPresetId: string
@@ -34,6 +37,8 @@ export class ThemeManager {
   private onModeChange?: ThemeModeChangeCallback
   private adapter?: SiteAdapter | null
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
+  private skipNextDetection = false // 标志：跳过下一次主题检测（用于 toggle 后避免被 monitorTheme 反悔）
+  private listeners: Set<Listener> = new Set() // 订阅者集合
 
   constructor(
     mode: ThemeMode | string,
@@ -95,6 +100,7 @@ export class ThemeManager {
    */
   updateMode(mode: ThemeMode | string) {
     this.mode = mode === "dark" ? "dark" : "light"
+    this.emitChange()
     this.apply()
   }
 
@@ -301,6 +307,12 @@ ${cssVars}
    */
   monitorTheme() {
     const checkTheme = () => {
+      // 如果是 toggle() 主动触发后的首次恢复，跳过检测以避免覆盖用户意图
+      if (this.skipNextDetection) {
+        this.skipNextDetection = false
+        return
+      }
+
       const detectedMode = this.detectCurrentTheme()
 
       // 同步到插件 UI (ghMode)
@@ -309,6 +321,7 @@ ${cssVars}
       // 如果检测到的模式与当前模式不同，更新并触发回调
       if (this.mode !== detectedMode) {
         this.mode = detectedMode
+        this.emitChange()
         // 触发变化回调，通知 React 组件更新
         if (this.onModeChange) {
           this.onModeChange(detectedMode)
@@ -400,6 +413,7 @@ ${cssVars}
     ) {
       doToggle()
       this.mode = nextMode
+      this.emitChange()
       // 无条件启动监听（确保网页主题变化能被检测）
       this.monitorTheme()
       return nextMode
@@ -439,23 +453,50 @@ ${cssVars}
     })
 
     // 使用 finally 确保 MutationObserver 一定会恢复（即使动画失败）
-    // ⭐ 将 React 状态更新延迟到动画完成后，确保视觉一致性
-    transition.finished
-      .catch(() => {
-        // 忽略动画错误
-      })
-      .finally(() => {
-        // 触发回调通知 React 更新状态（动画完成后）
-        if (this.onModeChange) {
-          this.onModeChange(nextMode)
-        }
-        // 无条件启动监听（确保网页主题变化能被检测）
-        this.monitorTheme()
-      })
+    // ⭐ 等待动画完成后再返回，确保调用方等待动画真正完成
+    await transition.finished.catch(() => {
+      // 忽略动画错误
+    })
+
+    // 标记跳过下一次检测，防止 monitorTheme 检测到错误的页面状态而覆盖用户意图
+    this.skipNextDetection = true
+    // 触发回调通知 React 更新状态（动画完成后）
+    if (this.onModeChange) {
+      this.onModeChange(nextMode)
+    }
+    // 无条件启动监听（确保网页主题变化能被检测）
+    this.monitorTheme()
 
     // 更新内部状态
     this.mode = nextMode
+    this.emitChange()
     return nextMode
+  }
+
+  /**
+   * 设置主题模式（绝对操作）
+   * 与 toggle() 不同，此方法明确指定目标模式，无论调用多少次结果都是确定的
+   * 如果当前已是目标模式，则不做任何操作
+   * @param targetMode 目标模式
+   * @param event 可选的鼠标事件，用于确定动画中心
+   * @returns 包含最终模式和是否触发了动画
+   */
+  async setMode(
+    targetMode: ThemeMode,
+    event?: MouseEvent,
+  ): Promise<{ mode: ThemeMode; animated: boolean }> {
+    const currentMode = this.detectCurrentTheme()
+
+    // 如果已经是目标模式，不做任何操作
+    if (currentMode === targetMode) {
+      // 仍然需要同步插件 UI 主题（确保样式变量正确应用）
+      this.syncPluginUITheme(targetMode)
+      return { mode: targetMode, animated: false }
+    }
+
+    // 否则执行切换动画
+    const resultMode = await this.toggle(event)
+    return { mode: resultMode, animated: true }
   }
 
   /**
@@ -466,9 +507,37 @@ ${cssVars}
   }
 
   /**
+   * 获取当前模式快照（用于 useSyncExternalStore）
+   */
+  getSnapshot = (): ThemeMode => {
+    return this.mode
+  }
+
+  /**
+   * 订阅模式变化（用于 useSyncExternalStore）
+   * @returns 取消订阅函数
+   */
+  subscribe = (listener: Listener): (() => void) => {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  /**
+   * 通知所有订阅者模式已变化
+   */
+  private emitChange() {
+    for (const listener of this.listeners) {
+      listener()
+    }
+  }
+
+  /**
    * 销毁，清理资源
    */
   destroy() {
     this.stopMonitoring()
+    this.listeners.clear()
   }
 }

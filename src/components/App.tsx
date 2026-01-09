@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
 import { getAdapter } from "~adapters/index"
 import { ConversationManager } from "~core/conversation-manager"
@@ -26,11 +33,6 @@ export const App = () => {
   // 面板状态 - 初始值来自设置
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const hasInitializedPanel = useRef(false)
-
-  // 主题状态 - 与 settings 同步
-  // ⭐ 初始值使用 "light" 作为默认值，待 settings 加载后由 useEffect 同步
-  const [themeMode, setThemeMode] = useState<"light" | "dark">("light")
-  const hasInitializedTheme = useRef(false)
 
   // ⭐ 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
   const settingsRef = useRef(settings)
@@ -79,36 +81,6 @@ export const App = () => {
       setLanguage(settings.language)
     }
   }, [settings?.language, isSettingsHydrated])
-
-  // 当设置中的主题变化时，同步更新本地状态
-  // ⭐ 重要：确保首次加载和后续变化都能正确同步 themeMode
-  useEffect(() => {
-    if (!isSettingsHydrated) return // 等待 settings 加载完成
-
-    // ⭐ 使用当前站点的配置而非 _default
-    const currentAdapter = getAdapter()
-    const siteId = currentAdapter?.getSiteId() || "_default"
-    const siteTheme =
-      settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-      settings?.theme?.sites?._default
-    const savedMode = siteTheme?.mode
-
-    // 首次加载时，从 settings 同步主题模式
-    if (!hasInitializedTheme.current && savedMode) {
-      hasInitializedTheme.current = true
-      if (savedMode !== themeMode) {
-        setThemeMode(savedMode)
-      }
-      return
-    }
-
-    // 后续更新时，仅当 mode 真的变化时同步
-    if (savedMode && savedMode !== themeMode) {
-      setThemeMode(savedMode)
-      // ⭐ 当设置中的 mode 发生变化（例如在设置页切换），强制应用到 ThemeManager
-      themeManager.apply(savedMode)
-    }
-  }, [isSettingsHydrated, settings?.theme?.sites])
 
   // 单例实例
   const adapter = useMemo(() => getAdapter(), [])
@@ -179,7 +151,7 @@ export const App = () => {
       settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
       settings?.theme?.sites?._default
     return new ThemeManager(
-      themeMode,
+      fallbackTheme?.mode || "light", // 使用 settings 中的 mode，而非本地状态
       undefined,
       adapter,
       fallbackTheme?.lightStyleId || "google-gradient",
@@ -188,10 +160,14 @@ export const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
   }, [])
 
-  // ⭐ 动态注册主题变化回调，当页面主题变化时同步更新 React 状态
+  // ⭐ 使用 useSyncExternalStore 订阅 ThemeManager 的主题模式
+  // 这让 ThemeManager 成为唯一的主题状态源，避免双重状态导致的同步问题
+  const themeMode = useSyncExternalStore(themeManager.subscribe, themeManager.getSnapshot)
+
+  // ⭐ 动态注册主题变化回调，当页面主题变化时同步更新 settings
+  // 注意：themeMode 由 useSyncExternalStore 自动订阅更新，不需要手动 setThemeMode
   useEffect(() => {
     const handleThemeModeChange = (mode: "light" | "dark") => {
-      setThemeMode(mode)
       // ⭐ 使用 ref 获取最新 settings，避免闭包捕获过期值
       const currentSettings = settingsRef.current
       const sites = currentSettings?.theme?.sites || {}

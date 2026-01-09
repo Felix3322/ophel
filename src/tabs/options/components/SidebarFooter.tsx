@@ -1,16 +1,19 @@
-import React from "react"
+import React, { useSyncExternalStore } from "react"
 
 import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
+import type { ThemeManager } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 
 export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
 
-  const currentSiteConfig =
-    settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-    settings?.theme?.sites?._default
-  const currentThemeMode = currentSiteConfig?.mode || "light"
+  // ⭐ 从全局 ThemeManager 订阅当前主题模式（Single Source of Truth）
+  const themeManager = (window as any).__ophelThemeManager as ThemeManager | undefined
+  const currentThemeMode = useSyncExternalStore(
+    themeManager?.subscribe ?? (() => () => {}),
+    themeManager?.getSnapshot ?? (() => "light" as const),
+  )
 
   // 切换主题模式
   const handleThemeModeToggle = async (mode: "light" | "dark") => {

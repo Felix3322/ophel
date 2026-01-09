@@ -90,9 +90,6 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
     { id: "custom", label: t("customStylesTab") || "自定义样式" },
   ]
 
-  // 动画时长常量（与 ThemeManager 中的动画时长一致）
-  const THEME_ANIMATION_DURATION = 550
-
   // 切换主题
   const handleThemeToggle = async () => {
     const themeManager = (window as any).__ophelThemeManager
@@ -101,64 +98,54 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
     }
   }
 
-  // 选择浅色主题预置（如果当前不是浅色模式，先切换模式，动画完成后再更新）
-  const selectLightPreset = (presetId: string) => {
-    const updateStyleId = () => {
-      const sites = settings?.theme?.sites || {}
-      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
-      setSettings({
-        theme: {
-          ...settings?.theme,
-          sites: {
-            ...settings?.theme?.sites,
-            [siteId]: {
-              ...currentSite,
-              lightStyleId: presetId,
-            },
-          },
-        },
-      })
+  // 选择浅色主题预置
+  const selectLightPreset = async (presetId: string) => {
+    const themeManager = (window as any).__ophelThemeManager
+    if (themeManager?.setMode) {
+      // setMode 会等待动画完成后才返回
+      await themeManager.setMode("light")
     }
 
-    if (currentTheme?.mode !== "light") {
-      // 先切换模式
-      handleThemeToggle()
-      // 动画完成后再更新主题（延迟略长于动画时长）
-      setTimeout(updateStyleId, THEME_ANIMATION_DURATION)
-    } else {
-      // 已经是浅色模式，直接更新
-      updateStyleId()
-    }
+    // 更新样式 ID
+    const sites = settings?.theme?.sites || {}
+    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+    setSettings({
+      theme: {
+        ...settings?.theme,
+        sites: {
+          ...settings?.theme?.sites,
+          [siteId]: {
+            ...currentSite,
+            lightStyleId: presetId,
+          },
+        },
+      },
+    })
   }
 
-  // 选择深色主题预置（如果当前不是深色模式，先切换模式，动画完成后再更新）
-  const selectDarkPreset = (presetId: string) => {
-    const updateStyleId = () => {
-      const sites = settings?.theme?.sites || {}
-      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
-      setSettings({
-        theme: {
-          ...settings?.theme,
-          sites: {
-            ...settings?.theme?.sites,
-            [siteId]: {
-              ...currentSite,
-              darkStyleId: presetId,
-            },
-          },
-        },
-      })
+  // 选择深色主题预置
+  const selectDarkPreset = async (presetId: string) => {
+    const themeManager = (window as any).__ophelThemeManager
+    if (themeManager?.setMode) {
+      // setMode 会等待动画完成后才返回
+      await themeManager.setMode("dark")
     }
 
-    if (currentTheme?.mode !== "dark") {
-      // 先切换模式
-      handleThemeToggle()
-      // 动画完成后再更新主题（延迟略长于动画时长）
-      setTimeout(updateStyleId, THEME_ANIMATION_DURATION)
-    } else {
-      // 已经是深色模式，直接更新
-      updateStyleId()
-    }
+    // 更新样式 ID
+    const sites = settings?.theme?.sites || {}
+    const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
+    setSettings({
+      theme: {
+        ...settings?.theme,
+        sites: {
+          ...settings?.theme?.sites,
+          [siteId]: {
+            ...currentSite,
+            darkStyleId: presetId,
+          },
+        },
+      },
+    })
   }
 
   // 保存自定义样式
