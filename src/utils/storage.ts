@@ -258,7 +258,7 @@ export const DEFAULT_SETTINGS: Settings = {
     renameInterval: 3,
     showStatus: true,
     titleFormat: "{status}{title}->{model}",
-    showNotification: true,
+    showNotification: false,
     notificationSound: true,
     notificationVolume: 0.6,
     notifyWhenFocused: false,

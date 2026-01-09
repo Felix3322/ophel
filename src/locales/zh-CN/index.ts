@@ -62,6 +62,10 @@ export const zhCN = {
   generalTab: "通用",
   tabSettingsTab: "标签页",
   generalSettings: "通用设置",
+  panelTab: "面板",
+  tabOrderTab: "界面排版",
+  shortcutsTab: "快捷按钮",
+  panelSettings: "面板设置",
 
   // ======== 外观页面 ========
   themePresetsTab: "主题预置",
@@ -74,8 +78,8 @@ export const zhCN = {
   create: "创建",
   unnamedStyle: "未命名样式",
 
-  // ======== 页面与内容 ========
-  layoutTab: "页面布局",
+  // ======== 宽度布局 ========
+  layoutTab: "宽度布局",
   contentStyleTab: "内容处理",
   pageWidthSettings: "页面宽度",
   enablePageWidthDesc: "调整聊天页面的最大宽度",
@@ -168,7 +172,7 @@ export const zhCN = {
 
   // ======== 通用按钮/标签 ========
   tabBehaviorTitle: "标签页行为",
-  notificationSettings: "通知设置",
+  notificationSettings: "完成提醒",
   privacyModeTitle: "隐私模式",
   collapsedButtonsOrderTitle: "快捷按钮组",
 
@@ -672,6 +676,8 @@ export const zhCN = {
   importBackupFile: "备份文件导入",
 
   // ======== 权限请求弹窗 ========
+  permissionRequired: "需要权限",
+  webdavPermissionDesc: "需要访问该域名的权限才能进行 WebDAV 备份。",
   permAllUrlsTitle: "需要所有网站访问权限",
   permAllUrlsDesc: "此权限用于 WebDAV 云端备份和同步功能，以及移除 AI 生成图片的水印。",
   permWebdavTitle: "需要网络访问权限",
@@ -686,6 +692,12 @@ export const zhCN = {
   permissionDialogAllow: "允许并继续",
   permissionGranted: "授权成功",
   permissionDenied: "授权已取消",
+  revokeConfirmDefault: "确定要撤销此权限吗？撤销后，依赖该权限的功能将会自动关闭。",
+  revokeConfirmNotifications:
+    "确定要撤销通知权限吗？\n\n撤销后，【桌面通知】功能将自动关闭。如需再次使用，需重新授权。",
+  revokeConfirmWebdav:
+    "确定要撤销高级访问权限吗？\n\n撤销后，【水印移除】和【WebDAV 同步】功能将自动关闭。如需再次使用，需重新授权。",
+  warning: "警告",
   windowClosing: "窗口即将关闭...",
   allow: "允许",
 

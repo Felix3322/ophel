@@ -10,7 +10,6 @@ import {
   BackupIcon,
   FeaturesIcon,
   GeneralIcon,
-  PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -20,7 +19,6 @@ import AppearancePage from "~tabs/options/pages/AppearancePage"
 import BackupPage from "~tabs/options/pages/BackupPage"
 import FeaturesPage from "~tabs/options/pages/FeaturesPage"
 import GeneralPage from "~tabs/options/pages/GeneralPage"
-import PageContentPage from "~tabs/options/pages/PageContentPage"
 import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { setLanguage, t } from "~utils/i18n"
@@ -38,12 +36,6 @@ const NAV_ITEMS = [
     Icon: AppearanceIcon,
     labelKey: "navAppearance",
     label: "外观主题",
-  },
-  {
-    id: "pageContent",
-    Icon: PageContentIcon,
-    labelKey: "navPageContent",
-    label: "页面与内容",
   },
   { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
@@ -113,8 +105,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         return <GeneralPage siteId={siteId} />
       case "appearance":
         return <AppearancePage siteId={siteId} />
-      case "pageContent":
-        return <PageContentPage siteId={siteId} />
+
       case "features":
         return <FeaturesPage siteId={siteId} />
       case "permissions":

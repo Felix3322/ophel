@@ -65,6 +65,10 @@ export const en = {
   generalTab: "General",
   tabSettingsTab: "Tab Settings",
   generalSettings: "General Settings",
+  panelTab: "Panel",
+  tabOrderTab: "Tab Order",
+  shortcutsTab: "Shortcuts",
+  panelSettings: "Panel Settings",
 
   // ======== Appearance Page ========
   themePresetsTab: "Theme Presets",
@@ -77,7 +81,7 @@ export const en = {
   create: "Create",
   unnamedStyle: "Unnamed Style",
 
-  // ======== Page & Content ========
+  // ======== Width Layout ========
   layoutTab: "Page Layout",
   contentStyleTab: "Content Processing",
   pageWidthSettings: "Page Width",
@@ -136,7 +140,7 @@ export const en = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Tab Behavior",
-  notificationSettings: "Notification Settings",
+  notificationSettings: "Completion Alerts",
   privacyModeTitle: "Privacy Mode",
   collapsedButtonsOrderTitle: "Quick Buttons",
 
@@ -582,6 +586,8 @@ export const en = {
   backupTime: "Backup time",
   dataManagementNote:
     "Note: The exported file contains all settings, conversation records, etc. Can be used for backup or migration to new devices.",
+  permissionRequired: "Permission Required",
+  webdavPermissionDesc: "Permission to access this domain is required for WebDAV backup.",
   // WebDAV Sync
   webdavSectionTitle: "WebDAV Cloud Sync",
   webdavDesc: "Sync data to WebDAV server (e.g., Nextcloud, Owncloud)",
@@ -668,6 +674,13 @@ export const en = {
   permissionDialogAllow: "Allow & Continue",
   permissionGranted: "Permission Granted",
   permissionDenied: "Permission Denied",
+  revokeConfirmDefault:
+    "Are you sure you want to revoke this permission? Related features will be automatically disabled.",
+  revokeConfirmNotifications:
+    "Revoke notification permission?\n\nThe [Desktop Notification] feature will be automatically disabled. You will need to re-authorize to use it again.",
+  revokeConfirmWebdav:
+    "Revoke advanced access permission?\n\n[Watermark Removal] and [WebDAV Sync] features will be automatically disabled. You will need to re-authorize to use them again.",
+  warning: "Warning",
   windowClosing: "Window closing...",
   allow: "Allow",
 

@@ -2,7 +2,7 @@
  * 备份与同步页面 (重构版)
  * 包含：本地备份导出/导入 (支持部分导出) | WebDAV 同步配置与管理
  */
-import React, { useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 import { BackupIcon, CloudIcon } from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
@@ -248,6 +248,24 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pasteContent, setPasteContent] = useState("")
+
+  // WebDAV 本地表单状态（与 Store 解耦，仅点击保存时同步）
+  const [webdavForm, setWebdavForm] = useState<any>({
+    url: "",
+    username: "",
+    password: "",
+    remoteDir: "ophel",
+  })
+
+  // 初始化表单
+  useEffect(() => {
+    if (settings?.webdav) {
+      setWebdavForm((prev) => ({
+        ...prev,
+        ...settings.webdav,
+      }))
+    }
+  }, [settings?.webdav])
 
   // 弹窗状态
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -521,7 +539,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   // -------------------- WebDAV 功能 --------------------
 
   const checkAndRequestWebDAVPermission = async (onGranted: () => void): Promise<boolean> => {
-    const url = settings?.webdav?.url
+    const url = webdavForm.url // 使用表单值检查权限
     if (!url) {
       showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
       return false
@@ -564,15 +582,21 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   }
 
   const handleSaveConfig = () => {
-    // 这里的 setSettings 已经是持久化的
+    // 保存配置到 Store（持久化）
+    setSettings({
+      webdav: {
+        ...(settings.webdav ?? DEFAULT_SETTINGS.webdav ?? {}),
+        ...webdavForm,
+      },
+    })
     showDomToast(t("saveSuccess") || "配置已保存")
   }
 
   const testWebDAVConnection = async () => {
     const success = await checkAndRequestWebDAVPermission(async () => {
       const manager = getWebDAVSyncManager()
-      // Save config first just in case
-      if (settings.webdav) await manager.saveConfig(settings.webdav)
+      // 临时应用配置（不持久化）
+      await manager.setConfig(webdavForm, false)
 
       const res = await manager.testConnection()
       if (res.success) showDomToast(t("webdavConnectionSuccess") || "连接成功")
@@ -583,7 +607,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   const uploadToWebDAV = async () => {
     await checkAndRequestWebDAVPermission(async () => {
       const manager = getWebDAVSyncManager()
-      if (settings.webdav) await manager.saveConfig(settings.webdav)
+      // 临时应用配置（不持久化）
+      await manager.setConfig(webdavForm, false)
 
       // 构造完整备份数据用于上传
       // 复用 handleExport 'full' 的逻辑，但这里需要直接获取对象
@@ -833,12 +858,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
             type="text"
             className="settings-input"
             placeholder="https://dav.example.com/dav/"
-            value={settings.webdav?.url || ""}
-            onChange={(e) =>
-              setSettings({
-                webdav: { ...(settings.webdav ?? DEFAULT_SETTINGS.webdav), url: e.target.value },
-              })
-            }
+            value={webdavForm.url}
+            onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
             style={{ width: "280px" }}
           />
         </SettingRow>
@@ -847,15 +868,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
           <input
             type="text"
             className="settings-input"
-            value={settings.webdav?.username || ""}
-            onChange={(e) =>
-              setSettings({
-                webdav: {
-                  ...(settings.webdav ?? DEFAULT_SETTINGS.webdav),
-                  username: e.target.value,
-                },
-              })
-            }
+            value={webdavForm.username}
+            onChange={(e) => setWebdavForm({ ...webdavForm, username: e.target.value })}
             style={{ width: "280px" }}
           />
         </SettingRow>
@@ -864,15 +878,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
           <input
             type="password"
             className="settings-input"
-            value={settings.webdav?.password || ""}
-            onChange={(e) =>
-              setSettings({
-                webdav: {
-                  ...(settings.webdav ?? DEFAULT_SETTINGS.webdav),
-                  password: e.target.value,
-                },
-              })
-            }
+            value={webdavForm.password}
+            onChange={(e) => setWebdavForm({ ...webdavForm, password: e.target.value })}
             style={{ width: "280px" }}
           />
         </SettingRow>
@@ -882,15 +889,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
             type="text"
             className="settings-input"
             placeholder="ophel"
-            value={settings.webdav?.remoteDir ?? "ophel"}
-            onChange={(e) =>
-              setSettings({
-                webdav: {
-                  ...(settings.webdav ?? DEFAULT_SETTINGS.webdav),
-                  remoteDir: e.target.value,
-                },
-              })
-            }
+            value={webdavForm.remoteDir}
+            onChange={(e) => setWebdavForm({ ...webdavForm, remoteDir: e.target.value })}
             style={{ width: "280px" }}
           />
         </SettingRow>
@@ -925,6 +925,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
             className="settings-btn settings-btn-secondary"
             onClick={async () => {
               const hasPermission = await checkAndRequestWebDAVPermission(async () => {
+                // 临时应用配置
+                const manager = getWebDAVSyncManager()
+                await manager.setConfig(webdavForm, false)
                 setShowRemoteBackups(true)
               })
             }}>

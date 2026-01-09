@@ -10,7 +10,6 @@ import {
   BackupIcon,
   FeaturesIcon,
   GeneralIcon,
-  PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -23,7 +22,6 @@ import BackupPage from "./options/pages/BackupPage"
 import FeaturesPage from "./options/pages/FeaturesPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
-import PageContentPage from "./options/pages/PageContentPage"
 import PermissionsPage from "./options/pages/PermissionsPage"
 // 样式
 import "./options.css"
@@ -45,12 +43,6 @@ const NAV_ITEMS = [
     Icon: AppearanceIcon,
     labelKey: "navAppearance",
     label: "外观主题",
-  },
-  {
-    id: "pageContent",
-    Icon: PageContentIcon,
-    labelKey: "navPageContent",
-    label: "页面与内容",
   },
   { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
@@ -111,8 +103,7 @@ const OptionsPage = () => {
         return <GeneralPage siteId={siteId} />
       case "appearance":
         return <AppearancePage siteId={siteId} />
-      case "pageContent":
-        return <PageContentPage siteId={siteId} />
+
       case "features":
         return <FeaturesPage siteId={siteId} />
       case "permissions":

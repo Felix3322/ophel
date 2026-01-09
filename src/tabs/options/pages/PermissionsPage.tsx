@@ -5,6 +5,8 @@
 import React, { useEffect, useState } from "react"
 
 import { PermissionsIcon } from "~components/icons"
+import { ConfirmDialog } from "~components/ui"
+import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import {
   MSG_CHECK_PERMISSIONS,
@@ -56,11 +58,23 @@ interface PermissionsPageProps {
 }
 
 const PermissionsPage: React.FC<PermissionsPageProps> = () => {
+  const { updateNestedSetting } = useSettingsStore()
   // 可选权限状态
   const [optionalPermissionStatus, setOptionalPermissionStatus] = useState<Record<string, boolean>>(
     {},
   )
   const [loading, setLoading] = useState(true)
+
+  // 确认弹窗状态
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    message: React.ReactNode
+    onConfirm: () => void
+  }>({
+    open: false,
+    message: "",
+    onConfirm: () => {},
+  })
 
   // 判断是否在扩展页面上下文（可以直接调用权限 API）
   // 注意：content script 中 chrome.permissions 为 undefined
@@ -177,8 +191,8 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
     }
   }
 
-  // 撤销可选权限（通用函数）
-  const revokePermission = async (perm: {
+  // 执行撤销逻辑
+  const executeRevoke = async (perm: {
     id: string
     origins?: string[]
     permissions?: string[]
@@ -203,10 +217,41 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
       if (removed) {
         setOptionalPermissionStatus((prev) => ({ ...prev, [perm.id]: false }))
+
+        // 自动关闭相关设置
+        if (perm.id === "notifications") {
+          updateNestedSetting("tab", "showNotification", false)
+        } else if (perm.id === "webdav") {
+          updateNestedSetting("content", "watermarkRemoval", false)
+        }
       }
     } catch (e) {
       console.error(`撤销权限 ${perm.id} 失败:`, e)
+    } finally {
+      setConfirmDialog((prev) => ({ ...prev, open: false }))
     }
+  }
+
+  // 点击撤销按钮
+  const handleRevokeClick = (perm: { id: string; origins?: string[]; permissions?: string[] }) => {
+    let confirmMsg =
+      t("revokeConfirmDefault") || "确定要撤销此权限吗？撤销后，依赖该权限的功能将会自动关闭。"
+
+    if (perm.id === "notifications") {
+      confirmMsg =
+        t("revokeConfirmNotifications") ||
+        "确定要撤销通知权限吗？\n\n撤销后，【桌面通知】功能将自动关闭。如需再次使用，需重新授权。"
+    } else if (perm.id === "webdav") {
+      confirmMsg =
+        t("revokeConfirmWebdav") ||
+        "确定要撤销高级访问权限吗？\n\n撤销后，【水印移除】和【WebDAV 同步】功能将自动关闭。如需再次使用，需重新授权。"
+    }
+
+    setConfirmDialog({
+      open: true,
+      message: <div style={{ whiteSpace: "pre-wrap" }}>{confirmMsg}</div>,
+      onConfirm: () => executeRevoke(perm),
+    })
   }
 
   return (
@@ -275,7 +320,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      revokePermission(perm)
+                      handleRevokeClick(perm)
                     }}>
                     {t("revoke") || "撤销"}
                   </button>
@@ -337,6 +382,19 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
           </SettingRow>
         ))}
       </SettingCard>
+
+      {/* 确认弹窗 */}
+      {confirmDialog.open && (
+        <ConfirmDialog
+          title={t("warning") || "警告"}
+          message={confirmDialog.message}
+          confirmText={t("confirm") || "确定"}
+          cancelText={t("cancel") || "取消"}
+          danger={true}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        />
+      )}
     </div>
   )
 }

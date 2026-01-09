@@ -103,11 +103,25 @@ export class WebDAVSyncManager {
    * 保存配置
    * ⭐ 通过 Zustand store 保存，确保一致性
    */
-  async saveConfig(config: Partial<WebDAVConfig>): Promise<void> {
+  /**
+   * 设置配置
+   * @param config 配置对象
+   * @param persist 是否持久化到 storage (默认 true)
+   */
+  async setConfig(config: Partial<WebDAVConfig>, persist: boolean = true): Promise<void> {
     this.config = { ...this.config, ...config }
-    // 动态导入避免循环依赖
-    const { useSettingsStore } = await import("~stores/settings-store")
-    useSettingsStore.getState().setSettings({ webdav: this.config })
+    if (persist) {
+      // 动态导入避免循环依赖
+      const { useSettingsStore } = await import("~stores/settings-store")
+      useSettingsStore.getState().setSettings({ webdav: this.config })
+    }
+  }
+
+  /**
+   * 保存配置 (兼容旧方法，强制持久化)
+   */
+  async saveConfig(config: Partial<WebDAVConfig>): Promise<void> {
+    return this.setConfig(config, true)
   }
 
   /**

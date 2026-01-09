@@ -1,14 +1,14 @@
 /**
  * 基本设置页面
- * 包含：通用设置 | 标签页设置
+ * 包含：面板 | 界面排版 | 快捷按钮 | 宽度布局
  */
-import React, { useCallback, useRef, useState } from "react"
+import React, { useEffect, useState } from "react"
 
 import { DragIcon, GeneralIcon } from "~components/icons"
 import { Switch } from "~components/ui"
 import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
-import { setLanguage, t } from "~utils/i18n"
+import { t } from "~utils/i18n"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
@@ -79,7 +79,7 @@ const SortableItem: React.FC<{
 )
 
 const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
-  const [activeTab, setActiveTab] = useState("general")
+  const [activeTab, setActiveTab] = useState("panel")
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
 
   // 拖拽状态
@@ -87,34 +87,157 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     null,
   )
 
+  // 宽度布局相关状态
+  const currentPageWidth =
+    settings?.layout?.pageWidth?.[siteId as keyof typeof settings.layout.pageWidth] ||
+    settings?.layout?.pageWidth?._default
+  const currentUserQueryWidth =
+    settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
+    settings?.layout?.userQueryWidth?._default
+
+  const [tempWidth, setTempWidth] = useState(currentPageWidth?.value || "81")
+  const [tempUserQueryWidth, setTempUserQueryWidth] = useState(
+    currentUserQueryWidth?.value || "600",
+  )
+
+  useEffect(() => {
+    if (currentPageWidth?.value) {
+      setTempWidth(currentPageWidth.value)
+    }
+  }, [currentPageWidth?.value])
+
+  useEffect(() => {
+    if (currentUserQueryWidth?.value) {
+      setTempUserQueryWidth(currentUserQueryWidth.value)
+    }
+  }, [currentUserQueryWidth?.value])
+
+  // 页面宽度更新
+  const handleWidthBlur = () => {
+    let val = parseInt(tempWidth)
+    const unit = currentPageWidth?.unit || "%"
+
+    if (isNaN(val)) {
+      val = unit === "%" ? 81 : 1280
+    }
+
+    if (unit === "%") {
+      if (val < 40) val = 40
+      if (val > 100) val = 100
+    } else {
+      if (val <= 0) val = 1200
+    }
+
+    const finalVal = val.toString()
+    setTempWidth(finalVal)
+    if (finalVal !== currentPageWidth?.value && settings) {
+      const current = currentPageWidth || { enabled: true, value: finalVal, unit: "%" }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          pageWidth: {
+            ...settings.layout?.pageWidth,
+            [siteId]: { ...current, value: finalVal },
+          },
+        },
+      })
+    }
+  }
+
+  const handleUnitChange = (newUnit: string) => {
+    const newValue = newUnit === "px" ? "1280" : "81"
+    setTempWidth(newValue)
+
+    if (settings) {
+      const newPageWidth = {
+        ...currentPageWidth,
+        unit: newUnit,
+        value: newValue,
+        enabled: currentPageWidth?.enabled ?? false,
+      }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          pageWidth: {
+            ...settings.layout?.pageWidth,
+            [siteId]: newPageWidth,
+          },
+        },
+      })
+    }
+  }
+
+  // 用户问题宽度更新
+  const handleUserQueryWidthBlur = () => {
+    let val = parseInt(tempUserQueryWidth)
+    const unit = currentUserQueryWidth?.unit || "px"
+
+    if (isNaN(val)) {
+      val = unit === "%" ? 81 : 600
+    }
+
+    if (unit === "%") {
+      if (val < 40) val = 40
+      if (val > 100) val = 100
+    } else {
+      if (val <= 0) val = 600
+    }
+
+    const finalVal = val.toString()
+    setTempUserQueryWidth(finalVal)
+    if (finalVal !== currentUserQueryWidth?.value && settings) {
+      const current = currentUserQueryWidth || { enabled: true, value: finalVal, unit: "px" }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          userQueryWidth: {
+            ...settings.layout?.userQueryWidth,
+            [siteId]: { ...current, value: finalVal },
+          },
+        },
+      })
+    }
+  }
+
+  const handleUserQueryUnitChange = (newUnit: string) => {
+    const newValue = newUnit === "px" ? "600" : "81"
+    setTempUserQueryWidth(newValue)
+    if (settings) {
+      const current = currentUserQueryWidth || { enabled: false, value: newValue, unit: newUnit }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          userQueryWidth: {
+            ...settings.layout?.userQueryWidth,
+            [siteId]: { ...current, unit: newUnit, value: newValue },
+          },
+        },
+      })
+    }
+  }
+
   // 处理拖拽开始
   const handleDragStart = (e: React.DragEvent, type: "tab" | "button", index: number) => {
     setDraggedItem({ type, index })
     e.dataTransfer.effectAllowed = "move"
-    // 设置拖拽图像，避免默认的大片白色背景（可选，视浏览器表现而定）
   }
 
-  // 处理拖拽经过（需要阻止默认行为以允许放置）
+  // 处理拖拽经过
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
   }
 
-  // 处理拖拽结束（清理状态）
-  const handleDragEnd = () => {
-    setDraggedItem(null)
-  }
-
   // 处理放置 - Tab 排序
   const handleTabDrop = (e: React.DragEvent, targetIndex: number) => {
     e.preventDefault()
-    if (!settings || !draggedItem || draggedItem.type !== "tab") return
-    if (draggedItem.index === targetIndex) return
+    if (!draggedItem || draggedItem.type !== "tab") return
+    const fromIndex = draggedItem.index
+    if (fromIndex === targetIndex) return
 
     const newOrder = [...(settings.features?.order || [])]
-    const [movedItem] = newOrder.splice(draggedItem.index, 1)
-    newOrder.splice(targetIndex, 0, movedItem)
-
+    const [moved] = newOrder.splice(fromIndex, 1)
+    newOrder.splice(targetIndex, 0, moved)
     updateNestedSetting("features", "order", newOrder)
     setDraggedItem(null)
   }
@@ -122,39 +245,36 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
   // 处理放置 - 按钮排序
   const handleButtonDrop = (e: React.DragEvent, targetIndex: number) => {
     e.preventDefault()
-    if (!settings || !draggedItem || draggedItem.type !== "button") return
-    if (draggedItem.index === targetIndex) return
+    if (!draggedItem || draggedItem.type !== "button") return
+    const fromIndex = draggedItem.index
+    if (fromIndex === targetIndex) return
 
-    const newOrder = [...(settings.collapsedButtons || [])]
-    const [movedItem] = newOrder.splice(draggedItem.index, 1)
-    newOrder.splice(targetIndex, 0, movedItem)
-
-    setSettings({ collapsedButtons: newOrder })
+    const newButtons = [...(settings.collapsedButtons || [])]
+    const [moved] = newButtons.splice(fromIndex, 1)
+    newButtons.splice(targetIndex, 0, moved)
+    setSettings({ collapsedButtons: newButtons })
     setDraggedItem(null)
   }
 
-  const toggleButton = useCallback(
-    (index: number) => {
-      if (!settings) return
-      const newOrder = [...(settings.collapsedButtons || [])]
-      newOrder[index] = { ...newOrder[index], enabled: !newOrder[index].enabled }
-      setSettings({ collapsedButtons: newOrder })
-    },
-    [settings, setSettings],
-  )
+  // 处理拖拽结束
+  const handleDragEnd = () => {
+    setDraggedItem(null)
+  }
 
-  const handleLanguageChange = (lang: string) => {
-    setLanguage(lang)
-    if (settings) {
-      setSettings({ language: lang })
-    }
+  // 切换按钮启用状态
+  const toggleButton = (index: number) => {
+    const newButtons = [...(settings.collapsedButtons || [])]
+    newButtons[index] = { ...newButtons[index], enabled: !newButtons[index].enabled }
+    setSettings({ collapsedButtons: newButtons })
   }
 
   if (!settings) return null
 
   const tabs = [
-    { id: "general", label: t("generalTab") || "通用" },
-    { id: "tab", label: t("tabSettingsTab") || "标签页" },
+    { id: "panel", label: t("panelTab") || "面板" },
+    { id: "tabOrder", label: t("tabOrderTab") || "界面排版" },
+    { id: "shortcuts", label: t("shortcutsTab") || "快捷按钮" },
+    { id: "layout", label: t("layoutTab") || "宽度布局" },
   ]
 
   return (
@@ -164,192 +284,153 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "general" && (
-        <>
-          {/* 通用设置卡片 */}
-          <SettingCard title={t("generalSettings") || "通用设置"}>
-            <ToggleRow
-              label={t("defaultPanelStateLabel") || "默认显示面板"}
-              description={t("defaultPanelStateDesc") || "页面加载后自动展开面板"}
-              checked={settings.panel?.defaultOpen ?? false}
-              onChange={() =>
-                updateNestedSetting("panel", "defaultOpen", !settings.panel?.defaultOpen)
-              }
-            />
+      {/* ========== 面板 Tab ========== */}
+      {activeTab === "panel" && (
+        <SettingCard title={t("panelSettings") || "面板设置"}>
+          <ToggleRow
+            label={t("defaultPanelStateLabel") || "默认显示面板"}
+            description={t("defaultPanelStateDesc") || "页面加载后自动展开面板"}
+            checked={settings.panel?.defaultOpen ?? false}
+            onChange={() =>
+              updateNestedSetting("panel", "defaultOpen", !settings.panel?.defaultOpen)
+            }
+          />
 
-            <ToggleRow
-              label={t("autoHidePanelLabel") || "自动隐藏面板"}
-              description={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
-              checked={settings.panel?.autoHide ?? false}
-              onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
-            />
+          <ToggleRow
+            label={t("autoHidePanelLabel") || "自动隐藏面板"}
+            description={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
+            checked={settings.panel?.autoHide ?? false}
+            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
+          />
 
-            {/* 默认位置 */}
-            <SettingRow
-              label={t("defaultPositionLabel") || "默认位置"}
-              description={t("defaultPositionDesc") || "页面刷新后面板显示在哪一侧"}>
-              <div
+          {/* 默认位置 */}
+          <SettingRow
+            label={t("defaultPositionLabel") || "默认位置"}
+            description={t("defaultPositionDesc") || "页面刷新后面板显示在哪一侧"}>
+            <div
+              style={{
+                display: "inline-flex",
+                borderRadius: "6px",
+                overflow: "hidden",
+                border: "1px solid var(--gh-border, #e5e7eb)",
+              }}>
+              <button
+                onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}
                 style={{
-                  display: "inline-flex",
-                  borderRadius: "6px",
-                  overflow: "hidden",
-                  border: "1px solid var(--gh-border, #e5e7eb)",
+                  padding: "4px 12px",
+                  fontSize: "13px",
+                  border: "none",
+                  cursor: "pointer",
+                  background:
+                    (settings.panel?.defaultPosition || "right") === "left"
+                      ? "var(--gh-primary, #4285f4)"
+                      : "var(--gh-bg, #fff)",
+                  color:
+                    (settings.panel?.defaultPosition || "right") === "left"
+                      ? "#fff"
+                      : "var(--gh-text-secondary, #6b7280)",
+                  transition: "all 0.2s",
                 }}>
-                <button
-                  onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}
-                  style={{
-                    padding: "4px 12px",
-                    fontSize: "13px",
-                    border: "none",
-                    cursor: "pointer",
-                    background:
-                      (settings.panel?.defaultPosition || "right") === "left"
-                        ? "var(--gh-primary, #4285f4)"
-                        : "var(--gh-bg, #fff)",
-                    color:
-                      (settings.panel?.defaultPosition || "right") === "left"
-                        ? "#fff"
-                        : "var(--gh-text-secondary, #6b7280)",
-                    transition: "all 0.2s",
-                  }}>
-                  {t("defaultPositionLeft") || "左侧"}
-                </button>
-                <button
-                  onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}
-                  style={{
-                    padding: "4px 12px",
-                    fontSize: "13px",
-                    border: "none",
-                    borderLeft: "1px solid var(--gh-border, #e5e7eb)",
-                    cursor: "pointer",
-                    background:
-                      (settings.panel?.defaultPosition || "right") === "right"
-                        ? "var(--gh-primary, #4285f4)"
-                        : "var(--gh-bg, #fff)",
-                    color:
-                      (settings.panel?.defaultPosition || "right") === "right"
-                        ? "#fff"
-                        : "var(--gh-text-secondary, #6b7280)",
-                    transition: "all 0.2s",
-                  }}>
-                  {t("defaultPositionRight") || "右侧"}
-                </button>
-              </div>
-            </SettingRow>
+                {t("defaultPositionLeft") || "左侧"}
+              </button>
+              <button
+                onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}
+                style={{
+                  padding: "4px 12px",
+                  fontSize: "13px",
+                  border: "none",
+                  borderLeft: "1px solid var(--gh-border, #e5e7eb)",
+                  cursor: "pointer",
+                  background:
+                    (settings.panel?.defaultPosition || "right") === "right"
+                      ? "var(--gh-primary, #4285f4)"
+                      : "var(--gh-bg, #fff)",
+                  color:
+                    (settings.panel?.defaultPosition || "right") === "right"
+                      ? "#fff"
+                      : "var(--gh-text-secondary, #6b7280)",
+                  transition: "all 0.2s",
+                }}>
+                {t("defaultPositionRight") || "右侧"}
+              </button>
+            </div>
+          </SettingRow>
 
-            {/* 默认边距 */}
-            <SettingRow
-              label={t("defaultEdgeDistanceLabel") || "默认边距"}
-              description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <input
-                  type="number"
-                  className="settings-input"
-                  value={settings.panel?.defaultEdgeDistance ?? 20}
-                  min={0}
-                  max={200}
-                  style={{ width: "70px" }}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0
-                    const clamped = Math.max(0, Math.min(200, val))
-                    updateNestedSetting("panel", "defaultEdgeDistance", clamped)
-                  }}
-                />
-                <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
-              </div>
-            </SettingRow>
+          {/* 默认边距 */}
+          <SettingRow
+            label={t("defaultEdgeDistanceLabel") || "默认边距"}
+            description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <input
+                type="number"
+                className="settings-input"
+                value={settings.panel?.defaultEdgeDistance ?? 20}
+                min={0}
+                max={200}
+                style={{ width: "70px" }}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0
+                  const clamped = Math.max(0, Math.min(200, val))
+                  updateNestedSetting("panel", "defaultEdgeDistance", clamped)
+                }}
+              />
+              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+            </div>
+          </SettingRow>
 
-            <ToggleRow
-              label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}
-              description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动隐藏"}
-              checked={settings.panel?.edgeSnap ?? false}
-              onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
-            />
+          <ToggleRow
+            label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}
+            description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动隐藏"}
+            checked={settings.panel?.edgeSnap ?? false}
+            onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
+          />
 
-            {/* 吸附触发距离 */}
-            <SettingRow
-              label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
-              description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
-              disabled={!settings.panel?.edgeSnap}>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <input
-                  type="number"
-                  className="settings-input"
-                  value={settings.panel?.edgeSnapThreshold ?? 30}
-                  min={10}
-                  max={100}
-                  disabled={!settings.panel?.edgeSnap}
-                  style={{ width: "70px" }}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 30
-                    const clamped = Math.max(10, Math.min(100, val))
-                    updateNestedSetting("panel", "edgeSnapThreshold", clamped)
-                  }}
-                />
-                <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
-              </div>
-            </SettingRow>
-          </SettingCard>
+          {/* 吸附触发距离 */}
+          <SettingRow
+            label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
+            description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
+            disabled={!settings.panel?.edgeSnap}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <input
+                type="number"
+                className="settings-input"
+                value={settings.panel?.edgeSnapThreshold ?? 30}
+                min={10}
+                max={100}
+                disabled={!settings.panel?.edgeSnap}
+                style={{ width: "70px" }}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 30
+                  const clamped = Math.max(10, Math.min(100, val))
+                  updateNestedSetting("panel", "edgeSnapThreshold", clamped)
+                }}
+              />
+              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+            </div>
+          </SettingRow>
+        </SettingCard>
+      )}
 
-          {/* 界面排版卡片 */}
-          <SettingCard
-            title={t("tabOrderSettings") || "界面排版"}
-            description={t("tabOrderDesc") || "调整面板标签页的显示顺序 (拖拽排序)"}>
-            {settings.features?.order
-              ?.filter((id) => TAB_DEFINITIONS[id])
-              .map((tabId, index) => {
-                const def = TAB_DEFINITIONS[tabId]
-                const isEnabled =
-                  tabId === "prompts"
-                    ? settings.features?.prompts?.enabled !== false
-                    : tabId === "outline"
-                      ? settings.features?.outline?.enabled !== false
-                      : tabId === "conversations"
-                        ? settings.features?.conversations?.enabled !== false
-                        : true
-                return (
-                  <SortableItem
-                    key={tabId}
-                    iconNode={
-                      def.IconComponent ? (
-                        <def.IconComponent size={18} color="currentColor" />
-                      ) : (
-                        def.icon
-                      )
-                    }
-                    label={t(def.label) || tabId}
-                    index={index}
-                    total={settings.features?.order.filter((id) => TAB_DEFINITIONS[id]).length}
-                    enabled={isEnabled}
-                    showToggle
-                    onToggle={() => {
-                      if (tabId === "prompts")
-                        updateDeepSetting("features", "prompts", "enabled", !isEnabled)
-                      else if (tabId === "outline")
-                        updateDeepSetting("features", "outline", "enabled", !isEnabled)
-                      else if (tabId === "conversations")
-                        updateDeepSetting("features", "conversations", "enabled", !isEnabled)
-                    }}
-                    onDragStart={(e) => handleDragStart(e, "tab", index)}
-                    onDragOver={handleDragOver}
-                    onDragEnd={handleDragEnd}
-                    onDrop={handleTabDrop}
-                    isDragging={draggedItem?.type === "tab" && draggedItem?.index === index}
-                  />
-                )
-              })}
-          </SettingCard>
-
-          {/* 快捷按钮排序卡片 */}
-          <SettingCard
-            title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
-            description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
-            {settings.collapsedButtons?.map((btn, index) => {
-              const def = COLLAPSED_BUTTON_DEFS[btn.id]
-              if (!def) return null
+      {/* ========== 界面排版 Tab ========== */}
+      {activeTab === "tabOrder" && (
+        <SettingCard
+          title={t("tabOrderSettings") || "界面排版"}
+          description={t("tabOrderDesc") || "调整面板标签页的显示顺序 (拖拽排序)"}>
+          {settings.features?.order
+            ?.filter((id) => TAB_DEFINITIONS[id])
+            .map((tabId, index) => {
+              const def = TAB_DEFINITIONS[tabId]
+              const isEnabled =
+                tabId === "prompts"
+                  ? settings.features?.prompts?.enabled !== false
+                  : tabId === "outline"
+                    ? settings.features?.outline?.enabled !== false
+                    : tabId === "conversations"
+                      ? settings.features?.conversations?.enabled !== false
+                      : true
               return (
                 <SortableItem
-                  key={btn.id}
+                  key={tabId}
                   iconNode={
                     def.IconComponent ? (
                       <def.IconComponent size={18} color="currentColor" />
@@ -357,168 +438,159 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                       def.icon
                     )
                   }
-                  label={t(def.labelKey) || btn.id}
+                  label={t(def.label) || tabId}
                   index={index}
-                  total={settings.collapsedButtons.length}
-                  enabled={btn.enabled}
-                  showToggle={["anchor", "theme", "manualAnchor"].includes(btn.id)}
-                  onToggle={() => toggleButton(index)}
-                  onDragStart={(e) => handleDragStart(e, "button", index)}
+                  total={settings.features?.order.filter((id) => TAB_DEFINITIONS[id]).length}
+                  enabled={isEnabled}
+                  showToggle
+                  onToggle={() => {
+                    if (tabId === "prompts")
+                      updateDeepSetting("features", "prompts", "enabled", !isEnabled)
+                    else if (tabId === "outline")
+                      updateDeepSetting("features", "outline", "enabled", !isEnabled)
+                    else if (tabId === "conversations")
+                      updateDeepSetting("features", "conversations", "enabled", !isEnabled)
+                  }}
+                  onDragStart={(e) => handleDragStart(e, "tab", index)}
                   onDragOver={handleDragOver}
                   onDragEnd={handleDragEnd}
-                  onDrop={handleButtonDrop}
-                  isDragging={draggedItem?.type === "button" && draggedItem?.index === index}
+                  onDrop={handleTabDrop}
+                  isDragging={draggedItem?.type === "tab" && draggedItem?.index === index}
                 />
               )
             })}
-          </SettingCard>
-        </>
+        </SettingCard>
       )}
 
-      {activeTab === "tab" && (
-        <>
-          {/* 标签页行为卡片 */}
-          <SettingCard title={t("tabBehaviorTitle") || "标签页行为"}>
-            <ToggleRow
-              label={t("openNewTabLabel") || "新标签页打开"}
-              description={t("openNewTabDesc") || "在新标签页中打开新对话"}
-              checked={settings.tab?.openInNewTab ?? true}
-              onChange={() =>
-                updateNestedSetting("tab", "openInNewTab", !settings.tab?.openInNewTab)
-              }
-            />
-
-            <ToggleRow
-              label={t("autoRenameTabLabel") || "自动重命名"}
-              description={t("autoRenameTabDesc") || "根据对话内容自动更新标签页标题"}
-              checked={settings.tab?.autoRename ?? false}
-              onChange={() => updateNestedSetting("tab", "autoRename", !settings.tab?.autoRename)}
-            />
-
-            <SettingRow
-              label={t("renameIntervalLabel") || "检测频率"}
-              disabled={!settings.tab?.autoRename}>
-              <select
-                className="settings-select"
-                value={settings.tab?.renameInterval || 3}
-                onChange={(e) =>
-                  updateNestedSetting("tab", "renameInterval", parseInt(e.target.value))
+      {/* ========== 快捷按钮 Tab ========== */}
+      {activeTab === "shortcuts" && (
+        <SettingCard
+          title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
+          description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
+          {settings.collapsedButtons?.map((btn, index) => {
+            const def = COLLAPSED_BUTTON_DEFS[btn.id]
+            if (!def) return null
+            return (
+              <SortableItem
+                key={btn.id}
+                iconNode={
+                  def.IconComponent ? (
+                    <def.IconComponent size={18} color="currentColor" />
+                  ) : (
+                    def.icon
+                  )
                 }
-                disabled={!settings.tab?.autoRename}>
-                {[1, 3, 5, 10, 30, 60].map((v) => (
-                  <option key={v} value={v}>
-                    {v} 秒
-                  </option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <SettingRow
-              label={t("titleFormatLabel") || "标题格式"}
-              description={t("titleFormatDesc") || "支持占位符：{status}、{title}、{model}"}
-              disabled={!settings.tab?.autoRename}>
-              <input
-                type="text"
-                className="settings-input"
-                value={settings.tab?.titleFormat || "{status}{title}"}
-                onChange={(e) => updateNestedSetting("tab", "titleFormat", e.target.value)}
-                placeholder="{status}{title}"
-                disabled={!settings.tab?.autoRename}
-                style={{ width: "180px" }}
+                label={t(def.labelKey) || btn.id}
+                index={index}
+                total={settings.collapsedButtons.length}
+                enabled={btn.enabled}
+                showToggle={["anchor", "theme", "manualAnchor"].includes(btn.id)}
+                onToggle={() => toggleButton(index)}
+                onDragStart={(e) => handleDragStart(e, "button", index)}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+                onDrop={handleButtonDrop}
+                isDragging={draggedItem?.type === "button" && draggedItem?.index === index}
               />
-            </SettingRow>
+            )
+          })}
+        </SettingCard>
+      )}
 
+      {/* ========== 宽度布局 Tab ========== */}
+      {activeTab === "layout" && (
+        <>
+          {/* 页面宽度卡片 */}
+          <SettingCard title={t("pageWidthSettings") || "页面宽度"}>
             <ToggleRow
-              label={t("showStatusLabel") || "显示生成状态"}
-              description={t("showStatusDesc") || "在标签页标题中显示生成状态"}
-              checked={settings.tab?.showStatus ?? true}
-              onChange={() => updateNestedSetting("tab", "showStatus", !settings.tab?.showStatus)}
-            />
-          </SettingCard>
-
-          {/* 通知设置卡片 */}
-          <SettingCard title={t("notificationSettings") || "通知设置"}>
-            <ToggleRow
-              label={t("showNotificationLabel") || "桌面通知"}
-              description={t("showNotificationDesc") || "生成完成时发送桌面通知"}
-              checked={settings.tab?.showNotification ?? true}
-              onChange={() =>
-                updateNestedSetting("tab", "showNotification", !settings.tab?.showNotification)
-              }
-            />
-
-            <ToggleRow
-              label={t("notificationSoundLabel") || "通知声音"}
-              description={t("notificationSoundDesc") || "生成完成时播放提示音"}
-              checked={settings.tab?.notificationSound ?? false}
-              disabled={!settings.tab?.showNotification}
-              onChange={() =>
-                updateNestedSetting("tab", "notificationSound", !settings.tab?.notificationSound)
-              }
+              label={t("enablePageWidth") || "启用页面宽度"}
+              description={t("enablePageWidthDesc") || "调整聊天页面的最大宽度"}
+              checked={currentPageWidth?.enabled ?? false}
+              onChange={() => {
+                const current = currentPageWidth || { enabled: false, value: "81", unit: "%" }
+                setSettings({
+                  layout: {
+                    ...settings?.layout,
+                    pageWidth: {
+                      ...settings?.layout?.pageWidth,
+                      [siteId]: { ...current, enabled: !current.enabled },
+                    },
+                  },
+                })
+              }}
             />
 
             <SettingRow
-              label={t("notificationVolumeLabel") || "声音音量"}
-              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              label={t("pageWidthValueLabel") || "宽度值"}
+              disabled={!currentPageWidth?.enabled}>
+              <div style={{ display: "flex", gap: "8px" }}>
                 <input
-                  type="range"
-                  min="0.1"
-                  max="1.0"
-                  step="0.1"
-                  value={settings.tab?.notificationVolume || 0.5}
-                  onChange={(e) =>
-                    updateNestedSetting("tab", "notificationVolume", parseFloat(e.target.value))
-                  }
-                  disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-                  style={{ width: "100px" }}
+                  type="text"
+                  className="settings-input"
+                  value={tempWidth}
+                  onChange={(e) => setTempWidth(e.target.value.replace(/[^0-9]/g, ""))}
+                  onBlur={handleWidthBlur}
+                  disabled={!currentPageWidth?.enabled}
+                  style={{ width: "80px" }}
                 />
-                <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                  {Math.round((settings.tab?.notificationVolume || 0.5) * 100)}%
-                </span>
+                <select
+                  className="settings-select"
+                  value={currentPageWidth?.unit || "%"}
+                  onChange={(e) => handleUnitChange(e.target.value)}
+                  disabled={!currentPageWidth?.enabled}>
+                  <option value="%">%</option>
+                  <option value="px">px</option>
+                </select>
               </div>
             </SettingRow>
-
-            <ToggleRow
-              label={t("notifyWhenFocusedLabel") || "前台时也通知"}
-              description={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
-              checked={settings.tab?.notifyWhenFocused ?? false}
-              disabled={!settings.tab?.showNotification}
-              onChange={() =>
-                updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
-              }
-            />
-
-            <ToggleRow
-              label={t("autoFocusLabel") || "自动窗口置顶"}
-              description={t("autoFocusDesc") || "生成完成后自动激活窗口"}
-              checked={settings.tab?.autoFocus ?? false}
-              disabled={!settings.tab?.showNotification}
-              onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
-            />
           </SettingCard>
 
-          {/* 隐私模式卡片 */}
-          <SettingCard title={t("privacyModeTitle") || "隐私模式"}>
+          {/* 用户问题宽度卡片 */}
+          <SettingCard title={t("userQueryWidthSettings") || "用户问题宽度"}>
             <ToggleRow
-              label={t("privacyModeLabel") || "启用隐私模式"}
-              description={t("privacyModeDesc") || "使用伪装标题隐藏真实内容"}
-              checked={settings.tab?.privacyMode ?? false}
-              onChange={() => updateNestedSetting("tab", "privacyMode", !settings.tab?.privacyMode)}
+              label={t("enableUserQueryWidth") || "启用用户问题加宽"}
+              description={t("enableUserQueryWidthDesc") || "调整用户问题气泡的最大宽度"}
+              checked={currentUserQueryWidth?.enabled ?? false}
+              onChange={() => {
+                const current = currentUserQueryWidth || {
+                  enabled: false,
+                  value: "600",
+                  unit: "px",
+                }
+                setSettings({
+                  layout: {
+                    ...settings?.layout,
+                    userQueryWidth: {
+                      ...settings?.layout?.userQueryWidth,
+                      [siteId]: { ...current, enabled: !current.enabled },
+                    },
+                  },
+                })
+              }}
             />
 
             <SettingRow
-              label={t("privacyTitleLabel") || "伪装标题"}
-              disabled={!settings.tab?.privacyMode}>
-              <input
-                type="text"
-                className="settings-input"
-                value={settings.tab?.privacyTitle || "Google"}
-                onChange={(e) => updateNestedSetting("tab", "privacyTitle", e.target.value)}
-                placeholder="Google"
-                disabled={!settings.tab?.privacyMode}
-                style={{ width: "180px" }}
-              />
+              label={t("userQueryWidthValueLabel") || "问题宽度"}
+              disabled={!currentUserQueryWidth?.enabled}>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  type="text"
+                  className="settings-input"
+                  value={tempUserQueryWidth}
+                  onChange={(e) => setTempUserQueryWidth(e.target.value.replace(/[^0-9]/g, ""))}
+                  onBlur={handleUserQueryWidthBlur}
+                  disabled={!currentUserQueryWidth?.enabled}
+                  style={{ width: "80px" }}
+                />
+                <select
+                  className="settings-select"
+                  value={currentUserQueryWidth?.unit || "px"}
+                  onChange={(e) => handleUserQueryUnitChange(e.target.value)}
+                  disabled={!currentUserQueryWidth?.enabled}>
+                  <option value="px">px</option>
+                  <option value="%">%</option>
+                </select>
+              </div>
             </SettingRow>
           </SettingCard>
         </>
