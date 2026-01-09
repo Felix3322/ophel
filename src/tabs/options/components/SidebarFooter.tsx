@@ -96,7 +96,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         <button
           className={`lang-link ${currentLang === "zh-CN" ? "active" : ""}`}
           onClick={() => handleLanguageChange("zh-CN")}>
-          中
+          简
         </button>
         <span className="lang-divider">/</span>
         <button

@@ -190,10 +190,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const getThemeIcon = () => {
     if (themeMode === "dark") {
       // 深色模式时显示太阳图标（点击切换到浅色）
-      return <ThemeLightIcon size={20} />
+      return <ThemeLightIcon size={14} />
     }
     // 浅色模式时显示月亮图标（点击切换到深色）
-    return <ThemeDarkIcon size={20} />
+    return <ThemeDarkIcon size={14} />
   }
 
   return (
@@ -264,7 +264,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             // 发送隐私模式切换事件给 TabManager
             window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
           }}
-          title={t("privacyModeDesc") || "双击切换隐私模式"}>
+          title={t("aboutPageDesc")}>
           <span style={{ fontSize: "16px" }}>✨</span>
           <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
         </div>
@@ -282,8 +282,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
                 border: "none",
                 color: "var(--gh-glass-text, white)",
-                width: "28px",
-                height: "28px",
+                width: "24px",
+                height: "24px",
                 borderRadius: "6px",
                 cursor: "pointer",
                 display: "flex",
@@ -304,8 +304,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
               color: "var(--gh-glass-text, white)",
-              width: "28px",
-              height: "28px",
+              width: "24px",
+              height: "24px",
               borderRadius: "6px",
               cursor: "pointer",
               display: "flex",
@@ -314,7 +314,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontSize: "16px",
               transition: "all 0.2s",
             }}>
-            <NewTabIcon size={16} />
+            <NewTabIcon size={14} />
           </button>
 
           {/* 设置按钮 - 打开设置模态框 */}
@@ -327,8 +327,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
               color: "var(--gh-glass-text, white)",
-              width: "28px",
-              height: "28px",
+              width: "24px",
+              height: "24px",
               borderRadius: "6px",
               cursor: "pointer",
               display: "flex",
@@ -337,7 +337,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontSize: "14px",
               transition: "all 0.2s",
             }}>
-            <SettingsIcon size={16} />
+            <SettingsIcon size={14} />
           </button>
 
           {/* 刷新按钮 - 根据当前 Tab 智能刷新 */}
@@ -369,8 +369,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
               color: "var(--gh-glass-text, white)",
-              width: "28px",
-              height: "28px",
+              width: "24px",
+              height: "24px",
               borderRadius: "6px",
               cursor: "pointer",
               display: "flex",
@@ -379,7 +379,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontSize: "14px",
               transition: "all 0.2s",
             }}>
-            <RefreshIcon size={16} />
+            <RefreshIcon size={14} />
           </button>
 
           {/* 折叠按钮（收起面板） */}
@@ -390,8 +390,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
               color: "var(--gh-glass-text, white)",
-              width: "28px",
-              height: "28px",
+              width: "24px",
+              height: "24px",
               borderRadius: "6px",
               cursor: "pointer",
               display: "flex",
@@ -401,7 +401,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               fontWeight: 600,
               transition: "all 0.2s",
             }}>
-            <MinimizeIcon size={16} />
+            <MinimizeIcon size={14} />
           </button>
         </div>
       </div>
