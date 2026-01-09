@@ -647,7 +647,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-brand-border": "transparent",
       "--gh-glass-bg": "rgba(255, 255, 255, 0.15)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.25)",
-      "--gh-glass-text": "#09090b",
+      "--gh-glass-text": "#ffffff",
       "--gh-card-bg": "#ffffff",
       "--gh-card-border": "#e4e4e7",
       "--gh-overlay-bg": "rgba(255, 255, 255, 0.8)",
