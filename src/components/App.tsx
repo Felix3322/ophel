@@ -72,6 +72,8 @@ export const App = () => {
   const shortcutPeekTimerRef = useRef<NodeJS.Timeout | null>(null)
   // ⭐ 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
+  // ⭐ 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
+  const isInputFocusedRef = useRef(false)
 
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
@@ -399,7 +401,77 @@ export const App = () => {
     }
   }, [edgeSnapState, settings?.panel?.edgeSnap])
 
-  // 自动隐藏面板 - 点击外部关闭
+  // ⭐ 监听面板内输入框的聚焦状态
+  // 解决问题：当用户在输入框中打字时，IME 输入法弹出会导致浏览器丢失 CSS :hover 状态
+  // 方案：在输入框聚焦时主动设置 isEdgePeeking = true，不依赖纯 CSS :hover
+  useEffect(() => {
+    if (!edgeSnapState || !settings?.panel?.edgeSnap) return
+
+    // 获取 Shadow DOM 根节点
+    const shadowHost = document.querySelector("plasmo-csui")
+    const shadowRoot = shadowHost?.shadowRoot
+    if (!shadowRoot) return
+
+    const handleFocusIn = (e: Event) => {
+      const target = e.target as HTMLElement
+      // 检查是否是输入元素（input、textarea 或可编辑区域）
+      const isInputElement =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.getAttribute("contenteditable") === "true"
+
+      if (isInputElement) {
+        isInputFocusedRef.current = true
+        // 确保面板保持显示状态
+        setIsEdgePeeking(true)
+        // 清除任何隐藏计时器
+        if (hideTimerRef.current) {
+          clearTimeout(hideTimerRef.current)
+          hideTimerRef.current = null
+        }
+      }
+    }
+
+    const handleFocusOut = (e: Event) => {
+      const target = e.target as HTMLElement
+      const isInputElement =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.getAttribute("contenteditable") === "true"
+
+      if (isInputElement) {
+        isInputFocusedRef.current = false
+        // 延迟检查是否需要隐藏
+        // 给用户一点时间可能重新聚焦到其他输入框
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+        hideTimerRef.current = setTimeout(() => {
+          // 如果没有其他保持显示的条件，则隐藏
+          if (
+            !isInputFocusedRef.current &&
+            !isSettingsOpenRef.current &&
+            !isInteractionActiveRef.current
+          ) {
+            const portalElements = document.body.querySelectorAll(
+              ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .settings-modal-overlay",
+            )
+            if (portalElements.length === 0) {
+              setIsEdgePeeking(false)
+            }
+          }
+        }, 300)
+      }
+    }
+
+    // 监听 Shadow DOM 内的焦点事件
+    shadowRoot.addEventListener("focusin", handleFocusIn, true)
+    shadowRoot.addEventListener("focusout", handleFocusOut, true)
+
+    return () => {
+      shadowRoot.removeEventListener("focusin", handleFocusIn, true)
+      shadowRoot.removeEventListener("focusout", handleFocusOut, true)
+    }
+  }, [edgeSnapState, settings?.panel?.edgeSnap])
+
   useEffect(() => {
     if (!settings?.panel?.autoHide || !isPanelOpen) return
 
@@ -599,6 +671,9 @@ export const App = () => {
           hideTimerRef.current = setTimeout(() => {
             // ⭐ 优先检查设置模态框状态（使用 ref 确保读取最新值）
             if (isSettingsOpenRef.current) return
+
+            // ⭐ 检查是否有输入框正在聚焦（防止 IME 输入法弹出时隐藏）
+            if (isInputFocusedRef.current) return
 
             // 检查是否有任何菜单/对话框/弹窗处于打开状态
             const interactionActive = isInteractionActiveRef.current

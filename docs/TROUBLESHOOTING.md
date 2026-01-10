@@ -1643,3 +1643,178 @@ async init() {
 | 文件                               | 变更                        |
 | :--------------------------------- | :-------------------------- |
 | `src/core/conversation/manager.ts` | **修改** - 添加首次同步逻辑 |
+
+---
+
+## 11. 边缘吸附 Peeking 状态下输入时面板自动隐藏
+
+**日期**: 2026-01-11
+
+### 症状
+
+- 面板处于边缘吸附隐藏状态，用户悬停显示面板后在搜索框输入文字
+- 鼠标没有移动，但当 **IME 输入法候选栏弹出** 时，面板立即自动缩回隐藏
+- 严重影响使用中文/日文/韩文等需要 IME 输入法的用户体验
+
+### 背景
+
+项目的边缘吸附显示机制：
+
+1. **CSS `:hover` 伪类**：面板隐藏到屏幕边缘，悬停时通过 `:hover` 显示
+2. **`.edge-peek` 类**：JavaScript 控制的显示状态，用于弹窗/交互场景
+
+```css
+/* 悬停或 peek 状态时显示 */
+.gh-main-panel.edge-snapped-right:hover,
+.gh-main-panel.edge-snapped-right.edge-peek {
+  right: 0 !important;
+}
+```
+
+用户通过悬停触发面板显示时，仅依赖 CSS `:hover`，没有添加 `.edge-peek` 类。
+
+### 调试过程
+
+#### 第一轮分析：排除 onMouseLeave
+
+最初猜测是 `onMouseLeave` 事件被触发。但用户明确表示 **鼠标没有移动**。
+
+排查 `onMouseLeave` 的触发条件和隐藏计时器逻辑后，确认该逻辑正常。
+
+#### 第二轮分析：发现 `:hover` 失效
+
+关键发现：**用户鼠标没有移动，但 CSS `:hover` 状态丢失了**。
+
+这是一个 **已知的浏览器行为**：
+
+1. 当 IME 输入法候选栏弹出时，它是一个系统级窗口
+2. 某些浏览器会认为"鼠标已经离开网页元素"（即使物理位置没变）
+3. 这导致 CSS `:hover` 伪类失效
+4. 由于没有 `.edge-peek` 类，面板立即根据 CSS 规则隐藏
+
+```
+时间线：
+1. 用户悬停在面板上 → :hover 生效 → 面板显示
+2. 用户点击搜索框开始输入
+3. 用户输入需要 IME 的字符（如拼音）→ 候选栏弹出
+4. 浏览器认为鼠标"离开"了元素 → :hover 失效
+5. 没有 .edge-peek 类 → 面板立即隐藏
+```
+
+### 根因
+
+**IME 输入法候选栏弹出会导致浏览器丢失 CSS `:hover` 状态**，而原实现仅依赖 `:hover` 来显示 peeking 面板，缺少对"用户正在输入"这一交互状态的检测。
+
+### 修复方案
+
+**监听面板内输入框的 `focus`/`blur` 事件，在聚焦时主动设置 `.edge-peek` 类**
+
+核心思路：不完全依赖不可靠的 `:hover` 伪类，当检测到输入框聚焦时，主动通过 JavaScript 控制面板显示状态。
+
+#### 1. 添加输入框聚焦状态追踪
+
+```typescript
+// App.tsx
+// 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
+const isInputFocusedRef = useRef(false)
+```
+
+#### 2. 监听 Shadow DOM 内的焦点事件
+
+```typescript
+useEffect(() => {
+  if (!edgeSnapState || !settings?.panel?.edgeSnap) return
+
+  // 获取 Shadow DOM 根节点
+  const shadowHost = document.querySelector("plasmo-csui")
+  const shadowRoot = shadowHost?.shadowRoot
+  if (!shadowRoot) return
+
+  const handleFocusIn = (e: Event) => {
+    const target = e.target as HTMLElement
+    const isInputElement =
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.getAttribute("contenteditable") === "true"
+
+    if (isInputElement) {
+      isInputFocusedRef.current = true
+      // 确保面板保持显示状态
+      setIsEdgePeeking(true)
+      // 清除任何隐藏计时器
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current)
+        hideTimerRef.current = null
+      }
+    }
+  }
+
+  const handleFocusOut = (e: Event) => {
+    const target = e.target as HTMLElement
+    const isInputElement = /* 同上判断 */
+
+    if (isInputElement) {
+      isInputFocusedRef.current = false
+      // 延迟检查是否需要隐藏
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+      hideTimerRef.current = setTimeout(() => {
+        if (!isInputFocusedRef.current && !isSettingsOpenRef.current && !isInteractionActiveRef.current) {
+          const portalElements = document.body.querySelectorAll(/* Portal 选择器 */)
+          if (portalElements.length === 0) {
+            setIsEdgePeeking(false)
+          }
+        }
+      }, 300)
+    }
+  }
+
+  // 监听 Shadow DOM 内的焦点事件
+  shadowRoot.addEventListener("focusin", handleFocusIn, true)
+  shadowRoot.addEventListener("focusout", handleFocusOut, true)
+
+  return () => {
+    shadowRoot.removeEventListener("focusin", handleFocusIn, true)
+    shadowRoot.removeEventListener("focusout", handleFocusOut, true)
+  }
+}, [edgeSnapState, settings?.panel?.edgeSnap])
+```
+
+#### 3. 更新 onMouseLeave 逻辑
+
+```typescript
+onMouseLeave={() => {
+  hideTimerRef.current = setTimeout(() => {
+    if (isSettingsOpenRef.current) return
+
+    // ⭐ 新增：检查是否有输入框正在聚焦
+    if (isInputFocusedRef.current) return
+
+    // ... 其他检查 ...
+  }, 200)
+}}
+```
+
+### 验证结果
+
+修复后的行为：
+
+1. 面板边缘吸附隐藏 ✓
+2. 悬停显示面板 ✓
+3. 在搜索框输入（触发 IME）→ 面板保持显示 ✓
+4. 输入完成，点击其他区域 → 延迟后面板自动隐藏 ✓
+
+### 经验总结
+
+| 教训                      | 说明                                                                      |
+| :------------------------ | :------------------------------------------------------------------------ |
+| **IME 影响 CSS :hover**   | 系统级的 IME 候选栏可能导致浏览器认为鼠标已离开元素，这是已知的浏览器行为 |
+| **不要完全依赖 :hover**   | 对于关键交互，应该用 JavaScript 事件作为补充，而不是完全依赖 CSS 伪类     |
+| **focusin/focusout 事件** | 这些事件会冒泡，适合在容器级别监听，比直接给每个 input 添加监听更高效     |
+| **Shadow DOM 事件监听**   | Plasmo 使用 Shadow DOM，需要在 `shadowRoot` 上监听事件，而非 `document`   |
+| **延迟隐藏策略**          | 输入框失焦后延迟 300ms 再检查隐藏，给用户切换输入框的缓冲时间             |
+
+### 文件变更
+
+| 文件                     | 变更                                                  |
+| :----------------------- | :---------------------------------------------------- |
+| `src/components/App.tsx` | **修改** - 添加输入框聚焦监听，更新 onMouseLeave 逻辑 |

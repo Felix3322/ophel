@@ -192,7 +192,7 @@ export const DEFAULT_SETTINGS: Settings = {
   panel: {
     defaultOpen: true,
     autoHide: false,
-    edgeSnap: false,
+    edgeSnap: true,
     preventAutoScroll: false,
     defaultPosition: "right",
     defaultEdgeDistance: 20,
