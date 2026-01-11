@@ -45,11 +45,31 @@ export class ChatGPTAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
+  /**
+   * 获取当前账户标识（用于会话隔离）
+   * ChatGPT 通过 localStorage._account 区分不同账户/团队
+   * 值可能为 "personal" 或团队 UUID
+   */
+  getCurrentCid(): string | null {
+    try {
+      const account = localStorage.getItem("_account")
+      if (account) {
+        // localStorage 存储的值带双引号（如 "personal"），需要 JSON.parse
+        return JSON.parse(account)
+      }
+    } catch (e) {
+      // 静默处理解析错误
+    }
+    return null
+  }
+
   // ==================== 会话管理 ====================
 
   getConversationList(): ConversationInfo[] {
     // 侧边栏会话列表：#history 内的 a[data-sidebar-item]
     const items = document.querySelectorAll('#history a[data-sidebar-item="true"]') || []
+    const cid = this.getCurrentCid() || undefined
+
     return Array.from(items)
       .map((el) => {
         const href = el.getAttribute("href") || ""
@@ -67,6 +87,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
         return {
           id,
+          cid,
           title,
           url: id ? `https://chatgpt.com/c/${id}` : "",
           isActive,
@@ -98,12 +119,14 @@ export class ChatGPTAdapter extends SiteAdapter {
         const titleEl = el.querySelector("span")
         const title = titleEl?.textContent?.trim() || ""
         const isActive = el.hasAttribute("data-active")
+        const cid = this.getCurrentCid() || undefined
         // 检测置顶
         const trailingPair = el.querySelector(".trailing-pair")
         const trailingIcons = trailingPair?.querySelectorAll(".trailing svg") || []
         const isPinned = trailingIcons.length > 1
         return {
           id,
+          cid,
           title,
           url: `https://chatgpt.com/c/${id}`,
           isActive,
