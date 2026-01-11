@@ -217,6 +217,30 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     }
   }
 
+  navigateToConversation(id: string, url?: string): boolean {
+    // 通过菜单按钮 ID 查找侧边栏会话元素
+    const conversations = DOMToolkit.query(".conversation", {
+      all: true,
+      shadow: true,
+    }) as Element[] | null
+
+    if (conversations) {
+      for (const convEl of Array.from(conversations)) {
+        const menuBtn =
+          convEl.querySelector(`#menu-${id}`) ||
+          convEl.querySelector(`.conversation-action-menu-button[id="menu-${id}"]`)
+        if (menuBtn) {
+          const btn = convEl.querySelector("button.list-item") || convEl.querySelector("button")
+          if (btn) (btn as HTMLElement).click()
+          else (convEl as HTMLElement).click()
+          return true
+        }
+      }
+    }
+    // 降级：页面刷新
+    return super.navigateToConversation(id, url)
+  }
+
   getNewChatButtonSelectors(): string[] {
     return [
       ".chat-button.list-item",

@@ -359,41 +359,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       return
     }
 
-    // 尝试在侧边栏中查找并点击（SPA 导航，不刷新页面）
-    // 方法1: 通过 jslog 属性查找（Gemini 标准版）
-    let sidebarItem = DOMToolkit.query(`.conversation[jslog*="${conv.id}"]`, {
-      shadow: true,
-    }) as HTMLElement | null
-
-    // 方法2: 遍历所有会话元素，通过菜单按钮 ID 匹配（Gemini Enterprise）
-    if (!sidebarItem) {
-      const conversations = DOMToolkit.query(".conversation", {
-        all: true,
-        shadow: true,
-      }) as Element[] | null
-      if (conversations) {
-        for (const convEl of Array.from(conversations)) {
-          const menuBtn =
-            convEl.querySelector(`#menu-${conv.id}`) ||
-            convEl.querySelector(`.conversation-action-menu-button[id="menu-${conv.id}"]`)
-          if (menuBtn) {
-            sidebarItem = convEl as HTMLElement
-            break
-          }
-        }
-      }
-    }
-
-    if (sidebarItem) {
-      // 模拟点击侧边栏会话（SPA 导航）
-      const btn =
-        sidebarItem.querySelector("button.list-item") || sidebarItem.querySelector("button")
-      if (btn) (btn as HTMLElement).click()
-      else sidebarItem.click()
-    } else if (conv.url) {
-      // 找不到侧边栏元素时，降级为页面刷新
-      window.location.href = conv.url
-    }
+    // 使用适配器的 navigateToConversation 方法（SPA 导航）
+    manager.siteAdapter?.navigateToConversation(conv.id, conv.url)
   }
 
   // 文件夹展开/折叠（手风琴模式）

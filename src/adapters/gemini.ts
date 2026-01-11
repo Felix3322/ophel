@@ -109,6 +109,22 @@ export class GeminiAdapter extends SiteAdapter {
     }
   }
 
+  navigateToConversation(id: string, url?: string): boolean {
+    // 通过 jslog 属性查找侧边栏会话元素
+    const sidebarItem = document.querySelector(
+      `.conversation[jslog*="${id}"]`,
+    ) as HTMLElement | null
+    if (sidebarItem) {
+      const btn =
+        sidebarItem.querySelector("button.list-item") || sidebarItem.querySelector("button")
+      if (btn) (btn as HTMLElement).click()
+      else sidebarItem.click()
+      return true
+    }
+    // 降级：页面刷新
+    return super.navigateToConversation(id, url)
+  }
+
   getSessionName(): string | null {
     const titleEl = document.querySelector(".conversation-title")
     if (titleEl) {

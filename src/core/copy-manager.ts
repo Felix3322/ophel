@@ -58,22 +58,23 @@ export class CopyManager {
   /**
    * 初始化公式双击复制功能
    * 禁用公式文字选择，双击复制 LaTeX 源码
+   * 支持 Gemini (.math-block/.math-inline) 和 ChatGPT (.katex)
    */
   initFormulaCopy() {
     if (this.formulaCopyInitialized) return
     this.formulaCopyInitialized = true
 
-    // 注入 CSS
+    // 注入 CSS（同时支持 Gemini 和 ChatGPT 的公式选择器）
     const styleId = "gh-formula-copy-style"
     if (!document.getElementById(styleId)) {
       const style = document.createElement("style")
       style.id = styleId
       style.textContent = `
-        .math-block, .math-inline {
+        .math-block, .math-inline, .katex {
             user-select: none !important;
             cursor: pointer !important;
         }
-        .math-block:hover, .math-inline:hover {
+        .math-block:hover, .math-inline:hover, .katex:hover {
             outline: 2px solid #4285f4;
             outline-offset: 2px;
             border-radius: 4px;
@@ -85,34 +86,55 @@ export class CopyManager {
     // 双击事件委托处理
     this.formulaDblClickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      const mathEl = target.closest(".math-block, .math-inline")
-      if (!mathEl) return
 
-      const latex = mathEl.getAttribute("data-math")
-      if (!latex) {
-        console.warn("[FormulaCopy] No data-math attribute found")
-        return
+      // 优先匹配 Gemini 格式
+      const geminiMathEl = target.closest(".math-block, .math-inline")
+      if (geminiMathEl) {
+        const latex = geminiMathEl.getAttribute("data-math")
+        if (latex) {
+          this.copyLatex(latex, geminiMathEl.classList.contains("math-block"))
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
       }
 
-      let copyText = latex
-      if (this.settings.formulaDelimiter) {
-        const isBlock = mathEl.classList.contains("math-block")
-        copyText = isBlock ? `$$${latex}$$` : `$${latex}$`
+      // 匹配 ChatGPT/KaTeX 格式
+      const katexEl = target.closest(".katex")
+      if (katexEl) {
+        // 从 annotation 标签获取 LaTeX 源码
+        const annotation = katexEl.querySelector('annotation[encoding="application/x-tex"]')
+        if (annotation?.textContent) {
+          // 检测是否为 display 模式（块级公式）
+          const mathEl = katexEl.closest(".katex-display") || katexEl.querySelector(".katex-html")
+          const isBlock = !!katexEl.closest(".katex-display")
+          this.copyLatex(annotation.textContent, isBlock)
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
       }
-
-      navigator.clipboard
-        .writeText(copyText)
-        .then(() => showToast(t("formulaCopied")))
-        .catch((err) => {
-          console.error("[FormulaCopy] Copy failed:", err)
-          showToast(t("copyFailed"))
-        })
-
-      e.preventDefault()
-      e.stopPropagation()
     }
 
     document.addEventListener("dblclick", this.formulaDblClickHandler, true)
+  }
+
+  /**
+   * 复制 LaTeX 公式
+   */
+  private copyLatex(latex: string, isBlock: boolean) {
+    let copyText = latex
+    if (this.settings.formulaDelimiter) {
+      copyText = isBlock ? `$$${latex}$$` : `$${latex}$`
+    }
+
+    navigator.clipboard
+      .writeText(copyText)
+      .then(() => showToast(t("formulaCopied")))
+      .catch((err) => {
+        console.error("[FormulaCopy] Copy failed:", err)
+        showToast(t("copyFailed"))
+      })
   }
 
   /**

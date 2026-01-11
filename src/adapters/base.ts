@@ -156,6 +156,22 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 导航到指定会话（SPA 导航，不刷新页面）
+   * 各站点适配器应覆盖此方法实现站点特定的导航逻辑
+   * @param id 会话 ID
+   * @param url 会话 URL（用于降级硬刷新）
+   * @returns 是否成功导航
+   */
+  navigateToConversation(id: string, url?: string): boolean {
+    // 默认实现：直接跳转（刷新页面）
+    if (url) {
+      window.location.href = url
+      return true
+    }
+    return false
+  }
+
   /** 滚动加载全部会话 */
   async loadAllConversations(): Promise<void> {
     const container = this.getSidebarScrollContainer()
@@ -660,6 +676,14 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 模拟点击元素（子类可覆盖以适配特殊的点击事件处理）
+   * 默认使用 HTMLElement.click()，某些站点（如 ChatGPT）需要完整的 PointerEvent 序列
+   */
+  protected simulateClick(element: HTMLElement): void {
+    element.click()
+  }
+
   /** 通用模型锁定实现 */
   lockModel(keyword: string, onSuccess?: () => void): void {
     const config = this.getModelSwitcherConfig(keyword)
@@ -700,7 +724,7 @@ export abstract class SiteAdapter {
       }
 
       isSelecting = true
-      selectorBtn.click()
+      this.simulateClick(selectorBtn)
 
       setTimeout(() => {
         const menuItems = this.findAllElementsBySelector(menuItemSelector)
@@ -711,7 +735,7 @@ export abstract class SiteAdapter {
           for (const item of menuItems) {
             const itemText = item.textContent || (item as HTMLElement).innerText || ""
             if (normalize(itemText).includes(target)) {
-              ;(item as HTMLElement).click()
+              this.simulateClick(item as HTMLElement)
               found = true
               clearInterval(timer)
               setTimeout(() => {

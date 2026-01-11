@@ -19,6 +19,7 @@ export class ModelLocker {
   private config: ModelLockSiteConfig
   private isLocked = false
   private verifyTimer: ReturnType<typeof setInterval> | null = null
+  private configDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(adapter: SiteAdapter, config: ModelLockSiteConfig) {
     this.adapter = adapter
@@ -30,11 +31,20 @@ export class ModelLocker {
     const oldKeyword = this.config.keyword
     this.config = config
 
-    // 动态开关支持：从 false→true 或 关键词变化时，重置 isLocked 并立即锁定
-    if ((!wasEnabled && config.enabled) || (config.enabled && config.keyword !== oldKeyword)) {
-      this.isLocked = false
-      // 用户手动操作时，无需等待页面初始化，立即执行
-      this.start(50)
+    // 动态开关支持：从 false→true 或 关键词变化时触发锁定
+    const needsLock =
+      (!wasEnabled && config.enabled) || (config.enabled && config.keyword !== oldKeyword)
+
+    if (needsLock) {
+      // 使用防抖：避免输入过程中频繁触发（例如 React 重渲染导致输入框短暂失焦）
+      if (this.configDebounceTimer) {
+        clearTimeout(this.configDebounceTimer)
+      }
+      this.configDebounceTimer = setTimeout(() => {
+        this.configDebounceTimer = null
+        this.isLocked = false
+        this.start(50)
+      }, 500) // 500ms 防抖
     }
   }
 
@@ -121,6 +131,11 @@ export class ModelLocker {
   }
 
   stop() {
+    // 停止防抖定时器
+    if (this.configDebounceTimer) {
+      clearTimeout(this.configDebounceTimer)
+      this.configDebounceTimer = null
+    }
     // 停止验证定时器
     if (this.verifyTimer) {
       clearInterval(this.verifyTimer)

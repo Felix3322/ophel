@@ -540,6 +540,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
           />
+
+          {/* ChatGPT */}
+          <ModelLockRow
+            label="ChatGPT"
+            siteKey="chatgpt"
+            settings={settings}
+            setSettings={setSettings}
+            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+          />
         </SettingCard>
       )}
 
