@@ -39,7 +39,17 @@ export class GeminiAdapter extends SiteAdapter {
 
   isNewConversation(): boolean {
     const path = window.location.pathname
-    return path === "/app" || path === "/app/"
+    // 普通新对话
+    if (path === "/app" || path === "/app/") return true
+    // Gem 相关页面：创建、编辑、使用 gem 新对话
+    if (path === "/gems/create" || path === "/gems/create/") return true
+    if (path.startsWith("/gems/edit/")) return true
+    // /gem/{gem_id} 是使用 gem 新对话，/gem/{gem_id}/{session_id} 是已有对话
+    if (path.startsWith("/gem/")) {
+      const parts = path.split("/").filter(Boolean) // ["gem", "gem_id"] 或 ["gem", "gem_id", "session_id"]
+      return parts.length <= 2 // 只有 gem_id，没有 session_id
+    }
+    return false
   }
 
   /** 检测是否为分享页面（只读） */
