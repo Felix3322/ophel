@@ -589,7 +589,7 @@ export class ConversationManager {
     // 检查是否为当前会话
     const currentSessionId = this.siteAdapter.getSessionId()
     if (currentSessionId !== convId) {
-      console.error("[ConversationManager] Please open the conversation first")
+      showToast(t("exportNeedOpenFirst"))
       return false
     }
 
