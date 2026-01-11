@@ -102,20 +102,28 @@ if (!window.ophelInitialized) {
       window.__ophelThemeManager = themeManager
 
       // ⭐ 同步页面原生主题与settings
-      // 恢复备份后,面板主题会正确应用,但Gemini页面本身的主题可能不一致
+      // 恢复备份后,面板主题会正确应用,但页面本身的主题可能不一致
       // 需要检测当前页面主题,如果与settings不一致则同步
       const syncPageTheme = async () => {
         const targetTheme = siteTheme.mode === "dark" ? "dark" : "light"
 
         // 检测页面实际的主题状态
+        // 1. html.dark/light (ChatGPT)
+        const htmlClass = document.documentElement.className
+        const htmlHasDark = /\bdark\b/i.test(htmlClass)
+        const htmlHasLight = /\blight\b/i.test(htmlClass)
+
+        // 2. body.dark-theme (Gemini)
         const bodyClass = document.body.className
-        const hasDarkClass = /\bdark-theme\b/i.test(bodyClass)
+        const bodyHasDarkTheme = /\bdark-theme\b/i.test(bodyClass)
         const pageColorScheme = document.body.style.colorScheme
 
         // 判断页面实际主题
         let actualPageTheme: "light" | "dark" = "light"
-        if (hasDarkClass || pageColorScheme === "dark") {
+        if (htmlHasDark || bodyHasDarkTheme || pageColorScheme === "dark") {
           actualPageTheme = "dark"
+        } else if (htmlHasLight) {
+          actualPageTheme = "light"
         }
 
         // 如果不一致，需要同步主题
@@ -125,7 +133,7 @@ if (!window.ophelInitialized) {
             themeManager.apply(targetTheme)
           }
 
-          // 2. 再调用 adapter.toggleTheme()（Gemini Enterprise 需要模拟点击）
+          // 2. 再调用 adapter.toggleTheme()（ChatGPT/Gemini Enterprise 需要模拟点击）
           // adapter.toggleTheme 对标准版返回 false 不会有副作用
           if (adapter && typeof adapter.toggleTheme === "function") {
             await adapter.toggleTheme(targetTheme)
@@ -319,13 +327,14 @@ if (!window.ophelInitialized) {
 
       // ⭐ SPA 导航监听：URL 变化时重新初始化相关模块
       // 参考油猴脚本 initUrlChangeObserver (15845行)
-      let lastUrl = window.location.href
+      // 注意：只比较 pathname，忽略 hash 变化（如 #settings）
+      let lastPathname = window.location.pathname
       let readingHistoryRestoreTimeoutId: ReturnType<typeof setTimeout> | null = null
 
       const handleUrlChange = async () => {
-        const currentUrl = window.location.href
-        if (currentUrl !== lastUrl) {
-          lastUrl = currentUrl
+        const currentPathname = window.location.pathname
+        if (currentPathname !== lastPathname) {
+          lastPathname = currentPathname
           console.log("[Ophel] URL changed, reinitializing modules...")
 
           // 1. 阅读历史：停止录制 → 延迟恢复并重启

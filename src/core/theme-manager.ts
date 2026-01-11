@@ -106,21 +106,26 @@ export class ThemeManager {
 
   /**
    * 检测当前页面的实际主题状态
-   * 优先级：Class > Data Attribute > Style (colorScheme)
+   * 优先级：html Class (ChatGPT) > body Class (Gemini) > Data Attribute > Style (colorScheme)
    */
   private detectCurrentTheme(): ThemeMode {
-    const bodyClass = document.body.className
-    const hasDarkClass = /\bdark-theme\b/i.test(bodyClass)
-    const hasLightClass = /\blight-theme\b/i.test(bodyClass)
-
-    // 1. 显式 Class (Gemini 标准版使用这种方式)
-    if (hasDarkClass) {
+    // 1. html 元素的 class（ChatGPT 使用 html.dark / html.light）
+    const htmlClass = document.documentElement.className
+    if (/\bdark\b/i.test(htmlClass)) {
       return "dark"
-    } else if (hasLightClass) {
+    } else if (/\blight\b/i.test(htmlClass)) {
       return "light"
     }
 
-    // 2. Data 属性
+    // 2. body 元素的 class（Gemini 标准版使用 body.dark-theme）
+    const bodyClass = document.body.className
+    if (/\bdark-theme\b/i.test(bodyClass)) {
+      return "dark"
+    } else if (/\blight-theme\b/i.test(bodyClass)) {
+      return "light"
+    }
+
+    // 3. Data 属性
     const dataTheme = document.body.dataset.theme || document.documentElement.dataset.theme
     if (dataTheme === "dark") {
       return "dark"
@@ -128,7 +133,7 @@ export class ThemeManager {
       return "light"
     }
 
-    // 3. Style colorScheme (Gemini Enterprise 使用这种方式)
+    // 4. Style colorScheme (Gemini Enterprise 使用这种方式)
     if (document.body.style.colorScheme === "dark") {
       return "dark"
     }
@@ -294,9 +299,10 @@ ${cssVars}
         attributes: true,
         attributeFilter: ["class", "data-theme", "style"],
       })
+      // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
       this.themeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["data-theme"],
+        attributeFilter: ["class", "data-theme"],
       })
     }
   }
@@ -344,10 +350,10 @@ ${cssVars}
         attributeFilter: ["class", "data-theme", "style"],
       })
 
-      // 同时监听 html 元素的 data-theme 属性
+      // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
       this.themeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["data-theme"],
+        attributeFilter: ["class", "data-theme"],
       })
     }
   }
@@ -367,10 +373,9 @@ ${cssVars}
    * @param event 可选的鼠标事件，用于确定动画中心
    */
   async toggle(event?: MouseEvent): Promise<ThemeMode> {
-    const bodyClass = document.body.className
-    // 同时检查 style，确保健壮性
-    const isDark = /\bdark-theme\b/i.test(bodyClass) || document.body.style.colorScheme === "dark"
-    const nextMode: ThemeMode = isDark ? "light" : "dark"
+    // 使用 detectCurrentTheme 统一检测当前主题
+    const currentMode = this.detectCurrentTheme()
+    const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
 
     // 计算动画起点坐标（从点击位置或默认右上角）
     let x = 95

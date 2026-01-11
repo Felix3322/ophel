@@ -694,4 +694,37 @@ export class ChatGPTAdapter extends SiteAdapter {
       }, menuRenderDelay)
     }, checkInterval)
   }
+
+  // ==================== 主题切换 ====================
+
+  /**
+   * 切换 ChatGPT 主题
+   * 直接修改 localStorage.theme + html.className 实现即时无感切换
+   * @param targetMode 目标主题模式
+   */
+  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+    try {
+      // 1. 修改 localStorage 持久化主题设置
+      // ChatGPT 使用 "theme" 键存储主题，值为 "dark" / "light" / "system"
+      localStorage.setItem("theme", targetMode)
+
+      // 2. 直接修改 html.className 实现即时视觉变化
+      // ChatGPT 通过 html 元素的 class 控制主题：class="dark" 或 class="light"
+      document.documentElement.className = targetMode
+
+      // 3. 触发 storage 事件，通知其他可能监听的组件
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "theme",
+          newValue: targetMode,
+          storageArea: localStorage,
+        }),
+      )
+
+      return true
+    } catch (error) {
+      console.error("[ChatGPTAdapter] toggleTheme error:", error)
+      return false
+    }
+  }
 }

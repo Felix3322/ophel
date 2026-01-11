@@ -207,6 +207,29 @@ html[dark-theme] .gh-user-query-markdown blockquote {
 html[dark-theme] .gh-user-query-markdown hr {
   border-top-color: #4b5563;
 }
+
+/* ChatGPT 深色模式（使用 html.dark 类） */
+html.dark .gh-user-query-markdown pre,
+html.dark .gh-user-query-markdown code {
+  background: rgba(255, 255, 255, 0.08);
+}
+html.dark .gh-user-query-markdown pre::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+html.dark .gh-user-query-markdown pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+html.dark .gh-user-query-markdown .gh-code-copy-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+html.dark .gh-user-query-markdown blockquote {
+  background: rgba(255, 255, 255, 0.05);
+}
+html.dark .gh-user-query-markdown hr {
+  border-top-color: #4b5563;
+}
 `
 
 /**

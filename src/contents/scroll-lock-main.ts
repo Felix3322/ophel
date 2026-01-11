@@ -27,8 +27,6 @@ export const config: PlasmoCSConfig = {
 if (!(window as any).__ophelScrollLockInitialized) {
   ;(window as any).__ophelScrollLockInitialized = true
 
-  console.log("[Ophel ScrollLock Main] Script loaded on:", window.location.hostname)
-
   // 保存原始 API
   const originalApis = {
     scrollIntoView: Element.prototype.scrollIntoView,
@@ -209,7 +207,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
     if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
-      console.log("[Ophel ScrollLock Main] Received toggle:", event.data.enabled)
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })
