@@ -126,27 +126,34 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
         {/* 变量输入区域 */}
         <div style={{ padding: "16px", overflowY: "auto", flex: 1 }}>
           {values.map((variable, index) => (
-            <div key={variable.name} style={{ marginBottom: "16px" }}>
+            <div
+              key={variable.name}
+              style={{
+                marginBottom: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}>
               <label
                 style={{
-                  fontSize: "13px",
+                  fontSize: "14px",
                   fontWeight: 500,
                   color: "var(--gh-text, #374151)",
-                  marginBottom: "6px",
-                  display: "block",
+                  whiteSpace: "nowrap",
+                  minWidth: "80px",
                 }}>
-                {`{{${variable.name}}}`}
+                {variable.name}
               </label>
               <input
                 ref={index === 0 ? firstInputRef : undefined}
                 type="text"
                 value={variable.value}
                 onChange={(e) => updateValue(index, e.target.value)}
-                placeholder={`${t("promptVariablePlaceholder") || "请输入"} ${variable.name}`}
+                placeholder={t("promptVariablePlaceholder") || "请输入"}
                 style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "8px",
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: "6px",
                   border: "1px solid var(--gh-input-border, #d1d5db)",
                   fontSize: "14px",
                   outline: "none",
