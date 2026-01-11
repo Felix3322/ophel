@@ -28,16 +28,19 @@ export const getStyle = () => {
 
 /**
  * 自定义 Shadow Host 挂载位置
- * 将容器挂载到 document.documentElement 而非 document.body
- * 这样可以避免被 ChatGPT 等页面的 React Hydration 清除
+ *
+ * 默认挂载到 document.body（大多数站点）
+ * ChatGPT 特殊处理：延迟挂载 + MutationObserver 监控重挂载
+ * 因为 ChatGPT 的 React Hydration 会清除 body 下的非预期元素
  */
 export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost, anchor, mountState }) => {
-  const isChatGPT = window.location.hostname.includes("chatgpt.com")
+  const isChatGPT =
+    window.location.hostname.includes("chatgpt.com") ||
+    window.location.hostname.includes("chat.openai.com")
 
   const doMount = () => {
-    // 挂载到 html 元素，而非 body
     if (!shadowHost.parentElement) {
-      document.documentElement.appendChild(shadowHost)
+      document.body.appendChild(shadowHost)
     }
   }
 
@@ -55,9 +58,9 @@ export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost, anchor, mou
         doMount()
       }
     })
-    observer.observe(document.documentElement, { childList: true, subtree: true })
+    observer.observe(document.body, { childList: true, subtree: false })
   } else {
-    // 其他站点直接挂载
+    // 其他站点直接挂载到 body
     doMount()
   }
 }

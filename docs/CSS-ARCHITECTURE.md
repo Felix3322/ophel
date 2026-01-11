@@ -54,10 +54,12 @@ Plasmo 框架将 React 组件渲染在 `<plasmo-csui>` 元素的 Shadow DOM 内�
 ```html
 <plasmo-csui>
   #shadow-root (open)
-    <style>/* 通过 getStyle() 注入的样式 */</style>
-    <div class="gh-root">
-      <!-- 插件 UI 组件 -->
-    </div>
+  <style>
+    /* 通过 getStyle() 注入的样式 */
+  </style>
+  <div class="gh-root">
+    <!-- 插件 UI 组件 -->
+  </div>
 </plasmo-csui>
 ```
 
@@ -83,11 +85,11 @@ document
 
 这些文件的样式会被注入到 **Plasmo 的 Shadow DOM** 中，用于插件 UI 组件。
 
-| 文件 | 用途 | 注入方式 |
-|------|------|----------|
-| `src/style.css` | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css` |
-| `src/styles/conversations.css` | 会话 Tab 专用样式，从油猴脚本迁移 | `data-text:~styles/conversations.css` |
-| `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值） | 被 `style.css` 通过 `@import` 引入 |
+| 文件                             | 用途                                             | 注入方式                              |
+| -------------------------------- | ------------------------------------------------ | ------------------------------------- |
+| `src/style.css`                  | 主样式文件，包含面板、大纲、工具栏等核心 UI 样式 | `data-text:~style.css`                |
+| `src/styles/conversations.css`   | 会话 Tab 专用样式，从油猴脚本迁移                | `data-text:~styles/conversations.css` |
+| `src/styles/theme-variables.css` | CSS 变量定义（浅色/深色模式默认值）              | 被 `style.css` 通过 `@import` 引入    |
 
 **注入代码** (`src/contents/ui-entry.tsx`)：
 
@@ -106,11 +108,11 @@ export const getStyle = () => {
 
 这些样式需要动态注入到**主世界的 `document.head`** 或 **Gemini 的 Shadow DOM** 中，因此作为字符串内嵌在 TS 文件里。
 
-| 文件 | 样式用途 | 注入目标 |
-|------|----------|----------|
-| `src/core/user-query-markdown.ts` | 用户提问 Markdown 渲染样式 | 主世界 `document.head` 或 Gemini Shadow DOM |
-| `src/utils/markdown.ts` (`getHighlightStyles()`) | 代码高亮样式 (highlight.js) | 多个上下文复用 |
-| `src/core/theme-manager.ts` | View Transitions 动画样式 | 主世界 `document.head` |
+| 文件                                             | 样式用途                    | 注入目标                                    |
+| ------------------------------------------------ | --------------------------- | ------------------------------------------- |
+| `src/core/user-query-markdown.ts`                | 用户提问 Markdown 渲染样式  | 主世界 `document.head` 或 Gemini Shadow DOM |
+| `src/utils/markdown.ts` (`getHighlightStyles()`) | 代码高亮样式 (highlight.js) | 多个上下文复用                              |
+| `src/core/theme-manager.ts`                      | View Transitions 动画样式   | 主世界 `document.head`                      |
 
 **为什么不抽离成独立 CSS 文件？**
 
@@ -138,12 +140,12 @@ private injectStyleToShadowRoot(shadowRoot: ShadowRoot) {
 
 主题变量定义在 TypeScript 中，以便支持多主题预置系统。
 
-| 文件 | 用途 |
-|------|------|
-| `src/utils/themes/index.ts` | 主题系统入口，导出预置列表和工具函数 |
-| `src/utils/themes/types.ts` | 类型定义 (`ThemePreset`, `ThemeVariables`) |
-| `src/utils/themes/light/index.ts` | 浅色主题预置 (10+ 种配色方案) |
-| `src/utils/themes/dark/index.ts` | 深色主题预置 (10+ 种配色方案) |
+| 文件                              | 用途                                       |
+| --------------------------------- | ------------------------------------------ |
+| `src/utils/themes/index.ts`       | 主题系统入口，导出预置列表和工具函数       |
+| `src/utils/themes/types.ts`       | 类型定义 (`ThemePreset`, `ThemeVariables`) |
+| `src/utils/themes/light/index.ts` | 浅色主题预置 (10+ 种配色方案)              |
+| `src/utils/themes/dark/index.ts`  | 深色主题预置 (10+ 种配色方案)              |
 
 ---
 
@@ -268,17 +270,17 @@ UserQueryMarkdownRenderer 初始化
 
 所有 CSS 变量使用 `--gh-` 前缀（Gemini Helper）：
 
-| 变量类别 | 示例 | 说明 |
-|----------|------|------|
-| 背景色 | `--gh-bg`, `--gh-bg-secondary` | 基础背景颜色 |
-| 文字色 | `--gh-text`, `--gh-text-secondary` | 文字颜色层级 |
-| 边框 | `--gh-border`, `--gh-border-active` | 边框颜色 |
-| 交互状态 | `--gh-hover`, `--gh-active-bg` | 悬停/点击状态 |
-| 品牌色 | `--gh-primary`, `--gh-header-bg` | 主题色/渐变 |
-| 阴影 | `--gh-shadow`, `--gh-shadow-sm` | 阴影效果 |
-| 输入框 | `--gh-input-bg`, `--gh-input-border` | 表单元素 |
-| 大纲 | `--gh-outline-locate-bg` | 大纲面板专用 |
-| 危险操作 | `--gh-danger`, `--gh-text-danger` | 删除/警告 |
+| 变量类别 | 示例                                 | 说明          |
+| -------- | ------------------------------------ | ------------- |
+| 背景色   | `--gh-bg`, `--gh-bg-secondary`       | 基础背景颜色  |
+| 文字色   | `--gh-text`, `--gh-text-secondary`   | 文字颜色层级  |
+| 边框     | `--gh-border`, `--gh-border-active`  | 边框颜色      |
+| 交互状态 | `--gh-hover`, `--gh-active-bg`       | 悬停/点击状态 |
+| 品牌色   | `--gh-primary`, `--gh-header-bg`     | 主题色/渐变   |
+| 阴影     | `--gh-shadow`, `--gh-shadow-sm`      | 阴影效果      |
+| 输入框   | `--gh-input-bg`, `--gh-input-border` | 表单元素      |
+| 大纲     | `--gh-outline-locate-bg`             | 大纲面板专用  |
+| 危险操作 | `--gh-danger`, `--gh-text-danger`    | 删除/警告     |
 
 ### 4.3 主题预置结构
 
@@ -333,17 +335,17 @@ src/
 
 ### 5.2 样式来源速查表
 
-| 样式类型 | 定义位置 | 注入目标 | 注入方式 |
-|----------|----------|----------|----------|
-| 面板框架 | `style.css` | Plasmo Shadow DOM | `getStyle()` |
-| 大纲组件 | `style.css` | Plasmo Shadow DOM | `getStyle()` |
-| 会话列表 | `conversations.css` | Plasmo Shadow DOM | `getStyle()` |
-| 提示词 Tab | `style.css` | Plasmo Shadow DOM | `getStyle()` |
-| CSS 变量默认值 | `theme-variables.css` | Plasmo Shadow DOM | `@import` by style.css |
-| 主题预置变量 | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM | `ThemeManager` 动态注入 |
-| 代码高亮 | `markdown.ts` | 多个上下文 | 函数返回字符串 |
-| 用户提问渲染 | `user-query-markdown.ts` | 主世界 / Gemini Shadow DOM | 动态创建 `<style>` |
-| View Transitions | `theme-manager.ts` | 主世界 `document.head` | 动态创建 `<style>` |
+| 样式类型         | 定义位置                                | 注入目标                   | 注入方式                |
+| ---------------- | --------------------------------------- | -------------------------- | ----------------------- |
+| 面板框架         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
+| 大纲组件         | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
+| 会话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
+| 提示词 Tab       | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
+| CSS 变量默认值   | `theme-variables.css`                   | Plasmo Shadow DOM          | `@import` by style.css  |
+| 主题预置变量     | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM          | `ThemeManager` 动态注入 |
+| 代码高亮         | `markdown.ts`                           | 多个上下文                 | 函数返回字符串          |
+| 用户提问渲染     | `user-query-markdown.ts`                | 主世界 / Gemini Shadow DOM | 动态创建 `<style>`      |
+| View Transitions | `theme-manager.ts`                      | 主世界 `document.head`     | 动态创建 `<style>`      |
 
 ---
 
@@ -367,6 +369,7 @@ import "./my-component.css"
 // ✅ 正确
 // ui-entry.tsx
 import myComponentCss from "data-text:~styles/my-component.css"
+
 export const getStyle = () => {
   style.textContent = cssText + "\n" + myComponentCss
   return style
@@ -399,6 +402,28 @@ export const getStyle = () => {
 **原因**：`::view-transition-*` 伪元素在 Document Root 上，Shadow DOM 内的样式无法影响。
 
 **解决**：在 `ThemeManager.injectGlobalStyles()` 中向 `document.head` 注入。
+
+### 6.5 ChatGPT 面板被 React Hydration 清除
+
+**症状**：面板在 ChatGPT 页面刷新后短暂显示后消失。
+
+**原因**：ChatGPT 的 React Hydration 会清除 `document.body` 下的非预期元素。
+
+**尝试的方案**：
+
+1. **挂载到 `<html>`**（已放弃）：避开 Hydration，但引发 Portal 渲染、pointer-events、z-index 等连锁问题
+2. **body 挂载 + 延迟监控**（采用）：ChatGPT 特殊处理，其他站点不受影响
+
+**解决**：在 `ui-entry.tsx` 中实现 `mountShadowHost`，对 ChatGPT 使用延迟挂载 + MutationObserver 监控重挂载。
+
+**Portal 渲染规则**：
+
+| 挂载位置                   | Portal 目标       | 适用场景                      |
+| -------------------------- | ----------------- | ----------------------------- |
+| `document.body`            | `document.body`   | 默认方案，简单可靠            |
+| `document.documentElement` | Shadow DOM 内容器 | 需要额外的 Context 和样式处理 |
+
+详见 [TROUBLESHOOTING.md #12](./TROUBLESHOOTING.md#12-chatgpt-面板被-react-hydration-清除)。
 
 ---
 
@@ -447,6 +472,7 @@ export const getStyle = () => {
 
 ## 📝 更新日志
 
-| 日期 | 内容 |
-|------|------|
-| 2026-01-07 | 创建文档，整理 CSS 架构 |
+| 日期       | 内容                                      |
+| ---------- | ----------------------------------------- |
+| 2026-01-11 | 添加 ChatGPT 面板挂载与 Portal 渲染的说明 |
+| 2026-01-07 | 创建文档，整理 CSS 架构                   |

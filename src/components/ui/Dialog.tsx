@@ -1,6 +1,3 @@
-/**
- * Dialog 对话框组件
- */
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 

@@ -159,10 +159,12 @@
   - 设置项位于「基本设置 → 面板 → 面板高度」
   - 文件：`storage.ts`, `MainPanel.tsx`, `GeneralPage.tsx`
 
-- [ ] **适配 ChatGPT**
+- [x] **适配 ChatGPT** ✅
 
-  - 适配 chat.openai.com
-  - 需要分析 DOM 结构，实现 SiteAdapter
+  - 适配 chat.openai.com / chatgpt.com
+  - 挂载方案：body 挂载 + 延迟重挂载机制（ChatGPT 专用）
+  - 原因：ChatGPT 的 React Hydration 会清除 body 下的非预期元素
+  - 文件：`ui-entry.tsx`、`ChatGPTAdapter`
 
 - [ ] **适配 Grok**
 
@@ -193,6 +195,7 @@
 
 | 日期       | 内容                                                        |
 | ---------- | ----------------------------------------------------------- |
+| 2026-01-11 | 完成 ChatGPT 面板挂载适配（延迟 + MutationObserver 监控）   |
 | 2026-01-11 | 适配 Gemini Gem 功能（新对话判断、阅读历史跳过）            |
 | 2026-01-11 | 添加备份恢复数据类型校验（本地导入 + WebDAV 恢复）          |
 | 2026-01-11 | 实现自定义面板高度功能 (50-100 vh)                          |

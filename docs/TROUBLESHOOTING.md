@@ -17,6 +17,7 @@
 9. [操作其他设置后主题意外重置为默认值](#9-操作其他设置后主题意外重置为默认值)
 10. [阅读记录恢复异常与性能优化排查](#10-阅读记录恢复异常与性能优化排查)
 11. [首次安装会话同步不全问题](#11-首次安装会话同步不全问题)
+12. [ChatGPT 面板被 React Hydration 清除](#12-chatgpt-面板被-react-hydration-清除)
 
 ---
 
@@ -1818,3 +1819,97 @@ onMouseLeave={() => {
 | 文件                     | 变更                                                  |
 | :----------------------- | :---------------------------------------------------- |
 | `src/components/App.tsx` | **修改** - 添加输入框聚焦监听，更新 onMouseLeave 逻辑 |
+
+---
+
+## 12. ChatGPT 面板被 React Hydration 清除
+
+**日期**: 2026-01-11
+
+### 症状
+
+- 在 ChatGPT 页面上，面板刷新后短暂显示后消失
+- 控制台没有错误，但 `<plasmo-csui>` 元素从 DOM 中被移除
+- 其他站点（Gemini 等）无此问题
+
+### 背景
+
+ChatGPT 是一个 React 应用，使用 **React Hydration** 初始化页面。Plasmo 的默认行为是将 `<plasmo-csui>` 元素挂载到 `document.body`。
+
+### 根因
+
+**React Hydration 会清除 `document.body` 下的非预期元素**。
+
+当 ChatGPT 的 React 完成 Hydration 时，它会对比服务端渲染的 HTML 和客户端期望的 DOM 结构。任何非预期的元素（如我们的 `<plasmo-csui>`）会被视为"脏元素"并被移除。
+
+### 尝试的方案
+
+#### 方案1：挂载到 `<html>` 而非 `<body>`（已放弃）
+
+将面板挂载到 `document.documentElement`（`<html>`）可以避开 Hydration，但引发了连锁问题：
+
+1. **Portal 渲染问题**：`createPortal(content, document.body)` 渲染的菜单/对话框在 Shadow DOM 外部，样式丢失
+2. **pointer-events 问题**：`.gh-root` 有 `pointer-events: none`，Portal 容器需要特殊处理
+3. **z-index 管理复杂**：需要为 Portal 容器设置层级，与现有组件的 z-index 产生冲突
+
+#### 方案2：body 挂载 + ChatGPT 特殊处理（采用）
+
+**策略**：
+
+- 默认挂载到 `document.body`（所有站点）
+- ChatGPT 特殊处理：延迟挂载 + MutationObserver 监控重挂载
+
+```typescript
+// ui-entry.tsx
+export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost }) => {
+  const isChatGPT =
+    window.location.hostname.includes("chatgpt.com") ||
+    window.location.hostname.includes("chat.openai.com")
+
+  const doMount = () => {
+    if (!shadowHost.parentElement) {
+      document.body.appendChild(shadowHost)
+    }
+  }
+
+  if (isChatGPT) {
+    // 延迟挂载，等待 React Hydration 完成
+    const delays = [500, 1000, 2000, 3000]
+    delays.forEach((delay) => setTimeout(doMount, delay))
+
+    // MutationObserver 监控，如果被移除则重新挂载
+    const observer = new MutationObserver(() => {
+      if (!shadowHost.parentElement) doMount()
+    })
+    observer.observe(document.body, { childList: true, subtree: false })
+  } else {
+    // 其他站点直接挂载
+    doMount()
+  }
+}
+```
+
+### 挂载位置对 Portal 的影响
+
+| 维度               | body 挂载                   | html 挂载                         |
+| ------------------ | --------------------------- | --------------------------------- |
+| **Portal 目标**    | `document.body`（主文档）   | 需要 Shadow DOM 内的容器          |
+| **pointer-events** | 自然继承，无需处理          | 需要显式设置                      |
+| **z-index**        | 主文档层叠上下文，清晰      | Shadow DOM 内，需额外管理         |
+| **样式隔离**       | Portal 在主文档，需注入样式 | Portal 在 Shadow DOM 内，自动隔离 |
+| **复杂度**         | ⭐️ 简单                    | ⭐️⭐️⭐️ 复杂                    |
+
+### 经验总结
+
+| 教训                     | 说明                                                             |
+| ------------------------ | ---------------------------------------------------------------- |
+| **React Hydration 清除** | React SSR 应用的 Hydration 会移除 `body` 下的非预期元素          |
+| **优先保持简单**         | body 挂载是更成熟的方案，只需对特定站点做特殊处理                |
+| **避免过度工程**         | html 挂载方案引发了多个连锁问题，不值得为一个站点做全局修改      |
+| **延迟 + 监控**          | 对于 React SPA，延迟挂载 + MutationObserver 监控是可靠的重试机制 |
+
+### 文件变更
+
+| 文件                        | 变更                                    |
+| --------------------------- | --------------------------------------- |
+| `src/contents/ui-entry.tsx` | **修改** - body 挂载 + ChatGPT 延迟监控 |
