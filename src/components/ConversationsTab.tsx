@@ -224,6 +224,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 定位当前对话
   const handleLocate = useCallback(() => {
+    // 分享页面或新对话页面不执行定位
+    if (manager.siteAdapter?.isSharePage?.() || manager.siteAdapter?.isNewConversation?.()) {
+      return
+    }
+
     const sessionId = manager.siteAdapter?.getSessionId?.()
     if (!sessionId || sessionId === "default" || sessionId === "app") return
 

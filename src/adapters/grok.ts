@@ -54,6 +54,9 @@ export class GrokAdapter extends SiteAdapter {
     return path === "/" || path === ""
   }
 
+  // 缓存弹窗中的会话数据（用于同步时弹窗已关闭的情况）
+  private cachedDialogConversations: Map<string, ConversationInfo> | null = null
+
   async loadAllConversations(): Promise<void> {
     const sidebar = document.querySelector('[data-sidebar="content"]')
     if (!sidebar) return
@@ -66,24 +69,45 @@ export class GrokAdapter extends SiteAdapter {
     )
 
     if (viewAllBtn) {
+      // 显示同步提示
+      const { showToast } = await import("~utils/toast")
+      const { t } = await import("~utils/i18n")
+      showToast(t("grokSyncingConversations") || "正在同步会话，请稍候...")
       ;(viewAllBtn as HTMLElement).click()
 
-      // 等待对话框出现和数据加载
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // 再次等待一段时间，确保虚拟列表（如果有）渲染
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // 尝试自动滚动加载更多
-      const cmdkList = document.querySelector('[cmdk-list-sizer=""], [cmdk-list]')
-      if (cmdkList) {
-        cmdkList.scrollTop = cmdkList.scrollHeight
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
-        // 再次强制获取一次会话列表，确保数据被 Ophel 获取
-        // 注意：这里我们不需要做任何事，因为 ConversationManager 会在 loadAllConversations 返回后
-        // 自动调用 getConversationList。但为了保险，我们在这里等待一下。
+      // 轮询等待对话框出现（最多 3 秒）
+      let cmdkList: Element | null = null
+      for (let i = 0; i < 30; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        cmdkList = document.querySelector('[cmdk-list-sizer=""], [cmdk-list]')
+        if (cmdkList) break
       }
+
+      // 多次滚动，确保虚拟列表加载全部内容
+      if (cmdkList) {
+        let prevHeight = 0
+        let stableCount = 0
+        const maxAttempts = 15
+
+        for (let i = 0; i < maxAttempts; i++) {
+          cmdkList.scrollTop = cmdkList.scrollHeight
+          await new Promise((resolve) => setTimeout(resolve, 400))
+
+          const currentHeight = cmdkList.scrollHeight
+          if (currentHeight === prevHeight) {
+            stableCount++
+            // 连续3次高度不变，认为已加载完毕
+            if (stableCount >= 3) break
+          } else {
+            stableCount = 0
+            prevHeight = currentHeight
+          }
+        }
+      }
+
+      // 关键修复：在关闭弹窗之前，缓存弹窗中的所有会话
+      // 这样 getConversationList 在弹窗关闭后仍然可以返回这些数据
+      this.cacheDialogConversations()
 
       // 自动关闭弹窗：模拟按下 ESC 键
       document.dispatchEvent(
@@ -98,8 +122,52 @@ export class GrokAdapter extends SiteAdapter {
         }),
       )
 
+      // 5 秒后清除缓存，确保后续调用使用实时数据
+      setTimeout(() => {
+        this.cachedDialogConversations = null
+      }, 5000)
+
       return
     }
+  }
+
+  /** 缓存弹窗中的会话数据 */
+  private cacheDialogConversations(): void {
+    const cache = new Map<string, ConversationInfo>()
+
+    // 扫描所有 cmdk 对话框中的会话链接
+    const allLinks = document.querySelectorAll('a[href^="/c/"]')
+    allLinks.forEach((link) => {
+      const href = link.getAttribute("href")
+      if (!href) return
+
+      const id = href.replace("/c/", "")
+      if (cache.has(id)) return
+
+      let title = "New Chat"
+      let isActive = false
+      const isPinned = false
+
+      // 识别 cmdk 对话框项
+      const cmdkItem = link.closest("[cmdk-item]")
+      if (cmdkItem) {
+        const titleSpan = cmdkItem.querySelector("span.truncate")
+        title = titleSpan?.textContent?.trim() || title
+        isActive = cmdkItem.querySelector('[class*="border-border-l2"]') !== null
+      } else {
+        title = link.textContent?.trim() || title
+      }
+
+      cache.set(id, {
+        id,
+        title,
+        url: href,
+        isPinned,
+        isActive,
+      })
+    })
+
+    this.cachedDialogConversations = cache
   }
 
   // ==================== 会话管理 ====================
@@ -178,6 +246,15 @@ export class GrokAdapter extends SiteAdapter {
         isActive,
       })
     })
+
+    // 3. 合并缓存的弹窗会话数据（用于弹窗已关闭但缓存未过期的情况）
+    if (this.cachedDialogConversations) {
+      this.cachedDialogConversations.forEach((conv, id) => {
+        if (!conversationMap.has(id)) {
+          conversationMap.set(id, conv)
+        }
+      })
+    }
 
     return Array.from(conversationMap.values())
   }

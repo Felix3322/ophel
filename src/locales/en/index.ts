@@ -397,6 +397,7 @@ export const en = {
   // Refresh button hints
   refreshConversations: "Refresh conversations",
   syncingConversations: "Syncing conversations...",
+  grokSyncingConversations: "Syncing conversations, please wait...",
   // Tab Order Settings
   tabOrderSettings: "Interface Layout",
   tabOrderDesc: "Adjust the display order of panel tabs",
@@ -791,6 +792,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   conversationsRefreshed: "Conversations refreshed",
   locatingOutline: "Locating in outline...",
   locatingConversation: "Locating current conversation...",
+  noConversationToLocate: "No conversation to locate",
   outlineDisabled: "Outline feature is disabled",
   conversationsDisabled: "Conversations feature is disabled",
   exportStarted: "Starting export...",

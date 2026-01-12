@@ -419,6 +419,7 @@ export const zhCN = {
   refreshOutline: "刷新大纲",
   refreshConversations: "刷新会话",
   syncingConversations: "正在同步会话列表...",
+  grokSyncingConversations: "正在同步会话，请勿操作...",
   refreshSettings: "刷新设置",
   // Tab 顺序设置
   tabOrderSettings: "界面排版",
@@ -806,6 +807,7 @@ export const zhCN = {
   conversationsRefreshed: "会话列表已刷新",
   locatingOutline: "正在定位大纲位置...",
   locatingConversation: "正在定位当前会话...",
+  noConversationToLocate: "当前无会话可定位",
   outlineDisabled: "大纲功能已禁用",
   conversationsDisabled: "会话功能已禁用",
   exportStarted: "开始导出对话...",
