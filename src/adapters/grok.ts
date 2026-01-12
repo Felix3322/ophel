@@ -692,10 +692,12 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getNetworkMonitorConfig(): NetworkMonitorConfig | null {
-    // 默认监控常见的 API 关键词，以便在请求完成后更新会话标题等
+    // 精准匹配 Grok 的流式 API 路径
+    // 接口格式：/rest/app-chat/conversations/{id}/responses
+    // 该接口使用 NDJSON 流式输出，通过 isSoftStop: true 标记生成结束
     return {
-      urlPatterns: ["completion", "conversation", "chat", "graphql"],
-      silenceThreshold: 2000,
+      urlPatterns: ["rest/app-chat/conversations"],
+      silenceThreshold: 500,
     }
   }
 
