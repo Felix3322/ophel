@@ -10,6 +10,7 @@ import {
   BackupIcon,
   FeaturesIcon,
   GeneralIcon,
+  PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -23,6 +24,7 @@ import FeaturesPage from "./options/pages/FeaturesPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
 import PermissionsPage from "./options/pages/PermissionsPage"
+import SiteSettingsPage from "./options/pages/SiteSettingsPage"
 // 样式
 import "./options.css"
 
@@ -32,6 +34,7 @@ import { SidebarFooter } from "./options/components/SidebarFooter"
 
 // 导航菜单定义
 const NAV_ITEMS = [
+  // 导航项定义
   {
     id: "general",
     Icon: GeneralIcon,
@@ -39,6 +42,12 @@ const NAV_ITEMS = [
     label: "基本设置",
   },
   { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
+  {
+    id: "siteSettings",
+    Icon: PageContentIcon,
+    labelKey: "navSiteSettings",
+    label: "站点设置",
+  },
   {
     id: "appearance",
     Icon: AppearanceIcon,
@@ -56,6 +65,7 @@ const NAV_ITEMS = [
 ]
 
 const OptionsPage = () => {
+  console.log("Options Page Rendered", NAV_ITEMS)
   const [activePage, setActivePage] = useState("general")
 
   // 初始化时检查 URL search params
@@ -103,7 +113,8 @@ const OptionsPage = () => {
         return <GeneralPage siteId={siteId} />
       case "appearance":
         return <AppearancePage siteId={siteId} />
-
+      case "siteSettings":
+        return <SiteSettingsPage siteId={siteId} />
       case "features":
         return <FeaturesPage siteId={siteId} />
       case "permissions":

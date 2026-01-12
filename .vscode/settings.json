@@ -18,7 +18,5 @@
 		"**/.plasmo": true
 	},
 	// 文件排除（资源管理器中隐藏）
-	"files.exclude": {
-		"**/.plasmo": true
-	}
+	"files.exclude": {}
 }

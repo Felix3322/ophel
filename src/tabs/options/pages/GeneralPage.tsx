@@ -88,17 +88,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
   )
 
   // 宽度布局相关状态
-  const currentPageWidth =
-    settings?.layout?.pageWidth?.[siteId as keyof typeof settings.layout.pageWidth] ||
-    settings?.layout?.pageWidth?._default
-  const currentUserQueryWidth =
-    settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
-    settings?.layout?.userQueryWidth?._default
-
-  const [tempWidth, setTempWidth] = useState(currentPageWidth?.value || "81")
-  const [tempUserQueryWidth, setTempUserQueryWidth] = useState(
-    currentUserQueryWidth?.value || "600",
-  )
 
   // 面板设置本地状态 (优化输入体验)
   const [tempEdgeDistance, setTempEdgeDistance] = useState(
@@ -108,18 +97,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     settings.panel?.edgeSnapThreshold?.toString() ?? "30",
   )
   const [tempHeight, setTempHeight] = useState(settings.panel?.height?.toString() ?? "80")
-
-  useEffect(() => {
-    if (currentPageWidth?.value) {
-      setTempWidth(currentPageWidth.value)
-    }
-  }, [currentPageWidth?.value])
-
-  useEffect(() => {
-    if (currentUserQueryWidth?.value) {
-      setTempUserQueryWidth(currentUserQueryWidth.value)
-    }
-  }, [currentUserQueryWidth?.value])
 
   // 同步 Store 设置到本地状态
   useEffect(() => {
@@ -163,110 +140,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     const clamped = Math.max(50, Math.min(100, val))
     setTempHeight(clamped.toString())
     updateNestedSetting("panel", "height", clamped)
-  }
-
-  // 页面宽度更新
-  const handleWidthBlur = () => {
-    let val = parseInt(tempWidth)
-    const unit = currentPageWidth?.unit || "%"
-
-    if (isNaN(val)) {
-      val = unit === "%" ? 81 : 1280
-    }
-
-    if (unit === "%") {
-      if (val < 40) val = 40
-      if (val > 100) val = 100
-    } else {
-      if (val <= 0) val = 1200
-    }
-
-    const finalVal = val.toString()
-    setTempWidth(finalVal)
-    if (finalVal !== currentPageWidth?.value && settings) {
-      const current = currentPageWidth || { enabled: true, value: finalVal, unit: "%" }
-      setSettings({
-        layout: {
-          ...settings.layout,
-          pageWidth: {
-            ...settings.layout?.pageWidth,
-            [siteId]: { ...current, value: finalVal },
-          },
-        },
-      })
-    }
-  }
-
-  const handleUnitChange = (newUnit: string) => {
-    const newValue = newUnit === "px" ? "1280" : "81"
-    setTempWidth(newValue)
-
-    if (settings) {
-      const newPageWidth = {
-        ...currentPageWidth,
-        unit: newUnit,
-        value: newValue,
-        enabled: currentPageWidth?.enabled ?? false,
-      }
-      setSettings({
-        layout: {
-          ...settings.layout,
-          pageWidth: {
-            ...settings.layout?.pageWidth,
-            [siteId]: newPageWidth,
-          },
-        },
-      })
-    }
-  }
-
-  // 用户问题宽度更新
-  const handleUserQueryWidthBlur = () => {
-    let val = parseInt(tempUserQueryWidth)
-    const unit = currentUserQueryWidth?.unit || "px"
-
-    if (isNaN(val)) {
-      val = unit === "%" ? 81 : 600
-    }
-
-    if (unit === "%") {
-      if (val < 40) val = 40
-      if (val > 100) val = 100
-    } else {
-      if (val <= 0) val = 600
-    }
-
-    const finalVal = val.toString()
-    setTempUserQueryWidth(finalVal)
-    if (finalVal !== currentUserQueryWidth?.value && settings) {
-      const current = currentUserQueryWidth || { enabled: true, value: finalVal, unit: "px" }
-      setSettings({
-        layout: {
-          ...settings.layout,
-          userQueryWidth: {
-            ...settings.layout?.userQueryWidth,
-            [siteId]: { ...current, value: finalVal },
-          },
-        },
-      })
-    }
-  }
-
-  const handleUserQueryUnitChange = (newUnit: string) => {
-    const newValue = newUnit === "px" ? "600" : "81"
-    setTempUserQueryWidth(newValue)
-    if (settings) {
-      const current = currentUserQueryWidth || { enabled: false, value: newValue, unit: newUnit }
-      setSettings({
-        layout: {
-          ...settings.layout,
-          userQueryWidth: {
-            ...settings.layout?.userQueryWidth,
-            [siteId]: { ...current, unit: newUnit, value: newValue },
-          },
-        },
-      })
-    }
   }
 
   // 处理拖拽开始
@@ -327,7 +200,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     { id: "panel", label: t("panelTab") || "面板" },
     { id: "tabOrder", label: t("tabOrderTab") || "界面排版" },
     { id: "shortcuts", label: t("shortcutsTab") || "快捷按钮" },
-    { id: "layout", label: t("layoutTab") || "宽度布局" },
   ]
 
   return (
@@ -564,105 +436,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             )
           })}
         </SettingCard>
-      )}
-
-      {/* ========== 宽度布局 Tab ========== */}
-      {activeTab === "layout" && (
-        <>
-          {/* 页面宽度卡片 */}
-          <SettingCard title={t("pageWidthSettings") || "页面宽度"}>
-            <ToggleRow
-              label={t("enablePageWidth") || "启用页面宽度"}
-              description={t("enablePageWidthDesc") || "调整聊天页面的最大宽度"}
-              checked={currentPageWidth?.enabled ?? false}
-              onChange={() => {
-                const current = currentPageWidth || { enabled: false, value: "81", unit: "%" }
-                setSettings({
-                  layout: {
-                    ...settings?.layout,
-                    pageWidth: {
-                      ...settings?.layout?.pageWidth,
-                      [siteId]: { ...current, enabled: !current.enabled },
-                    },
-                  },
-                })
-              }}
-            />
-
-            <SettingRow
-              label={t("pageWidthValueLabel") || "宽度值"}
-              disabled={!currentPageWidth?.enabled}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="text"
-                  className="settings-input"
-                  value={tempWidth}
-                  onChange={(e) => setTempWidth(e.target.value.replace(/[^0-9]/g, ""))}
-                  onBlur={handleWidthBlur}
-                  disabled={!currentPageWidth?.enabled}
-                  style={{ width: "80px" }}
-                />
-                <select
-                  className="settings-select"
-                  value={currentPageWidth?.unit || "%"}
-                  onChange={(e) => handleUnitChange(e.target.value)}
-                  disabled={!currentPageWidth?.enabled}>
-                  <option value="%">%</option>
-                  <option value="px">px</option>
-                </select>
-              </div>
-            </SettingRow>
-          </SettingCard>
-
-          {/* 用户问题宽度卡片 */}
-          <SettingCard title={t("userQueryWidthSettings") || "用户问题宽度"}>
-            <ToggleRow
-              label={t("enableUserQueryWidth") || "启用用户问题加宽"}
-              description={t("enableUserQueryWidthDesc") || "调整用户问题气泡的最大宽度"}
-              checked={currentUserQueryWidth?.enabled ?? false}
-              onChange={() => {
-                const current = currentUserQueryWidth || {
-                  enabled: false,
-                  value: "600",
-                  unit: "px",
-                }
-                setSettings({
-                  layout: {
-                    ...settings?.layout,
-                    userQueryWidth: {
-                      ...settings?.layout?.userQueryWidth,
-                      [siteId]: { ...current, enabled: !current.enabled },
-                    },
-                  },
-                })
-              }}
-            />
-
-            <SettingRow
-              label={t("userQueryWidthValueLabel") || "问题宽度"}
-              disabled={!currentUserQueryWidth?.enabled}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="text"
-                  className="settings-input"
-                  value={tempUserQueryWidth}
-                  onChange={(e) => setTempUserQueryWidth(e.target.value.replace(/[^0-9]/g, ""))}
-                  onBlur={handleUserQueryWidthBlur}
-                  disabled={!currentUserQueryWidth?.enabled}
-                  style={{ width: "80px" }}
-                />
-                <select
-                  className="settings-select"
-                  value={currentUserQueryWidth?.unit || "px"}
-                  onChange={(e) => handleUserQueryUnitChange(e.target.value)}
-                  disabled={!currentUserQueryWidth?.enabled}>
-                  <option value="px">px</option>
-                  <option value="%">%</option>
-                </select>
-              </div>
-            </SettingRow>
-          </SettingCard>
-        </>
       )}
     </div>
   )

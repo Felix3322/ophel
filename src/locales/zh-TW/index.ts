@@ -5,6 +5,7 @@ export const zhTW = {
 
   // ======== Options 頁面導航 ========
   navGeneral: "基本設定",
+  navSiteSettings: "站點配置",
   navAppearance: "外觀主題",
   navPageContent: "頁面與內容",
   navFeatures: "功能模組",
@@ -13,6 +14,9 @@ export const zhTW = {
   navAbout: "關於",
 
   // ======== Options 頁面標題與描述 ========
+  // Site Settings
+  siteSettingsPageDesc: "配置站點相關的頁面佈局和內容處理",
+
   generalPageDesc: "配置擴充功能的基本行為和介面",
   appearancePageDesc: "自定義擴充功能的視覺樣式和主題",
   pageContentPageDesc: "調整頁面排版和內容顯示樣式",
@@ -707,7 +711,7 @@ export const zhTW = {
 請直接輸出優化後的程式碼區塊，並在後面附帶簡短的優化點總結。`,
 
   // ======== 快捷鍵設置頁面 ========
-  navShortcuts: "鍵位設置",
+  navShortcuts: "快捷鍵位",
   shortcutsPageDesc: "配置鍵盤快捷鍵以快速執行操作",
   shortcutsGlobalSettings: "快捷鍵設置",
   enableShortcuts: "啟用快捷鍵",

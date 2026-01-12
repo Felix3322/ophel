@@ -11,6 +11,7 @@ import {
   FeaturesIcon,
   GeneralIcon,
   KeyboardIcon,
+  PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -22,6 +23,7 @@ import FeaturesPage from "~tabs/options/pages/FeaturesPage"
 import GeneralPage from "~tabs/options/pages/GeneralPage"
 import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
+import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { setLanguage, t } from "~utils/i18n"
 
@@ -33,14 +35,20 @@ const NAV_ITEMS = [
     labelKey: "navGeneral",
     label: "基本设置",
   },
-  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   {
     id: "appearance",
     Icon: AppearanceIcon,
     labelKey: "navAppearance",
     label: "外观主题",
   },
-  { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "键位设置" },
+  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
+  {
+    id: "siteSettings",
+    Icon: PageContentIcon,
+    labelKey: "navSiteSettings",
+    label: "站点配置",
+  },
+  { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
   { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "数据管理" },
   {
     id: "permissions",
@@ -169,6 +177,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     switch (activePage) {
       case "general":
         return <GeneralPage siteId={siteId} />
+      case "siteSettings":
+        return <SiteSettingsPage siteId={siteId} />
       case "appearance":
         return <AppearancePage siteId={siteId} />
       case "features":

@@ -5,6 +5,7 @@ export const zhCN = {
 
   // ======== Options 页面导航 ========
   navGeneral: "基本设置",
+  navSiteSettings: "站点配置",
   navAppearance: "外观主题",
   navPageContent: "页面与内容",
   navFeatures: "功能模块",
@@ -13,6 +14,9 @@ export const zhCN = {
   navAbout: "关于",
 
   // ======== Options 页面标题与描述 ========
+  // Site Settings
+  siteSettingsPageDesc: "配置站点相关的页面布局和内容处理",
+
   generalPageDesc: "配置扩展的基本行为和界面",
   appearancePageDesc: "自定义扩展的视觉样式和主题",
   pageContentPageDesc: "调整页面布局和内容显示样式",
@@ -79,7 +83,7 @@ export const zhCN = {
   unnamedStyle: "未命名样式",
 
   // ======== 宽度布局 ========
-  layoutTab: "宽度布局",
+  layoutTab: "页面布局",
   contentStyleTab: "内容处理",
   pageWidthSettings: "页面宽度",
   enablePageWidthDesc: "调整聊天页面的最大宽度",
@@ -742,7 +746,7 @@ export const zhCN = {
 请直接输出优化后的代码块，并在后面附带简短的优化点总结。`,
 
   // ======== 快捷键设置页面 ========
-  navShortcuts: "键位设置",
+  navShortcuts: "快捷键位",
   shortcutsPageDesc: "配置键盘快捷键以快速执行操作",
   shortcutsGlobalSettings: "快捷键设置",
   enableShortcuts: "启用快捷键",

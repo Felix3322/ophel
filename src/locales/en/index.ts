@@ -5,6 +5,7 @@ export const en = {
 
   // ======== Options Page Navigation ========
   navGeneral: "General",
+  navSiteSettings: "Site Config",
   navAppearance: "Appearance",
   navPageContent: "Page & Content",
   navFeatures: "Features",
@@ -13,6 +14,9 @@ export const en = {
   navAbout: "About",
 
   // ======== Options Page Titles & Descriptions ========
+  // Site Settings
+  siteSettingsPageDesc: "Configure site-specific layout and content processing",
+
   generalPageDesc: "Configure extension behavior and interface",
   appearancePageDesc: "Customize visual styles and themes",
   pageContentPageDesc: "Adjust page layout and content display",

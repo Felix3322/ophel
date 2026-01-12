@@ -19,77 +19,6 @@ interface FeaturesPageProps {
   siteId: string
 }
 
-// 模型锁定行组件 - 只在失焦或按回车时保存
-const ModelLockRow: React.FC<{
-  label: string
-  siteKey: string
-  settings: Settings
-  setSettings: (settings: Partial<Settings>) => void
-  placeholder: string
-}> = ({ label, siteKey, settings, setSettings, placeholder }) => {
-  const currentConfig = settings.modelLock?.[siteKey] || { enabled: false, keyword: "" }
-  const [localKeyword, setLocalKeyword] = useState(currentConfig.keyword)
-
-  // 同步外部值变化
-  React.useEffect(() => {
-    setLocalKeyword(currentConfig.keyword)
-  }, [currentConfig.keyword])
-
-  // 保存关键词
-  const saveKeyword = useCallback(() => {
-    if (localKeyword !== currentConfig.keyword) {
-      setSettings({
-        modelLock: {
-          ...settings.modelLock,
-          [siteKey]: { ...currentConfig, keyword: localKeyword },
-        },
-      })
-    }
-  }, [localKeyword, currentConfig, settings.modelLock, siteKey, setSettings])
-
-  // 切换启用状态
-  const toggleEnabled = () => {
-    setSettings({
-      modelLock: {
-        ...settings.modelLock,
-        [siteKey]: { ...currentConfig, enabled: !currentConfig.enabled },
-      },
-    })
-  }
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        marginBottom: "12px",
-      }}>
-      <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>{label}</span>
-      <input
-        type="text"
-        className="settings-input"
-        value={localKeyword}
-        onChange={(e) => setLocalKeyword(e.target.value)}
-        onBlur={saveKeyword}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            saveKeyword()
-            ;(e.target as HTMLInputElement).blur()
-          }
-        }}
-        placeholder={placeholder}
-        disabled={!currentConfig.enabled}
-        style={{
-          width: "200px",
-          opacity: currentConfig.enabled ? 1 : 0.5,
-        }}
-      />
-      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
-    </div>
-  )
-}
-
 const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
   const [activeTab, setActiveTab] = useState("tab")
   const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
@@ -97,11 +26,9 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
   if (!settings) return null
 
   const tabs = [
-    { id: "tab", label: t("tabSettingsTab") || "标签页" },
-    { id: "content", label: t("contentStyleTab") || "内容处理" },
     { id: "outline", label: t("tabOutline") || "大纲" },
     { id: "conversations", label: t("tabConversations") || "会话" },
-    { id: "modelLock", label: t("modelLockTitle") || "模型锁定" },
+    { id: "tab", label: t("tabSettingsTab") || "标签页" },
     { id: "readingHistory", label: t("readingHistoryTitle") || "阅读历史" },
   ]
 
@@ -282,104 +209,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
         </>
       )}
 
-      {/* ========== 内容处理 Tab ========== */}
-      {activeTab === "content" && (
-        <>
-          {/* 内容处理卡片 */}
-          <SettingCard
-            title={t("contentProcessing") || "内容处理"}
-            description={t("contentProcessingDesc") || "配置 AI 回复内容的处理方式"}>
-            <ToggleRow
-              label={t("markdownFixLabel") || "Markdown 加粗修复"}
-              description={t("markdownFixDesc") || "修复 Gemini 响应中未渲染的加粗文本"}
-              checked={settings.content?.markdownFix ?? true}
-              onChange={() =>
-                updateNestedSetting("content", "markdownFix", !settings.content?.markdownFix)
-              }
-            />
-
-            <ToggleRow
-              label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
-              description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
-              checked={settings.content?.userQueryMarkdown ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "userQueryMarkdown",
-                  !settings.content?.userQueryMarkdown,
-                )
-              }
-            />
-
-            <ToggleRow
-              label={t("watermarkRemovalLabel") || "图片水印移除"}
-              description={t("watermarkRemovalDesc") || "自动移除 AI 生成图片的水印"}
-              checked={settings.content?.watermarkRemoval ?? false}
-              onChange={async () => {
-                const checked = settings.content?.watermarkRemoval
-                if (!checked) {
-                  // 1. 检查是否已有权限
-                  const response = await sendToBackground({
-                    type: MSG_CHECK_PERMISSIONS,
-                    origins: ["<all_urls>"],
-                  })
-
-                  if (response.success && response.hasPermission) {
-                    updateNestedSetting("content", "watermarkRemoval", true)
-                  } else {
-                    // 2. 请求权限 (打开独立窗口)
-                    await sendToBackground({
-                      type: MSG_REQUEST_PERMISSIONS,
-                      permType: "allUrls",
-                    })
-                    showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
-                  }
-                } else {
-                  updateNestedSetting("content", "watermarkRemoval", false)
-                }
-              }}
-            />
-          </SettingCard>
-
-          {/* 交互增强卡片 */}
-          <SettingCard
-            title={t("interactionEnhance") || "交互增强"}
-            description={t("interactionEnhanceDesc") || "增强公式和表格的交互功能"}>
-            <ToggleRow
-              label={t("formulaCopyLabel") || "双击复制公式"}
-              description={t("formulaCopyDesc") || "双击数学公式即可复制其 LaTeX 源码"}
-              checked={settings.content?.formulaCopy ?? true}
-              onChange={() =>
-                updateNestedSetting("content", "formulaCopy", !settings.content?.formulaCopy)
-              }
-            />
-
-            <ToggleRow
-              label={t("formulaDelimiterLabel") || "公式分隔符转换"}
-              description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
-              checked={settings.content?.formulaDelimiter ?? true}
-              disabled={!settings.content?.formulaCopy}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "formulaDelimiter",
-                  !settings.content?.formulaDelimiter,
-                )
-              }
-            />
-
-            <ToggleRow
-              label={t("tableCopyLabel") || "表格复制 Markdown"}
-              description={t("tableCopyDesc") || "表格右上角添加复制按钮"}
-              checked={settings.content?.tableCopy ?? true}
-              onChange={() =>
-                updateNestedSetting("content", "tableCopy", !settings.content?.tableCopy)
-              }
-            />
-          </SettingCard>
-        </>
-      )}
-
       {/* ========== 大纲 Tab ========== */}
       {activeTab === "outline" && (
         <>
@@ -516,49 +345,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
             />
           </SettingCard>
         </>
-      )}
-
-      {/* ========== 模型锁定 Tab ========== */}
-      {activeTab === "modelLock" && (
-        <SettingCard
-          title={t("modelLockTitle") || "模型锁定"}
-          description={t("modelLockDesc") || "进入页面后自动切换到指定模型"}>
-          {/* Gemini */}
-          <ModelLockRow
-            label="Gemini"
-            siteKey="gemini"
-            settings={settings}
-            setSettings={setSettings}
-            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
-          />
-
-          {/* Gemini Enterprise */}
-          <ModelLockRow
-            label="Gemini Enterprise"
-            siteKey="gemini-enterprise"
-            settings={settings}
-            setSettings={setSettings}
-            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
-          />
-
-          {/* ChatGPT */}
-          <ModelLockRow
-            label="ChatGPT"
-            siteKey="chatgpt"
-            settings={settings}
-            setSettings={setSettings}
-            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
-          />
-
-          {/* Grok */}
-          <ModelLockRow
-            label="Grok"
-            siteKey="grok"
-            settings={settings}
-            setSettings={setSettings}
-            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
-          />
-        </SettingCard>
       )}
 
       {/* ========== 阅读历史 Tab ========== */}
