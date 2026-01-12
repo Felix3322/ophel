@@ -832,17 +832,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     }
   }
 
-  /** 覆盖基类：处理锁定后的清理 */
+  /** 覆盖基类：处理锁定后的清理（已废弃的清空逻辑已移除）*/
   lockModel(keyword: string, onSuccess: (() => void) | null = null): void {
-    super.lockModel(keyword, () => {
-      // 执行传入的回调
-      if (onSuccess) onSuccess()
-
-      // 执行企业版特定的清理：锁定模型后，重新插入零宽字符修复中文输入
-      if (this.clearOnInit) {
-        setTimeout(() => this.clearTextarea(), 300)
-      }
-    })
+    super.lockModel(keyword, onSuccess ?? undefined)
   }
 
   /** 排除侧边栏中的 Shadow DOM 样式注入 */

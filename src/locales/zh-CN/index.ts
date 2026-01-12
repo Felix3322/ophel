@@ -264,6 +264,9 @@ export const zhCN = {
   modelKeywordPlaceholder: "模型关键词",
   modelKeywordExample: "例如: 3 Pro",
   modelKeywordDesc: "用于匹配目标模型名称",
+  modelLockFailedNoButton: "模型选择器未找到",
+  modelLockFailedMenuEmpty: "模型菜单加载失败",
+  modelLockFailedNotFound: '未找到模型 "{model}"',
   // 分类管理
   categoryManage: "分类管理",
   categoryEmpty: "暂无分类，添加提示词时会自动创建分类",

@@ -190,6 +190,10 @@ export class ClaudeAdapter extends SiteAdapter {
       menuItemSelector: 'div[role="menuitem"]',
       checkInterval: 1000,
       maxAttempts: 20,
+      // 语言无关：通过 aria-haspopup 检测子菜单触发器
+      subMenuSelector: '[aria-haspopup="menu"]',
+      // 文字备选（多语言）
+      subMenuTriggers: ["more models", "更多模型"],
     }
   }
 
@@ -210,122 +214,6 @@ export class ClaudeAdapter extends SiteAdapter {
         }),
       )
     }
-  }
-
-  /**
-   * 覆盖模型锁定方法以支持 Claude 的多级菜单结构
-   * Claude 模型菜单可能有 "More models" (更多模型) 子菜单
-   */
-  lockModel(keyword: string, onSuccess?: () => void): void {
-    const config = this.getModelSwitcherConfig(keyword)
-    if (!config) return
-
-    const {
-      targetModelKeyword,
-      selectorButtonSelectors,
-      menuItemSelector,
-      checkInterval = 1000,
-      maxAttempts = 15,
-      menuRenderDelay = 500,
-    } = config
-
-    let attempts = 0
-    let isSelecting = false
-    const normalize = (str: string) => (str || "").toLowerCase().trim()
-    const target = normalize(targetModelKeyword)
-
-    const timer = setInterval(() => {
-      attempts++
-      if (attempts > maxAttempts) {
-        console.warn(`Ophel: Model lock timed out for "${targetModelKeyword}"`)
-        clearInterval(timer)
-        return
-      }
-
-      if (isSelecting) return
-
-      const selectorBtn = this.findElementBySelectors(selectorButtonSelectors)
-      if (!selectorBtn) return
-
-      const currentText = selectorBtn.textContent || selectorBtn.innerText || ""
-      if (normalize(currentText).includes(target)) {
-        clearInterval(timer)
-        if (onSuccess) onSuccess()
-        return
-      }
-
-      isSelecting = true
-      this.simulateClick(selectorBtn)
-
-      setTimeout(() => {
-        const menuItems = this.findAllElementsBySelector(menuItemSelector)
-
-        if (menuItems.length > 0) {
-          let found = false
-
-          // 1. 尝试直接查找目标
-          for (const item of menuItems) {
-            const itemText = item.textContent || (item as HTMLElement).innerText || ""
-            if (normalize(itemText).includes(target)) {
-              this.simulateClick(item as HTMLElement)
-              found = true
-              clearInterval(timer)
-              setTimeout(() => {
-                document.body.click() // 关闭菜单
-                if (onSuccess) onSuccess()
-              }, 100)
-              return
-            }
-          }
-
-          // 2. 如果没找到，查找 "More models" / "更多模型"
-          if (!found) {
-            const moreModelsItem = menuItems.find((item) => {
-              const t = normalize(item.textContent || "")
-              return t.includes("more models") || t.includes("更多模型")
-            })
-
-            if (moreModelsItem) {
-              // 点击展开更多模型
-              this.simulateClick(moreModelsItem as HTMLElement)
-
-              // 等待子菜单渲染
-              setTimeout(() => {
-                const subItems = this.findAllElementsBySelector(menuItemSelector)
-                for (const item of subItems) {
-                  const itemText = item.textContent || (item as HTMLElement).innerText || ""
-                  if (normalize(itemText).includes(target)) {
-                    this.simulateClick(item as HTMLElement)
-                    found = true
-                    clearInterval(timer)
-                    setTimeout(() => {
-                      document.body.click()
-                      if (onSuccess) onSuccess()
-                    }, 100)
-                    return
-                  }
-                }
-
-                // 仍未找到
-                console.warn(`Ophel: Model "${target}" not found in sub-menu.`)
-                clearInterval(timer)
-                document.body.click()
-                isSelecting = false
-              }, menuRenderDelay)
-            } else {
-              // 没有更多模型选项
-              console.warn(`Ophel: Model "${target}" not found and no 'More models' option.`)
-              clearInterval(timer)
-              document.body.click()
-              isSelecting = false
-            }
-          }
-        } else {
-          isSelecting = false
-          document.body.click()
-        }
-      }, menuRenderDelay)
-    }, checkInterval)
   }
 
   // ==================== 杂项 ====================

@@ -176,6 +176,9 @@ export const zhTW = {
   modelKeywordPlaceholder: "模型關鍵詞",
   modelKeywordExample: "例如: 3 Pro",
   modelKeywordDesc: "用於匹配目標模型名稱",
+  modelLockFailedNoButton: "模型選擇器未找到",
+  modelLockFailedMenuEmpty: "模型選單載入失敗",
+  modelLockFailedNotFound: '未找到模型 "{model}"',
   // 分類管理
   categoryManage: "分類管理",
   categoryEmpty: "暫無分類，新增提示詞時會自動建立分類",

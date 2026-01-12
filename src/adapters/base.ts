@@ -37,6 +37,10 @@ export interface ModelSwitcherConfig {
   checkInterval?: number
   maxAttempts?: number
   menuRenderDelay?: number
+  /** 子菜单触发关键字（可选），如 ["more models", "更多模型", "传统", "legacy"] */
+  subMenuTriggers?: string[]
+  /** 子菜单选择器（可选），用于语言无关匹配，如 '[aria-haspopup="menu"]' */
+  subMenuSelector?: string
 }
 
 export interface ExportConfig {
@@ -711,7 +715,14 @@ export abstract class SiteAdapter {
     return false
   }
 
-  /** 通用模型锁定实现 */
+  /**
+   * 通用模型锁定实现（分阶段执行，优化用户体验）
+   *
+   * 阶段1: 等待按钮出现（最多 10 秒）
+   * 阶段2: 检查当前模型是否已是目标
+   * 阶段3: 打开菜单搜索（仅一次，失败立即停止）
+   * 阶段4: 验证切换成功（最多 3 次）
+   */
   lockModel(keyword: string, onSuccess?: () => void): void {
     const config = this.getModelSwitcherConfig(keyword)
     if (!config) return
@@ -720,71 +731,251 @@ export abstract class SiteAdapter {
       targetModelKeyword,
       selectorButtonSelectors,
       menuItemSelector,
-      checkInterval = 1500,
-      maxAttempts = 20,
+      checkInterval = 1000,
+      maxAttempts = 10,
       menuRenderDelay = 500,
+      subMenuTriggers = [],
+      subMenuSelector,
     } = config
 
-    let attempts = 0
-    let isSelecting = false
     const normalize = (str: string) => (str || "").toLowerCase().trim()
     const target = normalize(targetModelKeyword)
 
-    const timer = setInterval(() => {
-      attempts++
-      if (attempts > maxAttempts) {
-        console.warn(`Ophel: Model lock timed out for "${targetModelKeyword}"`)
-        clearInterval(timer)
-        return
-      }
+    let buttonWaitAttempts = 0
+    const maxButtonWait = maxAttempts // 等待按钮最多 10 次
 
-      if (isSelecting) return
+    // 阶段1: 等待按钮出现
+    const waitForButton = setInterval(() => {
+      buttonWaitAttempts++
 
       const selectorBtn = this.findElementBySelectors(selectorButtonSelectors)
-      if (!selectorBtn) return
 
-      const currentText = selectorBtn.textContent || selectorBtn.innerText || ""
-      if (normalize(currentText).includes(target)) {
-        clearInterval(timer)
-        if (onSuccess) onSuccess()
+      if (selectorBtn) {
+        clearInterval(waitForButton)
+
+        // 阶段2: 检查当前模型
+        const currentText = normalize(selectorBtn.textContent || selectorBtn.innerText || "")
+        if (currentText.includes(target)) {
+          // 已经是目标模型，直接成功
+          if (onSuccess) onSuccess()
+          return
+        }
+
+        // 阶段3: 打开菜单搜索
+        this.performMenuSearch(
+          selectorBtn,
+          target,
+          menuItemSelector,
+          menuRenderDelay,
+          subMenuTriggers,
+          subMenuSelector,
+          onSuccess,
+        )
+      } else if (buttonWaitAttempts >= maxButtonWait) {
+        clearInterval(waitForButton)
+        console.warn(`Ophel: Model selector button not found after ${maxButtonWait} attempts.`)
+        this.showModelLockFailure(targetModelKeyword, "button_not_found")
+      }
+    }, checkInterval)
+  }
+
+  /**
+   * 执行菜单搜索（仅执行一次，不重复打开关闭）
+   */
+  private performMenuSearch(
+    selectorBtn: HTMLElement,
+    target: string,
+    menuItemSelector: string,
+    menuRenderDelay: number,
+    subMenuTriggers: string[],
+    subMenuSelector: string | undefined,
+    onSuccess?: () => void,
+  ): void {
+    const normalize = (str: string) => (str || "").toLowerCase().trim()
+
+    // 打开菜单
+    this.simulateClick(selectorBtn)
+
+    setTimeout(() => {
+      const menuItems = this.findAllElementsBySelector(menuItemSelector)
+
+      if (menuItems.length === 0) {
+        // 菜单可能还没加载，短暂等待再试一次
+        setTimeout(() => {
+          const retryItems = this.findAllElementsBySelector(menuItemSelector)
+          if (retryItems.length === 0) {
+            document.body.click()
+            console.warn(`Ophel: Menu items not found.`)
+            this.showModelLockFailure(target, "menu_empty")
+            return
+          }
+          this.searchAndSelectModel(
+            retryItems,
+            target,
+            menuItemSelector,
+            menuRenderDelay,
+            subMenuTriggers,
+            subMenuSelector,
+            onSuccess,
+          )
+        }, menuRenderDelay)
         return
       }
 
-      isSelecting = true
-      this.simulateClick(selectorBtn)
+      this.searchAndSelectModel(
+        menuItems,
+        target,
+        menuItemSelector,
+        menuRenderDelay,
+        subMenuTriggers,
+        subMenuSelector,
+        onSuccess,
+      )
+    }, menuRenderDelay)
+  }
+
+  /**
+   * 在菜单项中搜索并选择目标模型
+   */
+  private searchAndSelectModel(
+    menuItems: Element[],
+    target: string,
+    menuItemSelector: string,
+    menuRenderDelay: number,
+    subMenuTriggers: string[],
+    subMenuSelector: string | undefined,
+    onSuccess?: () => void,
+  ): void {
+    const normalize = (str: string) => (str || "").toLowerCase().trim()
+
+    // 1. 在主菜单中查找（优先精确匹配）
+    const matchedItem = this.findBestMatchingItem(menuItems, target)
+    if (matchedItem) {
+      this.simulateClick(matchedItem as HTMLElement)
+      setTimeout(() => {
+        document.body.click()
+        if (onSuccess) onSuccess()
+      }, 100)
+      return
+    }
+
+    // 2. 尝试子菜单
+    // 优先使用 selector（语言无关），文字匹配作为备选
+    let subMenuItem: Element | undefined
+
+    // 2a. 优先通过 selector 查找（如 aria-haspopup="menu"）
+    if (subMenuSelector) {
+      subMenuItem = menuItems.find((item) => item.matches(subMenuSelector))
+    }
+
+    // 2b. 备选：通过文字关键字匹配
+    if (!subMenuItem && subMenuTriggers.length > 0) {
+      subMenuItem = menuItems.find((item) => {
+        const text = normalize(item.textContent || "")
+        return subMenuTriggers.some((trigger) => text.includes(normalize(trigger)))
+      })
+    }
+
+    if (subMenuItem) {
+      this.simulateClick(subMenuItem as HTMLElement)
 
       setTimeout(() => {
-        const menuItems = this.findAllElementsBySelector(menuItemSelector)
-
-        if (menuItems.length > 0) {
-          let found = false
-
-          for (const item of menuItems) {
-            const itemText = item.textContent || (item as HTMLElement).innerText || ""
-            if (normalize(itemText).includes(target)) {
-              this.simulateClick(item as HTMLElement)
-              found = true
-              clearInterval(timer)
-              setTimeout(() => {
-                document.body.click()
-                if (onSuccess) onSuccess()
-              }, 100)
-              break
-            }
-          }
-
-          if (!found) {
-            console.warn(`Ophel: Target model "${targetModelKeyword}" not found in menu. Aborting.`)
-            clearInterval(timer)
+        const subItems = this.findAllElementsBySelector(menuItemSelector)
+        const matchedSubItem = this.findBestMatchingItem(subItems, target)
+        if (matchedSubItem) {
+          this.simulateClick(matchedSubItem as HTMLElement)
+          setTimeout(() => {
             document.body.click()
-            isSelecting = false
-          }
-        } else {
-          isSelecting = false
-          document.body.click()
+            if (onSuccess) onSuccess()
+          }, 100)
+          return
         }
+
+        // 子菜单中也没找到
+        document.body.click()
+        console.warn(`Ophel: Model "${target}" not found in sub-menu.`)
+        this.showModelLockFailure(target, "not_found")
       }, menuRenderDelay)
-    }, checkInterval)
+      return
+    }
+
+    // 3. 主菜单和子菜单都没找到
+    document.body.click()
+    console.warn(`Ophel: Model "${target}" not found in menu.`)
+    this.showModelLockFailure(target, "not_found")
+  }
+
+  /**
+   * 查找最佳匹配的菜单项
+   * 匹配优先级：精确匹配 > 结尾匹配 > 包含匹配
+   * 这确保 "gpt-5.1" 会匹配 "GPT-5.1" 而不是 "GPT-5.1 Instant"
+   */
+  private findBestMatchingItem(menuItems: Element[], target: string): Element | undefined {
+    const normalize = (str: string) => (str || "").toLowerCase().trim()
+
+    // 优先级1: 精确匹配（文本完全相等，或去掉描述后相等）
+    for (const item of menuItems) {
+      const itemText = normalize(item.textContent || (item as HTMLElement).innerText || "")
+      // 有些菜单项包含描述文字，提取第一行/主要文本
+      const mainText = itemText.split("\n")[0].trim()
+      if (mainText === target || itemText === target) {
+        return item
+      }
+    }
+
+    // 优先级2: 结尾匹配（目标是菜单项文本的结尾部分）
+    // 例如 target="5.1" 匹配 "gpt-5.1" 但不匹配 "gpt-5.1 instant"
+    for (const item of menuItems) {
+      const itemText = normalize(item.textContent || (item as HTMLElement).innerText || "")
+      const mainText = itemText.split("\n")[0].trim()
+      if (mainText.endsWith(target)) {
+        return item
+      }
+    }
+
+    // 优先级3: 包含匹配（作为最后的备选）
+    for (const item of menuItems) {
+      const itemText = normalize(item.textContent || (item as HTMLElement).innerText || "")
+      if (itemText.includes(target)) {
+        return item
+      }
+    }
+
+    return undefined
+  }
+
+  /**
+   * 显示模型锁定失败的 Toast 提示
+   */
+  private async showModelLockFailure(
+    keyword: string,
+    reason: "button_not_found" | "menu_empty" | "not_found",
+  ): Promise<void> {
+    try {
+      const { showToast } = await import("~utils/toast")
+      const { t } = await import("~utils/i18n")
+
+      let message: string
+      switch (reason) {
+        case "button_not_found":
+          message = t("modelLockFailedNoButton") || `模型选择器未找到`
+          break
+        case "menu_empty":
+          message = t("modelLockFailedMenuEmpty") || `模型菜单加载失败`
+          break
+        case "not_found":
+        default:
+          message = (t("modelLockFailedNotFound") || `未找到模型 "{model}"`).replace(
+            "{model}",
+            keyword,
+          )
+      }
+
+      showToast(message, 3000)
+    } catch (e) {
+      // Toast 加载失败时静默处理
+      console.error("Ophel: Failed to show toast:", e)
+    }
   }
 
   /** 通过选择器列表查找单个元素（支持 Shadow DOM 穿透） */

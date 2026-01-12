@@ -572,6 +572,10 @@ export class ChatGPTAdapter extends SiteAdapter {
       checkInterval: 1000,
       maxAttempts: 15,
       menuRenderDelay: 500, // ChatGPT 菜单渲染较慢，增加延迟
+      // 语言无关：通过 aria-haspopup 检测子菜单触发器
+      subMenuSelector: '[aria-haspopup="menu"]',
+      // 文字备选（多语言）
+      subMenuTriggers: ["传统", "legacy", "more"],
     }
   }
 
@@ -591,125 +595,6 @@ export class ChatGPTAdapter extends SiteAdapter {
         }),
       )
     }
-  }
-
-  /**
-   * 覆盖模型锁定方法以支持 ChatGPT 的子菜单结构
-   * ChatGPT 的模型菜单有两层：主菜单（GPT-5.2等）和子菜单（传统模型 → GPT-5.1等）
-   */
-  lockModel(keyword: string, onSuccess?: () => void): void {
-    const config = this.getModelSwitcherConfig(keyword)
-    if (!config) return
-
-    const {
-      targetModelKeyword,
-      selectorButtonSelectors,
-      menuItemSelector,
-      checkInterval = 1000,
-      maxAttempts = 15,
-      menuRenderDelay = 500,
-    } = config
-
-    let attempts = 0
-    let isSelecting = false
-    const normalize = (str: string) => (str || "").toLowerCase().trim()
-    const target = normalize(targetModelKeyword)
-
-    const timer = setInterval(() => {
-      attempts++
-      if (attempts > maxAttempts) {
-        console.warn(`Ophel: Model lock timed out for "${targetModelKeyword}"`)
-        clearInterval(timer)
-        return
-      }
-
-      if (isSelecting) return
-
-      const selectorBtn = this.findElementBySelectors(selectorButtonSelectors)
-      if (!selectorBtn) return
-
-      const currentText = selectorBtn.textContent || selectorBtn.innerText || ""
-      if (normalize(currentText).includes(target)) {
-        clearInterval(timer)
-        if (onSuccess) onSuccess()
-        return
-      }
-
-      isSelecting = true
-      this.simulateClick(selectorBtn)
-
-      // 第一层菜单：尝试查找目标或"传统模型"子菜单
-      setTimeout(() => {
-        const menuItems = this.findAllElementsBySelector(menuItemSelector)
-
-        if (menuItems.length > 0) {
-          let found = false
-
-          // 先在主菜单中查找目标
-          for (const item of menuItems) {
-            const itemText = item.textContent || (item as HTMLElement).innerText || ""
-            if (normalize(itemText).includes(target)) {
-              this.simulateClick(item as HTMLElement)
-              found = true
-              clearInterval(timer)
-              setTimeout(() => {
-                document.body.click()
-                if (onSuccess) onSuccess()
-              }, 100)
-              return
-            }
-          }
-
-          // 主菜单没找到，尝试展开"传统模型"子菜单
-          if (!found) {
-            const legacyMenuItem = menuItems.find((item) => {
-              const text = normalize(item.textContent || "")
-              return text.includes("传统") || text.includes("legacy") || text.includes("more")
-            })
-
-            if (legacyMenuItem) {
-              // 点击展开子菜单
-              this.simulateClick(legacyMenuItem as HTMLElement)
-
-              // 等待子菜单渲染，再次查找
-              setTimeout(() => {
-                const subMenuItems = this.findAllElementsBySelector(menuItemSelector)
-                for (const item of subMenuItems) {
-                  const itemText = item.textContent || (item as HTMLElement).innerText || ""
-                  if (normalize(itemText).includes(target)) {
-                    this.simulateClick(item as HTMLElement)
-                    clearInterval(timer)
-                    setTimeout(() => {
-                      document.body.click()
-                      if (onSuccess) onSuccess()
-                    }, 100)
-                    return
-                  }
-                }
-                // 子菜单中也没找到
-                console.warn(
-                  `Ophel: Target model "${targetModelKeyword}" not found in menu. Aborting.`,
-                )
-                clearInterval(timer)
-                document.body.click()
-                isSelecting = false
-              }, menuRenderDelay)
-            } else {
-              // 没有子菜单，直接报错
-              console.warn(
-                `Ophel: Target model "${targetModelKeyword}" not found in menu. Aborting.`,
-              )
-              clearInterval(timer)
-              document.body.click()
-              isSelecting = false
-            }
-          }
-        } else {
-          isSelecting = false
-          document.body.click()
-        }
-      }, menuRenderDelay)
-    }, checkInterval)
   }
 
   // ==================== 主题切换 ====================

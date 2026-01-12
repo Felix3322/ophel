@@ -232,6 +232,9 @@ export const en = {
   modelKeywordPlaceholder: "Model Keyword",
   modelKeywordExample: "e.g., 3 Pro",
   modelKeywordDesc: "Used to match target model name",
+  modelLockFailedNoButton: "Model selector not found",
+  modelLockFailedMenuEmpty: "Model menu failed to load",
+  modelLockFailedNotFound: 'Model "{model}" not found',
   // Category management
   categoryManage: "Category Management",
   categoryEmpty: "No categories yet. Categories are created when you add prompts.",
