@@ -693,6 +693,7 @@ export abstract class SiteAdapter {
   /**
    * 点击模型选择器按钮（公开方法，供外部调用）
    * 使用 simulateClick 确保在 Radix UI 等框架中也能正常工作
+   * 使用 findElementBySelectors 支持 Shadow DOM 穿透（与 lockModel 一致）
    * @returns 是否成功点击
    */
   clickModelSelector(): boolean {
@@ -701,12 +702,11 @@ export abstract class SiteAdapter {
       return false
     }
 
-    for (const selector of config.selectorButtonSelectors) {
-      const btn = document.querySelector(selector) as HTMLElement
-      if (btn && btn.offsetParent !== null) {
-        this.simulateClick(btn)
-        return true
-      }
+    // 使用 findElementBySelectors 穿透 Shadow DOM 查找按钮
+    const btn = this.findElementBySelectors(config.selectorButtonSelectors)
+    if (btn && btn.offsetParent !== null) {
+      this.simulateClick(btn)
+      return true
     }
     return false
   }
