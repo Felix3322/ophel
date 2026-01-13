@@ -46,7 +46,8 @@
       "declarativeNetRequestWithHostAccess"
     ],
     "optional_permissions": [
-      "notifications"
+      "notifications",
+      "cookies"
     ],
     "host_permissions": [
       "https://gemini.google.com/*",

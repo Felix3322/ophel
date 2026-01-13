@@ -112,6 +112,17 @@ export interface OpenUrlMessage extends OpenUrlPayload {
   type: typeof MSG_OPEN_URL
 }
 
+// 设置Claude SessionKey Cookie
+export const MSG_SET_CLAUDE_SESSION_KEY = "SET_CLAUDE_SESSION_KEY"
+
+export interface SetClaudeSessionKeyPayload {
+  key: string // SessionKey值,空字符串表示移除cookie(使用默认)
+}
+
+export interface SetClaudeSessionKeyMessage extends SetClaudeSessionKeyPayload {
+  type: typeof MSG_SET_CLAUDE_SESSION_KEY
+}
+
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
@@ -123,6 +134,7 @@ export type ExtensionMessage =
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
   | OpenUrlMessage
+  | SetClaudeSessionKeyMessage
 
 /**
  * Send a message to the background service worker with type safety

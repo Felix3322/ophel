@@ -39,6 +39,14 @@ const OPTIONAL_PERMISSIONS = [
     icon: "🔔",
     permissions: ["notifications"],
   },
+  {
+    id: "cookies",
+    name: "Cookie管理",
+    nameKey: "permissionCookies",
+    description: "permissionCookiesDesc",
+    icon: "🍪",
+    permissions: ["cookies"],
+  },
 ]
 
 // 可选主机权限

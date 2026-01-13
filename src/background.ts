@@ -8,6 +8,7 @@ import {
   MSG_PROXY_FETCH,
   MSG_REQUEST_PERMISSIONS,
   MSG_REVOKE_PERMISSIONS,
+  MSG_SET_CLAUDE_SESSION_KEY,
   MSG_SHOW_NOTIFICATION,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
@@ -343,6 +344,43 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           sendResponse({ success: true })
         } catch (err) {
           console.error("Open URL failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_SET_CLAUDE_SESSION_KEY:
+      ;(async () => {
+        try {
+          const { key } = message as any
+
+          if (key) {
+            // 设置cookie
+            await chrome.cookies.set({
+              url: "https://claude.ai",
+              name: "sessionKey",
+              value: key,
+              domain: ".claude.ai",
+              path: "/",
+              secure: true,
+              sameSite: "lax",
+            })
+          } else {
+            // 移除cookie(使用默认)
+            await chrome.cookies.remove({
+              url: "https://claude.ai",
+              name: "sessionKey",
+            })
+          }
+
+          // 刷新当前标签页
+          if (sender.tab?.id) {
+            await chrome.tabs.reload(sender.tab.id)
+          }
+
+          sendResponse({ success: true })
+        } catch (err) {
+          console.error("Set Claude SessionKey failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

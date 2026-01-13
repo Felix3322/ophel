@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   PROMPTS: "prompts",
   CONVERSATIONS: "conversations",
   READING_HISTORY: "readingHistory",
+  CLAUDE_SESSION_KEYS: "claudeSessionKeys", // Claude SessionKey管理
 } as const
 
 // ==================== 类型定义 ====================
@@ -149,7 +150,12 @@ export interface Settings {
   // 快捷按钮配置
   collapsedButtons: Array<{ id: string; enabled: boolean }>
 
-  // WebDAV 同步
+  // Claude 专属设置
+  claude?: {
+    currentKeyId: string // 当前选中的SessionKey ID,空字符串表示使用默认cookie
+  }
+
+  //  WebDAV 同步
   webdav?: {
     enabled: boolean
     url: string
@@ -158,7 +164,8 @@ export interface Settings {
     syncMode: "manual" | "auto"
     syncInterval: number
     remoteDir: string
-    lastSyncTime?: number
+    dataSources?: Array<"settings" | "conversations" | "prompts" | "claudeSessionKeys"> // 可备份的数据源
+    lastSyncTime?: Record<string, number> // 每个数据源的最后同步时间
     lastSyncStatus?: "success" | "failed" | "syncing"
   }
 
@@ -290,6 +297,10 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "scrollBottom", enabled: true },
   ],
 
+  claude: {
+    currentKeyId: "", // 空字符串表示使用浏览器默认cookie
+  },
+
   webdav: {
     enabled: false,
     url: "",
@@ -298,6 +309,8 @@ export const DEFAULT_SETTINGS: Settings = {
     syncMode: "manual",
     syncInterval: 30,
     remoteDir: "ophel",
+    dataSources: ["settings", "conversations", "prompts"], // 默认不包括SessionKeys
+    lastSyncTime: {},
   },
 
   shortcuts: DEFAULT_SHORTCUTS_SETTINGS,
@@ -323,6 +336,22 @@ export interface Prompt {
   category: string
   pinned?: boolean // 是否置顶
   lastUsedAt?: number // 最近使用时间戳
+}
+
+// Claude SessionKey 管理
+export interface ClaudeSessionKey {
+  id: string // nanoid
+  name: string // 用户自定义名称
+  key: string // sk-ant-sid01-...
+  accountType?: "Free" | "Pro(5x)" | "Pro(20x)" | "API" | "Unknown"
+  isValid?: boolean // 最近测试结果
+  testedAt?: number // 最近测试时间戳
+  createdAt: number
+}
+
+export interface ClaudeSessionKeysState {
+  keys: ClaudeSessionKey[]
+  currentKeyId: string // 空字符串表示使用浏览器默认cookie
 }
 
 // ==================== 工具函数 ====================
