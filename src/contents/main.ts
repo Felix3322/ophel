@@ -391,6 +391,17 @@ if (!window.ophelInitialized) {
 
       // 兜底定时器（防止某些框架绕过 history API）
       setInterval(handleUrlChange, 1000)
+
+      // ⭐ 监听来自 background 的消息（用于跨页面检测生成状态）
+      chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        if (message.type === "CHECK_IS_GENERATING") {
+          // 使用 adapter 的 isGenerating 方法检测当前页面是否正在生成
+          const isGenerating = adapter.isGenerating?.() ?? false
+          sendResponse({ isGenerating })
+          return true // 保持消息通道打开
+        }
+        return false
+      })
     })()
   } else {
     console.log("[Ophel] No adapter found for:", window.location.hostname)

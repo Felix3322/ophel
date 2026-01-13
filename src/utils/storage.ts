@@ -309,7 +309,7 @@ export const DEFAULT_SETTINGS: Settings = {
     syncMode: "manual",
     syncInterval: 30,
     remoteDir: "ophel",
-    dataSources: ["settings", "conversations", "prompts"], // 默认不包括SessionKeys
+    dataSources: ["settings", "conversations", "prompts", "claudeSessionKeys"], // 默认包括所有数据
     lastSyncTime: {},
   },
 

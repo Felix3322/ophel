@@ -29,6 +29,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
     { id: "outline", label: t("tabOutline") || "大纲" },
     { id: "conversations", label: t("tabConversations") || "会话" },
     { id: "tab", label: t("tabSettingsTab") || "标签页" },
+    { id: "content", label: t("navContent") || "内容交互" },
     { id: "readingHistory", label: t("readingHistoryTitle") || "阅读历史" },
   ]
 
@@ -397,6 +398,58 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
               <option value={-1}>{t("forever") || "永久"}</option>
             </select>
           </SettingRow>
+        </SettingCard>
+      )}
+
+      {/* ========== 内容交互 Tab ========== */}
+      {activeTab === "content" && (
+        <SettingCard
+          title={t("interactionEnhance") || "交互增强"}
+          description={t("interactionEnhanceDesc") || "增强公式和表格的交互功能"}>
+          <ToggleRow
+            label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
+            description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
+            checked={settings.content?.userQueryMarkdown ?? false}
+            onChange={() =>
+              updateNestedSetting(
+                "content",
+                "userQueryMarkdown",
+                !settings.content?.userQueryMarkdown,
+              )
+            }
+          />
+
+          <ToggleRow
+            label={t("formulaCopyLabel") || "双击复制公式"}
+            description={t("formulaCopyDesc") || "双击数学公式即可复制其 LaTeX 源码"}
+            checked={settings.content?.formulaCopy ?? true}
+            onChange={() =>
+              updateNestedSetting("content", "formulaCopy", !settings.content?.formulaCopy)
+            }
+          />
+
+          <ToggleRow
+            label={t("formulaDelimiterLabel") || "公式分隔符转换"}
+            description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
+            checked={settings.content?.formulaDelimiter ?? true}
+            disabled={!settings.content?.formulaCopy}
+            onChange={() =>
+              updateNestedSetting(
+                "content",
+                "formulaDelimiter",
+                !settings.content?.formulaDelimiter,
+              )
+            }
+          />
+
+          <ToggleRow
+            label={t("tableCopyLabel") || "表格复制 Markdown"}
+            description={t("tableCopyDesc") || "表格右上角添加复制按钮"}
+            checked={settings.content?.tableCopy ?? true}
+            onChange={() =>
+              updateNestedSetting("content", "tableCopy", !settings.content?.tableCopy)
+            }
+          />
         </SettingCard>
       )}
     </div>

@@ -4,33 +4,78 @@
  */
 import React, { useState } from "react"
 
+import { CopyIcon } from "~components/icons"
+import { ConfirmDialog, InputDialog } from "~components/ui"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useSettingsStore } from "~stores/settings-store"
+import { t } from "~utils/i18n"
 import {
+  MSG_CHECK_CLAUDE_GENERATING,
   MSG_CHECK_PERMISSIONS,
+  MSG_GET_CLAUDE_SESSION_KEY,
   MSG_REQUEST_PERMISSIONS,
   MSG_SET_CLAUDE_SESSION_KEY,
+  MSG_TEST_CLAUDE_TOKEN,
   sendToBackground,
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 
-import { SettingCard, SettingRow } from "../components"
+import { SettingCard } from "../components"
 
 interface ClaudeSettingsProps {
   siteId: string
 }
+
+// 对话框状态类型
+type DialogState =
+  | { type: "none" }
+  | { type: "add-name"; defaultName?: string }
+  | { type: "add-key"; name: string }
+  | { type: "import-name"; sessionKey: string }
+  | { type: "delete"; id: string; name: string }
 
 const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   const { keys, currentKeyId, addKey, deleteKey, setCurrentKey, testKey, setKeys, updateKey } =
     useClaudeSessionKeysStore()
   const { settings } = useSettingsStore()
   const [testing, setTesting] = useState<Record<string, boolean>>({})
+  const [dialog, setDialog] = useState<DialogState>({ type: "none" })
+  const [hoveredKeyId, setHoveredKeyId] = useState<string | null>(null)
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null)
 
-  // 获取当前Token
+  // 获取当前 Session Key
   const currentKey = keys.find((k) => k.id === currentKeyId)
 
-  // 切换Token
+  // 关闭对话框
+  const closeDialog = () => setDialog({ type: "none" })
+
+  // 复制 Session Key（带反馈动画）
+  const handleCopyKey = async (keyId: string, keyValue: string) => {
+    try {
+      await navigator.clipboard.writeText(keyValue)
+      setCopiedKeyId(keyId)
+      showToast(t("claudeKeyCopied"), 1500)
+      // 1.5秒后恢复图标
+      setTimeout(() => setCopiedKeyId(null), 1500)
+    } catch {
+      showToast(t("claudeKeyCopyFailed"), 1500)
+    }
+  }
+
+  // 切换 Session Key（带检测）
   const handleSwitchToken = async (keyId: string) => {
+    // 禁止切换到空值（已移除默认选项）
+    if (!keyId) {
+      showToast(t("claudePleaseSelectKey"), 1500)
+      return
+    }
+
+    // 如果点击的是当前使用的，提示无需切换
+    if (keyId === currentKeyId) {
+      showToast(t("claudeAlreadyUsing"), 1500)
+      return
+    }
+
     // 1. 检查cookies权限
     const checkResult = await sendToBackground({
       type: MSG_CHECK_PERMISSIONS,
@@ -38,12 +83,11 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
     })
 
     if (!checkResult.hasPermission) {
-      // 请求权限
       await sendToBackground({
         type: MSG_REQUEST_PERMISSIONS,
         permType: "cookies",
       })
-      showToast("请在弹出窗口中授权Cookie权限", 3000)
+      showToast(t("claudeRequestPermission"), 3000)
       return
     }
 
@@ -56,52 +100,45 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
     // 3. 更新当前选中
     setCurrentKey(keyId)
-    showToast(keyId ? "Token已切换,页面将刷新" : "已切换到默认Cookie", 2000)
+    showToast(t("claudeKeySwitched"), 2000)
   }
 
-  // 测试Token有效性
+  // 测试 Session Key 有效性
   const handleTestToken = async (id: string) => {
     const key = keys.find((k) => k.id === id)
     if (!key) return
 
+    // 安全检测：如果正在生成则拒绝测试
+    try {
+      const checkResult = await sendToBackground({
+        type: MSG_CHECK_CLAUDE_GENERATING,
+      })
+      if (checkResult.isGenerating) {
+        showToast(t("claudeGenerating"), 3000)
+        return
+      }
+    } catch {
+      // 检测失败时允许继续
+    }
+
     setTesting((prev) => ({ ...prev, [id]: true }))
 
     try {
-      // 调用Claude API测试
-      const response = await fetch("https://claude.ai/api/organizations", {
-        headers: {
-          Cookie: `sessionKey=${key.key}`,
-        },
-        credentials: "include",
+      const result = await sendToBackground({
+        type: MSG_TEST_CLAUDE_TOKEN,
+        sessionKey: key.key,
       })
 
-      if (!response.ok) {
+      if (result.isValid) {
+        testKey(id, { isValid: true, accountType: result.accountType })
+        showToast(`${key.name}: ${result.accountType}`, 2000)
+      } else {
         testKey(id, { isValid: false })
-        showToast(`${key.name}: 无效`, 2000)
-        return
+        showToast(`${key.name}: ${t("claudeKeyInvalid")}`, 2000)
       }
-
-      const orgs = await response.json()
-      if (!orgs || orgs.length === 0) {
-        testKey(id, { isValid: false })
-        showToast(`${key.name}: 无组织信息`, 2000)
-        return
-      }
-
-      // 识别账号类型
-      const tier = orgs[0]?.rate_limit_tier
-      let accountType: any = "Unknown"
-      if (tier === "default_claude_max_5x") accountType = "Pro(5x)"
-      else if (tier === "default_claude_max_20x") accountType = "Pro(20x)"
-      else if (tier === "default_claude_ai") accountType = "Free"
-      else if (tier === "auto_api_evaluation") accountType = "API"
-      else if (orgs[0]?.capabilities?.includes("claude_max")) accountType = "Pro"
-
-      testKey(id, { isValid: true, accountType })
-      showToast(`${key.name}: ${accountType}`, 2000)
     } catch (error) {
       testKey(id, { isValid: false })
-      showToast(`${key.name}: 测试失败`, 2000)
+      showToast(`${key.name}: ${t("claudeKeyTest")} ${t("claudeKeyInvalid")}`, 2000)
     } finally {
       setTesting((prev) => ({ ...prev, [id]: false }))
     }
@@ -110,65 +147,67 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   // 从浏览器导入当前Cookie
   const handleImportFromBrowser = async () => {
     try {
-      // 1. 检查cookies权限
       const checkResult = await sendToBackground({
         type: MSG_CHECK_PERMISSIONS,
         permissions: ["cookies"],
       })
 
       if (!checkResult.hasPermission) {
-        // 请求权限
         await sendToBackground({
           type: MSG_REQUEST_PERMISSIONS,
           permType: "cookies",
         })
-        showToast("请在弹出窗口中授权Cookie权限后重试", 3000)
+        showToast(t("claudeRequestPermission"), 3000)
         return
       }
 
-      // 2. 获取当前Cookie
-      const cookies = await chrome.cookies.getAll({
-        url: "https://claude.ai",
-        name: "sessionKey",
+      const result = await sendToBackground({
+        type: MSG_GET_CLAUDE_SESSION_KEY,
       })
 
-      if (!cookies || cookies.length === 0) {
-        showToast("未找到当前Cookie", 2000)
+      if (!result.success) {
+        showToast(result.error || t("claudeNoCookieFound"), 2000)
         return
       }
 
-      const key = cookies[0].value
-      const name = prompt("输入Token名称:", `浏览器导入-${Date.now()}`)
-      if (!name) return
+      const existingKey = keys.find((k) => k.key === result.sessionKey)
+      if (existingKey) {
+        showToast(t("claudeTokenExists").replace("{name}", existingKey.name), 2000)
+        return
+      }
 
-      // 添加并测试
-      const newKey = addKey({ name, key })
-      showToast("已导入,正在测试...", 1500)
-      setTimeout(() => handleTestToken(newKey.id), 500)
+      setDialog({
+        type: "import-name",
+        sessionKey: result.sessionKey,
+      })
     } catch (error) {
-      showToast("导入失败: " + (error as Error).message, 3000)
+      showToast(t("claudeKeyCopyFailed") + ": " + (error as Error).message, 3000)
     }
   }
 
-  // 导出所有Token
+  // 导出所有 Session Key
   const handleExportTokens = () => {
     if (keys.length === 0) {
-      showToast("暂无Token可导出", 1500)
+      showToast(t("claudeNoTokensToExport"), 1500)
       return
     }
 
     const data = JSON.stringify(keys, null, 2)
     const blob = new Blob([data], { type: "application/json" })
     const url = URL.createObjectURL(blob)
+
     const a = document.createElement("a")
     a.href = url
     a.download = `claude-session-keys-${Date.now()}.json`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    showToast("已导出", 1500)
+
+    showToast(t("claudeExported"), 1500)
   }
 
-  // 导入Token
+  // 导入 Session Key
   const handleImportTokens = () => {
     const input = document.createElement("input")
     input.type = "file"
@@ -182,235 +221,469 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         const imported = JSON.parse(text)
 
         if (!Array.isArray(imported)) {
-          showToast("无效的JSON格式", 2000)
+          showToast(t("claudeInvalidJSON"), 2000)
           return
         }
 
-        // 合并导入(避免重复)
         const existingKeys = new Set(keys.map((k) => k.key))
         const newKeys = imported.filter((k: any) => !existingKeys.has(k.key))
 
         if (newKeys.length === 0) {
-          showToast("没有新Token", 1500)
+          showToast(t("claudeNoNewTokens"), 1500)
           return
         }
 
         setKeys([...keys, ...newKeys])
-        showToast(`已导入 ${newKeys.length} 个Token`, 2000)
+        showToast(t("claudeImported").replace("{count}", String(newKeys.length)), 2000)
       } catch (error) {
-        showToast("导入失败: " + (error as Error).message, 3000)
+        showToast(t("claudeInvalidJSON") + ": " + (error as Error).message, 3000)
       }
     }
     input.click()
   }
 
-  // 添加Token
+  // 添加 Session Key - 第一步
   const handleAddToken = () => {
-    const name = prompt("输入Token名称:")
-    if (!name) return
+    setDialog({ type: "add-name" })
+  }
 
-    const key = prompt("输入Session Key (sk-ant-sid...):")
-    if (!key) return
+  // 添加 Session Key - 第二步
+  const handleAddTokenKey = (name: string) => {
+    if (!name.trim()) {
+      showToast(t("claudeNameRequired"), 1500)
+      return
+    }
+    setDialog({ type: "add-key", name: name.trim() })
+  }
 
-    // 验证格式
-    if (!/^sk-ant-sid\d{2}-/.test(key)) {
-      showToast("无效的Session Key格式", 2000)
+  // 添加 Session Key - 完成
+  const handleAddTokenComplete = (key: string) => {
+    if (!key.trim()) {
+      showToast(t("claudeKeyRequired"), 1500)
       return
     }
 
-    addKey({ name, key })
-    showToast("Token已添加", 1500)
+    if (!/^sk-ant-sid\d{2}-/.test(key)) {
+      showToast(t("claudeKeyInvalidFormat"), 2000)
+      return
+    }
+
+    if (keys.some((k) => k.key === key)) {
+      showToast(t("claudeKeyExists"), 2000)
+      return
+    }
+
+    const dialogState = dialog as { type: "add-key"; name: string }
+    addKey({ name: dialogState.name, key: key.trim() })
+    showToast(t("claudeKeyAdded"), 1500)
+    closeDialog()
   }
 
-  // 删除Token
+  // 从浏览器导入 - 完成命名
+  const handleImportComplete = (name: string) => {
+    if (!name.trim()) {
+      showToast(t("claudeNameRequired"), 1500)
+      return
+    }
+
+    const dialogState = dialog as { type: "import-name"; sessionKey: string }
+    const newKey = addKey({ name: name.trim(), key: dialogState.sessionKey })
+
+    // 自动设为当前使用（因为这就是浏览器当前正在用的 key）
+    setCurrentKey(newKey.id)
+
+    showToast(t("claudeKeyImported"), 1500)
+    closeDialog()
+    setTimeout(() => handleTestToken(newKey.id), 500)
+  }
+
+  // 删除 Session Key
   const handleDeleteToken = (id: string, name: string) => {
-    if (!confirm(`确定删除 ${name}?`)) return
-    deleteKey(id)
-    showToast("已删除", 1500)
+    setDialog({ type: "delete", id, name })
+  }
+
+  const confirmDelete = () => {
+    const dialogState = dialog as { type: "delete"; id: string; name: string }
+    deleteKey(dialogState.id)
+    showToast(t("claudeKeyDeleted"), 1500)
+    closeDialog()
+  }
+
+  // 渲染状态标签
+  const renderStatusBadge = (isValid: boolean | undefined) => {
+    if (isValid === undefined) return <span style={{ color: "var(--gh-text-secondary)" }}>-</span>
+    return isValid ? (
+      <span style={{ color: "#10b981", fontWeight: 500 }}>✓ {t("claudeKeyValid")}</span>
+    ) : (
+      <span style={{ color: "#ef4444", fontWeight: 500 }}>✗ {t("claudeKeyInvalid")}</span>
+    )
+  }
+
+  // 渲染类型标签
+  const renderTypeBadge = (type: string | undefined) => {
+    if (!type)
+      return <span style={{ color: "var(--gh-text-secondary)" }}>{t("claudeKeyUntested")}</span>
+    return (
+      <span
+        style={{
+          padding: "2px 8px",
+          borderRadius: "4px",
+          fontSize: "11px",
+          fontWeight: 500,
+          backgroundColor: "var(--gh-bg-secondary)",
+        }}>
+        {type}
+      </span>
+    )
   }
 
   return (
     <div>
-      {/* 当前使用的Token */}
-      <SettingCard title="当前使用" description="当前正在使用的 Session Key">
+      {/* Session Key 管理（合并后的卡片） */}
+      <SettingCard title={t("claudeSessionKeyTitle")} description={t("claudeSessionKeyDesc")}>
+        {/* 当前使用状态栏 */}
         <div
           style={{
-            padding: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            marginBottom: "16px",
             backgroundColor: "var(--gh-bg-secondary)",
             borderRadius: "8px",
             border: "1px solid var(--gh-border)",
           }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "4px" }}>
-                {currentKey ? (
-                  <>
-                    🔑 {currentKey.name}
-                    {currentKey.accountType && (
-                      <span
-                        style={{
-                          marginLeft: "8px",
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          fontSize: "12px",
-                          backgroundColor: "var(--gh-bg)",
-                        }}>
-                        {currentKey.accountType}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  "🌐 默认(浏览器Cookie)"
-                )}
-              </div>
-              <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                {currentKey ? "使用管理的Token" : "使用浏览器默认登录"}
-                <span style={{ marginLeft: "12px", opacity: 0.7 }}>
-                  💡 提示:支持快捷切换功能(开发中)
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
+              {t("claudeCurrentUsing")}
+            </span>
+            <span style={{ fontSize: "14px", fontWeight: 500 }}>
+              {currentKey ? (
+                <>
+                  🔑 {currentKey.name}
+                  {currentKey.accountType && (
+                    <span
+                      style={{
+                        marginLeft: "8px",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                        backgroundColor: "var(--gh-bg)",
+                      }}>
+                      {currentKey.accountType}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span style={{ color: "var(--gh-text-secondary)" }}>
+                  {t("claudeNoKeySelected")}
                 </span>
-              </div>
-            </div>
-            <button
-              className="settings-btn settings-btn-primary"
-              style={{ padding: "6px 16px", fontSize: "13px" }}
-              onClick={() => {
-                // 简单切换选择
-                const nextIndex = keys.findIndex((k) => k.id === currentKeyId) + 1
-                const nextKey = nextIndex < keys.length ? keys[nextIndex] : null
-                handleSwitchToken(nextKey?.id || "")
-              }}>
-              切换
-            </button>
+              )}
+            </span>
           </div>
+          {/* 快捷切换下拉 */}
+          <select
+            className="settings-select"
+            value={currentKeyId}
+            onChange={(e) => handleSwitchToken(e.target.value)}
+            disabled={keys.length === 0}
+            style={{
+              minWidth: "180px",
+              padding: "6px 12px",
+              fontSize: "13px",
+              opacity: keys.length === 0 ? 0.5 : 1,
+            }}>
+            {keys.length === 0 ? (
+              <option value="">{t("claudePleaseAddKey")}</option>
+            ) : (
+              keys.map((k) => (
+                <option key={k.id} value={k.id}>
+                  🔑 {k.name} {k.accountType ? `(${k.accountType})` : ""}
+                </option>
+              ))
+            )}
+          </select>
         </div>
-      </SettingCard>
 
-      {/* Token列表 */}
-      <SettingCard title="Token 列表" description="管理你的 Claude Session Keys">
-        {/* 操作按钮 */}
-        <div style={{ marginBottom: "16px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {/* 操作按钮栏 */}
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap",
+            marginBottom: "16px",
+          }}>
           <button className="settings-btn settings-btn-primary" onClick={handleAddToken}>
-            ➕ 添加
+            ➕ {t("claudeAddKey")}
           </button>
           <button className="settings-btn settings-btn-secondary" onClick={handleImportFromBrowser}>
-            🌐 从浏览器导入
+            🌐 {t("claudeImportFromBrowser")}
           </button>
           <button className="settings-btn settings-btn-secondary" onClick={handleImportTokens}>
-            📥 导入JSON
+            📥 {t("claudeImportJSON")}
           </button>
           <button
             className="settings-btn settings-btn-secondary"
             onClick={handleExportTokens}
             disabled={keys.length === 0}>
-            📤 导出JSON
+            📤 {t("claudeExportJSON")}
           </button>
         </div>
 
-        {/* Token表格 */}
+        {/* Token 列表 */}
         {keys.length === 0 ? (
-          <div style={{ padding: "40px", textAlign: "center", color: "var(--gh-text-secondary)" }}>
-            暂无Token,点击"添加"创建
+          <div
+            style={{
+              padding: "48px 24px",
+              textAlign: "center",
+              color: "var(--gh-text-secondary)",
+              backgroundColor: "var(--gh-bg-secondary)",
+              borderRadius: "8px",
+              border: "1px dashed var(--gh-border)",
+            }}>
+            <div style={{ marginBottom: "8px", fontSize: "24px" }}>🔑</div>
+            <div>{t("claudeNoKeys")}</div>
+            <div style={{ fontSize: "12px", marginTop: "4px" }}>{t("claudeNoKeysHint")}</div>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "13px",
-              }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid var(--gh-border)" }}>
-                  <th style={{ padding: "12px 8px", textAlign: "left", fontWeight: 600 }}>名称</th>
-                  <th style={{ padding: "12px 8px", textAlign: "left", fontWeight: 600 }}>
-                    Session Key
-                  </th>
-                  <th style={{ padding: "12px 8px", textAlign: "left", fontWeight: 600 }}>类型</th>
-                  <th style={{ padding: "12px 8px", textAlign: "left", fontWeight: 600 }}>状态</th>
-                  <th style={{ padding: "12px 8px", textAlign: "center", fontWeight: 600 }}>
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {keys.map((key, index) => (
-                  <tr
-                    key={key.id}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}>
+            {keys.map((key) => {
+              const isCurrent = key.id === currentKeyId
+              const isHovered = hoveredKeyId === key.id
+
+              return (
+                <div
+                  key={key.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "12px 16px",
+                    backgroundColor: isCurrent
+                      ? "rgba(var(--gh-primary-rgb), 0.08)"
+                      : "var(--gh-bg-secondary)",
+                    borderRadius: "8px",
+                    border: isCurrent
+                      ? "1px solid rgba(var(--gh-primary-rgb), 0.3)"
+                      : "1px solid var(--gh-border)",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={() => setHoveredKeyId(key.id)}
+                  onMouseLeave={() => setHoveredKeyId(null)}>
+                  {/* 左侧：名称 + 当前标记 */}
+                  <div
                     style={{
-                      borderBottom: "1px solid var(--gh-border)",
-                      backgroundColor:
-                        key.id === currentKeyId ? "rgba(var(--gh-primary-rgb), 0.05)" : undefined,
+                      flex: "0 0 140px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}>
-                    <td style={{ padding: "12px 8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        {key.id === currentKeyId && <span>✓</span>}
-                        <span style={{ fontWeight: key.id === currentKeyId ? 500 : 400 }}>
-                          {key.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "12px 8px", fontFamily: "monospace", fontSize: "12px" }}>
-                      {key.key.substring(0, 20)}...
-                    </td>
-                    <td style={{ padding: "12px 8px" }}>
-                      {key.accountType ? (
-                        <span
-                          style={{
-                            padding: "2px 8px",
-                            borderRadius: "4px",
-                            fontSize: "11px",
-                            backgroundColor: "var(--gh-bg-secondary)",
-                          }}>
-                          {key.accountType}
-                        </span>
+                    {isCurrent && (
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: "var(--gh-primary)",
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <span
+                      style={{
+                        fontWeight: isCurrent ? 600 : 400,
+                        fontSize: "14px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}>
+                      {key.name}
+                    </span>
+                  </div>
+
+                  {/* 中间：Session Key（带复制） */}
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      minWidth: 0,
+                    }}
+                    onDoubleClick={() => handleCopyKey(key.id, key.key)}
+                    title={t("claudeKeyDoubleTapCopy")}>
+                    <code
+                      style={{
+                        fontSize: "12px",
+                        fontFamily: "monospace",
+                        color: "var(--gh-text-secondary)",
+                        backgroundColor: "var(--gh-bg)",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        cursor: "pointer",
+                      }}>
+                      {key.key.substring(0, 24)}...
+                    </code>
+                    {/* 复制按钮：悬浮显示，点击后变绿色对号 */}
+                    {(isHovered || copiedKeyId === key.id) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCopyKey(key.id, key.key)
+                        }}
+                        style={{
+                          padding: "4px",
+                          background: "none",
+                          border: "none",
+                          cursor: copiedKeyId === key.id ? "default" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          color: copiedKeyId === key.id ? "#22c55e" : "currentColor",
+                          opacity: copiedKeyId === key.id ? 1 : 0.7,
+                          transition: "color 0.2s, opacity 0.2s",
+                        }}
+                        title={copiedKeyId === key.id ? t("claudeCopied") : t("claudeCopyKey")}>
+                        {copiedKeyId === key.id ? (
+                          /* 绿色对号 */
+                          <svg
+                            viewBox="0 0 24 24"
+                            width={14}
+                            height={14}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <CopyIcon size={14} />
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 类型 */}
+                  <div style={{ flex: "0 0 70px", textAlign: "center" }}>
+                    {renderTypeBadge(key.accountType)}
+                  </div>
+
+                  {/* 状态 */}
+                  <div style={{ flex: "0 0 60px", textAlign: "center", fontSize: "12px" }}>
+                    {renderStatusBadge(key.isValid)}
+                  </div>
+
+                  {/* 操作按钮 */}
+                  <div style={{ flex: "0 0 auto", display: "flex", gap: "4px" }}>
+                    <button
+                      className="settings-btn settings-btn-secondary"
+                      style={{ padding: "4px 10px", fontSize: "12px" }}
+                      onClick={() => handleSwitchToken(key.id)}>
+                      {isCurrent ? t("claudeKeyUsing") : t("claudeKeyUse")}
+                    </button>
+                    <button
+                      className="settings-btn settings-btn-secondary"
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: "12px",
+                        minWidth: "52px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                      onClick={() => handleTestToken(key.id)}
+                      disabled={testing[key.id]}>
+                      {testing[key.id] ? (
+                        /* 加载动画：旋转的圆圈 */
+                        <svg
+                          width={14}
+                          height={14}
+                          viewBox="0 0 24 24"
+                          style={{ animation: "spin 1s linear infinite" }}>
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            fill="none"
+                            strokeDasharray="31.4"
+                            strokeDashoffset="10"
+                            strokeLinecap="round"
+                          />
+                        </svg>
                       ) : (
-                        <span style={{ color: "var(--gh-text-secondary)", fontSize: "12px" }}>
-                          未测试
-                        </span>
+                        t("claudeKeyTest")
                       )}
-                    </td>
-                    <td style={{ padding: "12px 8px" }}>
-                      {key.isValid === undefined ? (
-                        <span style={{ color: "var(--gh-text-secondary)", fontSize: "12px" }}>
-                          -
-                        </span>
-                      ) : key.isValid ? (
-                        <span style={{ color: "#10b981", fontSize: "12px" }}>✓ 有效</span>
-                      ) : (
-                        <span style={{ color: "#ef4444", fontSize: "12px" }}>✗ 无效</span>
-                      )}
-                    </td>
-                    <td style={{ padding: "12px 8px", textAlign: "center" }}>
-                      <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
-                        <button
-                          className="settings-btn settings-btn-secondary"
-                          style={{ padding: "4px 12px", fontSize: "12px" }}
-                          onClick={() => handleSwitchToken(key.id)}
-                          disabled={key.id === currentKeyId}>
-                          使用
-                        </button>
-                        <button
-                          className="settings-btn settings-btn-secondary"
-                          style={{ padding: "4px 12px", fontSize: "12px" }}
-                          onClick={() => handleTestToken(key.id)}
-                          disabled={testing[key.id]}>
-                          {testing[key.id] ? "测试中..." : "测试"}
-                        </button>
-                        <button
-                          className="settings-btn settings-btn-secondary"
-                          style={{ padding: "4px 12px", fontSize: "12px" }}
-                          onClick={() => handleDeleteToken(key.id, key.name)}>
-                          删除
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </button>
+                    <style>{`
+                      @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                      }
+                    `}</style>
+                    <button
+                      className="settings-btn settings-btn-secondary"
+                      style={{ padding: "4px 10px", fontSize: "12px", color: "#ef4444" }}
+                      onClick={() => handleDeleteToken(key.id, key.name)}>
+                      {t("claudeKeyDelete")}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </SettingCard>
+
+      {/* 对话框 */}
+      {dialog.type === "add-name" && (
+        <InputDialog
+          title={t("claudeAddKeyNameTitle")}
+          placeholder={t("claudeAddKeyNamePlaceholder")}
+          onConfirm={handleAddTokenKey}
+          onCancel={closeDialog}
+        />
+      )}
+
+      {dialog.type === "add-key" && (
+        <InputDialog
+          title={`${t("claudeAddKeyValueTitle")} (${dialog.name})`}
+          placeholder={t("claudeAddKeyValuePlaceholder")}
+          onConfirm={handleAddTokenComplete}
+          onCancel={closeDialog}
+        />
+      )}
+
+      {dialog.type === "import-name" && (
+        <InputDialog
+          title={t("claudeImportNameTitle")}
+          defaultValue={`Import-${new Date().toLocaleDateString()}`}
+          placeholder={t("claudeImportNamePlaceholder")}
+          onConfirm={handleImportComplete}
+          onCancel={closeDialog}
+        />
+      )}
+
+      {dialog.type === "delete" && (
+        <ConfirmDialog
+          title={t("claudeDeleteConfirmTitle")}
+          message={t("claudeDeleteConfirmMsg").replace("{name}", dialog.name)}
+          confirmText={t("claudeKeyDelete")}
+          danger
+          onConfirm={confirmDelete}
+          onCancel={closeDialog}
+        />
+      )}
     </div>
   )
 }

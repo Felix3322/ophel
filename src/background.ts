@@ -1,8 +1,10 @@
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
+  MSG_CHECK_CLAUDE_GENERATING,
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
   MSG_FOCUS_TAB,
+  MSG_GET_CLAUDE_SESSION_KEY,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
@@ -10,6 +12,8 @@ import {
   MSG_REVOKE_PERMISSIONS,
   MSG_SET_CLAUDE_SESSION_KEY,
   MSG_SHOW_NOTIFICATION,
+  MSG_SWITCH_NEXT_CLAUDE_KEY,
+  MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
 } from "~utils/messaging"
@@ -373,15 +377,320 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             })
           }
 
-          // 刷新当前标签页
-          if (sender.tab?.id) {
-            await chrome.tabs.reload(sender.tab.id)
+          // 查找并刷新所有 claude.ai 标签页（而非发送消息的页面）
+          const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
+          for (const tab of claudeTabs) {
+            if (tab.id) {
+              await chrome.tabs.reload(tab.id)
+            }
           }
 
-          sendResponse({ success: true })
+          sendResponse({ success: true, reloadedTabs: claudeTabs.length })
         } catch (err) {
           console.error("Set Claude SessionKey failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_SWITCH_NEXT_CLAUDE_KEY:
+      ;(async () => {
+        try {
+          // 1. 获取所有 keys 和当前 ID
+          // Zustand persist 存储结构: { state: { keys: [], currentKeyId: "" }, version: 0 }
+          const storageData = await localStorage.get<any>("claudeSessionKeys")
+          const keys = storageData?.state?.keys || []
+
+          if (keys.length === 0) {
+            sendResponse({ success: false, error: "No keys found" })
+            return
+          }
+
+          const currentId = storageData?.state?.currentKeyId
+
+          // 2. 找到下一个 Key
+          let nextIndex = 0
+          if (currentId) {
+            const currentIndex = keys.findIndex((k: any) => k.id === currentId)
+            if (currentIndex !== -1) {
+              nextIndex = (currentIndex + 1) % keys.length
+            }
+          }
+
+          const nextKey = keys[nextIndex]
+          if (!nextKey) {
+            sendResponse({ success: false, error: "Next key not found" })
+            return
+          }
+
+          // 3. 设置 Cookie
+          if (nextKey.key) {
+            await chrome.cookies.set({
+              url: "https://claude.ai",
+              name: "sessionKey",
+              value: nextKey.key,
+              domain: ".claude.ai",
+              path: "/",
+              secure: true,
+              sameSite: "lax",
+            })
+          }
+
+          // 4. 更新存储中的当前 Key ID (以保持状态一致)
+          if (storageData?.state) {
+            storageData.state.currentKeyId = nextKey.id
+            await localStorage.set("claudeSessionKeys", storageData)
+          }
+
+          // 5. 刷新标签页
+          const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
+          for (const tab of claudeTabs) {
+            if (tab.id) {
+              await chrome.tabs.reload(tab.id)
+            }
+          }
+
+          sendResponse({ success: true, keyName: nextKey.name })
+        } catch (err) {
+          console.error("Switch Claude SessionKey failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_TEST_CLAUDE_TOKEN:
+      // 测试Claude Token有效性
+      // 由于浏览器 fetch API 无法手动设置 Cookie header，需要临时设置 cookie 后使用 credentials: include
+      ;(async () => {
+        let originalCookie: chrome.cookies.Cookie | null = null
+
+        try {
+          const { sessionKey } = message as any
+
+          // 1. 备份当前的 sessionKey cookie
+          const existingCookies = await chrome.cookies.getAll({
+            url: "https://claude.ai",
+            name: "sessionKey",
+          })
+          originalCookie = existingCookies.length > 0 ? existingCookies[0] : null
+
+          // 2. 临时设置待测试的 sessionKey cookie
+          await chrome.cookies.set({
+            url: "https://claude.ai",
+            name: "sessionKey",
+            value: sessionKey,
+            domain: ".claude.ai",
+            path: "/",
+            secure: true,
+            sameSite: "lax",
+          })
+
+          // 3. 发起请求（使用 credentials: include 让浏览器自动携带 cookie）
+          const response = await fetch("https://claude.ai/api/organizations", {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Cache-Control": "no-cache",
+            },
+            credentials: "include",
+          })
+
+          // 4. 恢复原来的 cookie
+          if (originalCookie) {
+            await chrome.cookies.set({
+              url: "https://claude.ai",
+              name: "sessionKey",
+              value: originalCookie.value,
+              domain: ".claude.ai",
+              path: "/",
+              secure: true,
+              sameSite: "lax",
+            })
+          } else {
+            // 原来没有 cookie，删除临时设置的
+            await chrome.cookies.remove({
+              url: "https://claude.ai",
+              name: "sessionKey",
+            })
+          }
+
+          // 5. 处理响应
+          if (!response.ok) {
+            sendResponse({
+              success: true,
+              isValid: false,
+              error: `HTTP ${response.status}`,
+            })
+            return
+          }
+
+          const responseText = await response.text()
+
+          // 检查 unauthorized
+          if (responseText.toLowerCase().includes("unauthorized")) {
+            sendResponse({
+              success: true,
+              isValid: false,
+              error: "Unauthorized",
+            })
+            return
+          }
+
+          // 检查空响应
+          if (!responseText.trim()) {
+            sendResponse({
+              success: true,
+              isValid: false,
+              error: "Empty response",
+            })
+            return
+          }
+
+          // 解析 JSON
+          let orgs
+          try {
+            orgs = JSON.parse(responseText)
+          } catch {
+            sendResponse({
+              success: true,
+              isValid: false,
+              error: "Invalid JSON",
+            })
+            return
+          }
+
+          if (!orgs || !Array.isArray(orgs) || orgs.length === 0) {
+            sendResponse({
+              success: true,
+              isValid: false,
+              error: "No organizations",
+            })
+            return
+          }
+
+          // 识别账号类型（参考油猴脚本的逻辑）
+          const org = orgs[0]
+          const tier = org?.rate_limit_tier
+          const capabilities = org?.capabilities || []
+          const apiDisabledReason = org?.api_disabled_reason
+
+          let accountType = "Unknown"
+          if (tier === "default_claude_max_5x") {
+            accountType = "Max(5x)"
+          } else if (tier === "default_claude_max_20x") {
+            accountType = "Max(20x)"
+          } else if (tier === "default_claude_ai") {
+            accountType = "Free"
+          } else if (tier === "auto_api_evaluation") {
+            accountType = apiDisabledReason === "out_of_credits" ? "API(无额度)" : "API"
+          } else if (capabilities.includes("claude_max")) {
+            accountType = "Max"
+          } else if (capabilities.includes("api")) {
+            accountType = "API"
+          } else if (capabilities.includes("chat")) {
+            accountType = "Free"
+          }
+
+          sendResponse({
+            success: true,
+            isValid: true,
+            accountType,
+          })
+        } catch (err) {
+          // 确保即使出错也恢复原 cookie
+          try {
+            if (originalCookie) {
+              await chrome.cookies.set({
+                url: "https://claude.ai",
+                name: "sessionKey",
+                value: originalCookie.value,
+                domain: ".claude.ai",
+                path: "/",
+                secure: true,
+                sameSite: "lax",
+              })
+            }
+          } catch {
+            // 忽略恢复失败
+          }
+
+          console.error("Test Claude Token failed:", err)
+          sendResponse({
+            success: true,
+            isValid: false,
+            error: (err as Error).message,
+          })
+        }
+      })()
+      break
+
+    case MSG_GET_CLAUDE_SESSION_KEY:
+      // 获取Claude SessionKey Cookie
+      ;(async () => {
+        try {
+          const cookies = await chrome.cookies.getAll({
+            url: "https://claude.ai",
+            name: "sessionKey",
+          })
+
+          if (cookies && cookies.length > 0) {
+            sendResponse({
+              success: true,
+              sessionKey: cookies[0].value,
+            })
+          } else {
+            sendResponse({
+              success: false,
+              error: "未找到sessionKey Cookie",
+            })
+          }
+        } catch (err) {
+          console.error("Get Claude SessionKey failed:", err)
+          sendResponse({
+            success: false,
+            error: (err as Error).message,
+          })
+        }
+      })()
+      break
+
+    case MSG_CHECK_CLAUDE_GENERATING:
+      // 检测 claude.ai 页面是否正在生成（向所有 claude.ai 标签页查询）
+      ;(async () => {
+        try {
+          // 查找所有 claude.ai 标签页
+          const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
+
+          if (claudeTabs.length === 0) {
+            // 没有打开 claude.ai，安全
+            sendResponse({ success: true, isGenerating: false })
+            return
+          }
+
+          // 向每个标签页发送查询消息
+          // 只要有一个正在生成，就返回 true
+          let isGenerating = false
+
+          for (const tab of claudeTabs) {
+            if (!tab.id) continue
+            try {
+              const result = await chrome.tabs.sendMessage(tab.id, {
+                type: "CHECK_IS_GENERATING",
+              })
+              if (result?.isGenerating) {
+                isGenerating = true
+                break
+              }
+            } catch {
+              // 标签页可能没有内容脚本，忽略
+            }
+          }
+
+          sendResponse({ success: true, isGenerating })
+        } catch (err) {
+          console.error("Check Claude generating failed:", err)
+          // 出错时返回不确定，默认允许
+          sendResponse({ success: true, isGenerating: false })
         }
       })()
       break

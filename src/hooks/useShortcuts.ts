@@ -554,6 +554,69 @@ export function useShortcuts({
     }
   }, [adapter])
 
+  // 导航到设置页面的通用函数
+  // 导航到设置页面的通用函数
+  const navigateToSettings = useCallback(
+    (page: string, subTab?: string) => {
+      // 1. 打开设置面板
+      openSettings()
+
+      // 2. 延迟发送导航事件
+      setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent("ophel:navigateSettingsPage", {
+            detail: { page, subTab },
+          }),
+        )
+      }, 100)
+    },
+    [openSettings],
+  )
+
+  const openClaudeSettings = useCallback(
+    () => navigateToSettings("siteSettings", "claude"),
+    [navigateToSettings],
+  )
+  const openGeminiSettings = useCallback(
+    () => navigateToSettings("siteSettings", "gemini"),
+    [navigateToSettings],
+  )
+  const openThemeSettings = useCallback(
+    () => navigateToSettings("appearance"),
+    [navigateToSettings],
+  )
+  const openModelLockSettings = useCallback(
+    () => navigateToSettings("siteSettings", "modelLock"),
+    [navigateToSettings],
+  )
+
+  // 一键切换 Claude Key
+  const switchClaudeKey = useCallback(async () => {
+    // 仅在 Claude 站点生效 (简单判断)
+    if (!location.hostname.includes("claude.ai")) {
+      // 或者不做限制，允许全局切换？
+      // 用户需求是 "一键切换可用claude key"，通常是在使用 claude 时。
+      // 但也没说必须在 claude。暂不限制，或者给个提示。
+    }
+
+    try {
+      // 需要先引入 MSG_SWITCH_NEXT_CLAUDE_KEY
+      const { MSG_SWITCH_NEXT_CLAUDE_KEY, sendToBackground } = await import("~utils/messaging")
+
+      const result = await sendToBackground({
+        type: MSG_SWITCH_NEXT_CLAUDE_KEY,
+      })
+
+      if (result.success) {
+        showToast((t("claudeKeySwitched") || "Session Key 已切换") + `: ${result.keyName}`, 2000)
+      } else {
+        showToast(result.error || "切换失败", 2000)
+      }
+    } catch (e) {
+      showToast("切换失败: " + (e as Error).message, 2000)
+    }
+  }, [])
+
   // 更新设置
   useEffect(() => {
     shortcutManager.updateSettings(settings?.shortcuts)
@@ -594,6 +657,13 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.STOP_GENERATION]: stopGeneration,
       [SHORTCUT_ACTIONS.SHOW_SHORTCUTS]: showShortcuts,
       [SHORTCUT_ACTIONS.SHOW_MODEL_SELECTOR]: showModelSelector,
+
+      // 新增处理器
+      [SHORTCUT_ACTIONS.OPEN_CLAUDE_SETTINGS]: openClaudeSettings,
+      [SHORTCUT_ACTIONS.SWITCH_CLAUDE_KEY]: switchClaudeKey,
+      [SHORTCUT_ACTIONS.OPEN_GEMINI_SETTINGS]: openGeminiSettings,
+      [SHORTCUT_ACTIONS.OPEN_THEME_SETTINGS]: openThemeSettings,
+      [SHORTCUT_ACTIONS.OPEN_MODEL_LOCK_SETTINGS]: openModelLockSettings,
     }
 
     shortcutManager.registerAll(handlers)
@@ -634,7 +704,12 @@ export function useShortcuts({
     focusInput,
     stopGeneration,
     showShortcuts,
+    openClaudeSettings,
     showModelSelector,
+    switchClaudeKey,
+    openGeminiSettings,
+    openThemeSettings,
+    openModelLockSettings,
   ])
 
   return shortcutManager

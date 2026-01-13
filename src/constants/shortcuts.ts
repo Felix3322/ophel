@@ -63,6 +63,13 @@ export const SHORTCUT_ACTIONS = {
   // 帮助类
   SHOW_SHORTCUTS: "showShortcuts",
   SHOW_MODEL_SELECTOR: "showModelSelector",
+
+  // 设置类
+  OPEN_CLAUDE_SETTINGS: "openClaudeSettings",
+  SWITCH_CLAUDE_KEY: "switchClaudeKey",
+  OPEN_GEMINI_SETTINGS: "openGeminiSettings",
+  OPEN_THEME_SETTINGS: "openThemeSettings",
+  OPEN_MODEL_LOCK_SETTINGS: "openModelLockSettings",
 } as const
 
 export type ShortcutActionId = (typeof SHORTCUT_ACTIONS)[keyof typeof SHORTCUT_ACTIONS]
@@ -80,7 +87,6 @@ export const SHORTCUT_META: Record<
   // 面板类
   togglePanel: { labelKey: "shortcutTogglePanel", label: "切换面板", category: "panel" },
   toggleTheme: { labelKey: "shortcutToggleTheme", label: "切换主题", category: "panel" },
-  openSettings: { labelKey: "shortcutOpenSettings", label: "打开设置", category: "panel" },
   switchTab1: { labelKey: "shortcutSwitchTab1", label: "切换到第 1 个标签", category: "panel" },
   switchTab2: { labelKey: "shortcutSwitchTab2", label: "切换到第 2 个标签", category: "panel" },
   switchTab3: { labelKey: "shortcutSwitchTab3", label: "切换到第 3 个标签", category: "panel" },
@@ -171,17 +177,48 @@ export const SHORTCUT_META: Record<
     label: "停止生成",
     category: "edit",
   },
+  showModelSelector: {
+    labelKey: "shortcutShowModelSelector",
+    label: "模型选择菜单",
+    category: "edit",
+  },
+
+  // 设置类
+  openSettings: { labelKey: "shortcutOpenSettings", label: "打开设置", category: "settings" },
 
   // 帮助类
   showShortcuts: {
     labelKey: "shortcutShowShortcuts",
     label: "快捷键一览",
-    category: "help",
+    category: "settings",
   },
-  showModelSelector: {
-    labelKey: "shortcutShowModelSelector",
-    label: "模型选择菜单",
-    category: "help",
+
+  openThemeSettings: {
+    labelKey: "shortcutOpenThemeSettings",
+    label: "打开外观主题",
+    category: "settings",
+  },
+
+  openModelLockSettings: {
+    labelKey: "shortcutOpenModelLockSettings",
+    label: "打开模型锁定",
+    category: "settings",
+  },
+
+  openGeminiSettings: {
+    labelKey: "shortcutOpenGeminiSettings",
+    label: "打开 Gemini 专属",
+    category: "settings",
+  },
+  openClaudeSettings: {
+    labelKey: "shortcutOpenClaudeSettings",
+    label: "打开 Claude 专属",
+    category: "settings",
+  },
+  switchClaudeKey: {
+    labelKey: "shortcutSwitchClaudeKey",
+    label: "一键切换可用 Claude Key",
+    category: "settings",
   },
 }
 
@@ -192,7 +229,7 @@ export const SHORTCUT_CATEGORIES = {
   outline: { labelKey: "shortcutCategoryOutline", label: "大纲" },
   conversation: { labelKey: "shortcutCategoryConversation", label: "会话" },
   edit: { labelKey: "shortcutCategoryEdit", label: "编辑" },
-  help: { labelKey: "shortcutCategoryHelp", label: "帮助" },
+  settings: { labelKey: "shortcutCategorySettings", label: "设置" },
 }
 
 // 默认快捷键配置
@@ -205,7 +242,6 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   // 面板类
   togglePanel: { key: "p", alt: true },
   toggleTheme: { key: "d", alt: true },
-  openSettings: { key: ",", alt: true },
   switchTab1: { key: "1", alt: true },
   switchTab2: { key: "2", alt: true },
   switchTab3: { key: "3", alt: true },
@@ -236,10 +272,16 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   toggleScrollLock: { key: "s", alt: true },
   focusInput: { key: "i", alt: true },
   stopGeneration: { key: "k", alt: true },
-
-  // 帮助类
-  showShortcuts: { key: "\\", alt: true },
   showModelSelector: { key: "/", alt: true },
+
+  // 设置类
+  showShortcuts: { key: "\\", alt: true },
+  openSettings: { key: ",", alt: true },
+  openClaudeSettings: { key: "c", ctrl: true, alt: true },
+  switchClaudeKey: { key: "b", ctrl: true, alt: true },
+  openGeminiSettings: { key: "g", ctrl: true, alt: true },
+  openThemeSettings: { key: "t", ctrl: true, alt: true },
+  openModelLockSettings: { key: "l", ctrl: true, alt: true },
 }
 
 // 默认快捷键设置

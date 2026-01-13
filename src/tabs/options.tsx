@@ -67,14 +67,19 @@ const NAV_ITEMS = [
 const OptionsPage = () => {
   console.log("Options Page Rendered", NAV_ITEMS)
   const [activePage, setActivePage] = useState("general")
+  const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
 
   // 初始化时检查 URL search params
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
       const page = params.get("page")
+      const subTab = params.get("subTab")
       if (page && NAV_ITEMS.some((item) => item.id === page)) {
         setActivePage(page)
+      }
+      if (subTab) {
+        setInitialSubTab(subTab)
       }
     }
   }, [])
@@ -114,7 +119,7 @@ const OptionsPage = () => {
       case "appearance":
         return <AppearancePage siteId={siteId} />
       case "siteSettings":
-        return <SiteSettingsPage siteId={siteId} />
+        return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "features":
         return <FeaturesPage siteId={siteId} />
       case "permissions":

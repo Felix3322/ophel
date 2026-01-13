@@ -123,6 +123,31 @@ export interface SetClaudeSessionKeyMessage extends SetClaudeSessionKeyPayload {
   type: typeof MSG_SET_CLAUDE_SESSION_KEY
 }
 
+// 测试Claude SessionKey有效性（通过background代理绕过CORS）
+export const MSG_TEST_CLAUDE_TOKEN = "TEST_CLAUDE_TOKEN"
+
+export interface TestClaudeTokenPayload {
+  sessionKey: string // 要测试的SessionKey
+}
+
+export interface TestClaudeTokenMessage extends TestClaudeTokenPayload {
+  type: typeof MSG_TEST_CLAUDE_TOKEN
+}
+
+// 获取Claude SessionKey Cookie（从background获取，绕过权限限制）
+export const MSG_GET_CLAUDE_SESSION_KEY = "GET_CLAUDE_SESSION_KEY"
+
+export interface GetClaudeSessionKeyMessage {
+  type: typeof MSG_GET_CLAUDE_SESSION_KEY
+}
+
+// 检测Claude页面是否正在生成（用于测试前安全检查）
+export const MSG_CHECK_CLAUDE_GENERATING = "CHECK_CLAUDE_GENERATING"
+
+export interface CheckClaudeGeneratingMessage {
+  type: typeof MSG_CHECK_CLAUDE_GENERATING
+}
+
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
@@ -135,6 +160,16 @@ export type ExtensionMessage =
   | OpenOptionsPageMessage
   | OpenUrlMessage
   | SetClaudeSessionKeyMessage
+  | TestClaudeTokenMessage
+  | GetClaudeSessionKeyMessage
+  | CheckClaudeGeneratingMessage
+  | SwitchNextClaudeKeyMessage
+
+export const MSG_SWITCH_NEXT_CLAUDE_KEY = "SWITCH_NEXT_CLAUDE_KEY"
+
+export interface SwitchNextClaudeKeyMessage {
+  type: typeof MSG_SWITCH_NEXT_CLAUDE_KEY
+}
 
 /**
  * Send a message to the background service worker with type safety

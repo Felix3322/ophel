@@ -18,6 +18,7 @@ import ClaudeSettings from "./ClaudeSettings"
 
 interface SiteSettingsPageProps {
   siteId: string
+  initialTab?: string
 }
 
 // 模型锁定行组件 - 只在失焦或按回车时保存
@@ -91,8 +92,14 @@ const ModelLockRow: React.FC<{
   )
 }
 
-const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
-  const [activeTab, setActiveTab] = useState("layout")
+const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab }) => {
+  const [activeTab, setActiveTab] = useState(initialTab || "layout")
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
   const { settings, setSettings, updateNestedSetting } = useSettingsStore()
 
   // 宽度布局相关状态
@@ -229,8 +236,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
   const tabs = [
     { id: "layout", label: t("layoutTab") || "页面布局" },
     { id: "modelLock", label: t("modelLockTitle") || "模型锁定" },
-    { id: "content", label: t("contentStyleTab") || "内容处理" },
-    { id: "claude", label: "Claude 专属" },
+    { id: "gemini", label: t("geminiSettingsTab") || "Gemini 专属" },
+    { id: "claude", label: t("claudeSettingsTab") || "Claude 专属" },
   ]
 
   return (
@@ -249,7 +256,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
           <SettingCard title={t("pageWidthSettings") || "页面宽度"}>
             <ToggleRow
               label={t("enablePageWidth") || "启用页面宽度"}
-              description={t("enablePageWidthDesc") || "调整聊天页面的最大宽度"}
+              description={t("pageWidthDesc") || "调整聊天页面的最大宽度"}
               checked={currentPageWidth?.enabled ?? false}
               onChange={() => {
                 const current = currentPageWidth || { enabled: false, value: "81", unit: "%" }
@@ -294,7 +301,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
           <SettingCard title={t("userQueryWidthSettings") || "用户问题宽度"}>
             <ToggleRow
               label={t("enableUserQueryWidth") || "启用用户问题加宽"}
-              description={t("enableUserQueryWidthDesc") || "调整用户问题气泡的最大宽度"}
+              description={t("userQueryWidthDesc") || "调整用户问题气泡的最大宽度"}
               checked={currentUserQueryWidth?.enabled ?? false}
               onChange={() => {
                 const current = currentUserQueryWidth || {
@@ -393,102 +400,49 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
         </SettingCard>
       )}
 
-      {/* ========== 内容处理 Tab ========== */}
-      {activeTab === "content" && (
-        <>
-          {/* 内容处理卡片 */}
-          <SettingCard
-            title={t("contentProcessing") || "内容处理"}
-            description={t("contentProcessingDesc") || "配置 AI 回复内容的处理方式"}>
-            <ToggleRow
-              label={t("markdownFixLabel") || "Markdown 加粗修复"}
-              description={t("markdownFixDesc") || "修复 Gemini 响应中未渲染的加粗文本"}
-              checked={settings.content?.markdownFix ?? true}
-              onChange={() =>
-                updateNestedSetting("content", "markdownFix", !settings.content?.markdownFix)
-              }
-            />
+      {/* ========== Gemini 专属 Tab ========== */}
+      {activeTab === "gemini" && (
+        <SettingCard
+          title={t("geminiSettingsTab") || "Gemini 专属"}
+          description={t("contentProcessingDesc") || "配置 AI 回复内容的处理方式"}>
+          <ToggleRow
+            label={t("markdownFixLabel") || "Markdown 加粗修复"}
+            description={t("markdownFixDesc") || "修复 Gemini 响应中未渲染的加粗文本"}
+            checked={settings.content?.markdownFix ?? true}
+            onChange={() =>
+              updateNestedSetting("content", "markdownFix", !settings.content?.markdownFix)
+            }
+          />
 
-            <ToggleRow
-              label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
-              description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
-              checked={settings.content?.userQueryMarkdown ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "userQueryMarkdown",
-                  !settings.content?.userQueryMarkdown,
-                )
-              }
-            />
+          <ToggleRow
+            label={t("watermarkRemovalLabel") || "图片水印移除"}
+            description={t("watermarkRemovalDesc") || "自动移除 AI 生成图片的水印"}
+            checked={settings.content?.watermarkRemoval ?? false}
+            onChange={async () => {
+              const checked = settings.content?.watermarkRemoval
+              if (!checked) {
+                // 1. 检查是否已有权限
+                const response = await sendToBackground({
+                  type: MSG_CHECK_PERMISSIONS,
+                  origins: ["<all_urls>"],
+                })
 
-            <ToggleRow
-              label={t("watermarkRemovalLabel") || "图片水印移除"}
-              description={t("watermarkRemovalDesc") || "自动移除 AI 生成图片的水印"}
-              checked={settings.content?.watermarkRemoval ?? false}
-              onChange={async () => {
-                const checked = settings.content?.watermarkRemoval
-                if (!checked) {
-                  // 1. 检查是否已有权限
-                  const response = await sendToBackground({
-                    type: MSG_CHECK_PERMISSIONS,
-                    origins: ["<all_urls>"],
-                  })
-
-                  if (response.success && response.hasPermission) {
-                    updateNestedSetting("content", "watermarkRemoval", true)
-                  } else {
-                    // 2. 请求权限 (打开独立窗口)
-                    await sendToBackground({
-                      type: MSG_REQUEST_PERMISSIONS,
-                      permType: "allUrls",
-                    })
-                    showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
-                  }
+                if (response.success && response.hasPermission) {
+                  updateNestedSetting("content", "watermarkRemoval", true)
                 } else {
-                  updateNestedSetting("content", "watermarkRemoval", false)
+                  // 2. 请求权限 (打开独立窗口)
+                  await sendToBackground({
+                    type: MSG_REQUEST_PERMISSIONS,
+                    permType: "allUrls",
+                  })
+                  showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
                 }
-              }}
-            />
-          </SettingCard>
-
-          {/* 交互增强卡片 */}
-          <SettingCard
-            title={t("interactionEnhance") || "交互增强"}
-            description={t("interactionEnhanceDesc") || "增强公式和表格的交互功能"}>
-            <ToggleRow
-              label={t("formulaCopyLabel") || "双击复制公式"}
-              description={t("formulaCopyDesc") || "双击数学公式即可复制其 LaTeX 源码"}
-              checked={settings.content?.formulaCopy ?? true}
-              onChange={() =>
-                updateNestedSetting("content", "formulaCopy", !settings.content?.formulaCopy)
+              } else {
+                updateNestedSetting("content", "watermarkRemoval", false)
               }
-            />
-
-            <ToggleRow
-              label={t("formulaDelimiterLabel") || "公式分隔符转换"}
-              description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
-              checked={settings.content?.formulaDelimiter ?? true}
-              disabled={!settings.content?.formulaCopy}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "formulaDelimiter",
-                  !settings.content?.formulaDelimiter,
-                )
-              }
-            />
-
-            <ToggleRow
-              label={t("tableCopyLabel") || "表格复制 Markdown"}
-              description={t("tableCopyDesc") || "表格右上角添加复制按钮"}
-              checked={settings.content?.tableCopy ?? true}
-              onChange={() =>
-                updateNestedSetting("content", "tableCopy", !settings.content?.tableCopy)
-              }
-            />
-          </SettingCard>
-        </>
+            }}
+          />
+        </SettingCard>
       )}
 
       {/* ========== Claude 专属 Tab ========== */}

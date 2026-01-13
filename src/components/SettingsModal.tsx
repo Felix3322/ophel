@@ -67,6 +67,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, siteId }) => {
   const [activePage, setActivePage] = useState("general")
+  const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
   const contentRef = useRef<HTMLDivElement>(null)
@@ -102,9 +103,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
   // 监听外部导航请求
   useEffect(() => {
-    const handleNavigate = (e: CustomEvent<{ page: string }>) => {
+    const handleNavigate = (e: CustomEvent<{ page: string; subTab?: string }>) => {
       if (e.detail?.page && NAV_ITEMS.some((item) => item.id === e.detail.page)) {
         setActivePage(e.detail.page)
+        if (e.detail.subTab) {
+          setInitialSubTab(e.detail.subTab)
+        }
       }
     }
     window.addEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
@@ -176,7 +180,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       case "general":
         return <GeneralPage siteId={siteId} />
       case "siteSettings":
-        return <SiteSettingsPage siteId={siteId} />
+        return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "appearance":
         return <AppearancePage siteId={siteId} />
       case "features":
