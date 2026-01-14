@@ -1,6 +1,7 @@
 /**
  * ChatGPT 适配器 (chatgpt.com)
  */
+import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
@@ -13,13 +14,15 @@ import {
   type OutlineItem,
 } from "./base"
 
+const DEFAULT_TITLE = "ChatGPT"
+
 export class ChatGPTAdapter extends SiteAdapter {
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
   }
 
   getSiteId(): string {
-    return "chatgpt"
+    return SITE_IDS.CHATGPT
   }
 
   getName(): string {
@@ -148,8 +151,8 @@ export class ChatGPTAdapter extends SiteAdapter {
   getSessionName(): string | null {
     // 尝试从页面标题获取
     const title = document.title
-    if (title && title !== "ChatGPT") {
-      return title.replace(" | ChatGPT", "").replace(" - ChatGPT", "").trim()
+    if (title && title !== DEFAULT_TITLE) {
+      return title.replace(` | ${DEFAULT_TITLE}`, "").replace(` - ${DEFAULT_TITLE}`, "").trim()
     }
     return super.getSessionName()
   }

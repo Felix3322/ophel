@@ -1,6 +1,7 @@
 /**
  * Gemini Enterprise 适配器 (business.gemini.google)
  */
+import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
@@ -22,7 +23,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getSiteId(): string {
-    return "gemini-enterprise"
+    return SITE_IDS.GEMINI_ENTERPRISE
   }
 
   getName(): string {

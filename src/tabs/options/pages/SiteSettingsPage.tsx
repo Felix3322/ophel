@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from "react"
 
 import { PageContentIcon as LayoutIcon } from "~components/icons"
 import { Switch } from "~components/ui"
+import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
@@ -93,7 +94,7 @@ const ModelLockRow: React.FC<{
 }
 
 const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || "layout")
+  const [activeTab, setActiveTab] = useState<string>(initialTab || SITE_SETTINGS_TAB_IDS.LAYOUT)
 
   useEffect(() => {
     if (initialTab) {
@@ -110,9 +111,11 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
     settings?.layout?.userQueryWidth?._default
 
-  const [tempWidth, setTempWidth] = useState(currentPageWidth?.value || "81")
+  const [tempWidth, setTempWidth] = useState(
+    currentPageWidth?.value || LAYOUT_CONFIG.PAGE_WIDTH.DEFAULT_PERCENT,
+  )
   const [tempUserQueryWidth, setTempUserQueryWidth] = useState(
-    currentUserQueryWidth?.value || "600",
+    currentUserQueryWidth?.value || LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PX,
   )
 
   useEffect(() => {
@@ -133,14 +136,17 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     const unit = currentPageWidth?.unit || "%"
 
     if (isNaN(val)) {
-      val = unit === "%" ? 81 : 1280
+      val =
+        unit === "%"
+          ? parseInt(LAYOUT_CONFIG.PAGE_WIDTH.DEFAULT_PERCENT)
+          : parseInt(LAYOUT_CONFIG.PAGE_WIDTH.DEFAULT_PX)
     }
 
     if (unit === "%") {
-      if (val < 40) val = 40
-      if (val > 100) val = 100
+      if (val < LAYOUT_CONFIG.PAGE_WIDTH.MIN_PERCENT) val = LAYOUT_CONFIG.PAGE_WIDTH.MIN_PERCENT
+      if (val > LAYOUT_CONFIG.PAGE_WIDTH.MAX_PERCENT) val = LAYOUT_CONFIG.PAGE_WIDTH.MAX_PERCENT
     } else {
-      if (val <= 0) val = 1200
+      if (val <= 0) val = LAYOUT_CONFIG.PAGE_WIDTH.MIN_PX
     }
 
     const finalVal = val.toString()
@@ -160,7 +166,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
   }
 
   const handleUnitChange = (newUnit: string) => {
-    const newValue = newUnit === "px" ? "1280" : "81"
+    const newValue =
+      newUnit === "px"
+        ? LAYOUT_CONFIG.PAGE_WIDTH.DEFAULT_PX
+        : LAYOUT_CONFIG.PAGE_WIDTH.DEFAULT_PERCENT
     setTempWidth(newValue)
 
     if (settings) {
@@ -188,14 +197,19 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     const unit = currentUserQueryWidth?.unit || "px"
 
     if (isNaN(val)) {
-      val = unit === "%" ? 81 : 600
+      val =
+        unit === "%"
+          ? parseInt(LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PERCENT)
+          : parseInt(LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PX)
     }
 
     if (unit === "%") {
-      if (val < 40) val = 40
-      if (val > 100) val = 100
+      if (val < LAYOUT_CONFIG.USER_QUERY_WIDTH.MIN_PERCENT)
+        val = LAYOUT_CONFIG.USER_QUERY_WIDTH.MIN_PERCENT
+      if (val > LAYOUT_CONFIG.USER_QUERY_WIDTH.MAX_PERCENT)
+        val = LAYOUT_CONFIG.USER_QUERY_WIDTH.MAX_PERCENT
     } else {
-      if (val <= 0) val = 600
+      if (val <= 0) val = LAYOUT_CONFIG.USER_QUERY_WIDTH.MIN_PX
     }
 
     const finalVal = val.toString()
@@ -215,7 +229,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
   }
 
   const handleUserQueryUnitChange = (newUnit: string) => {
-    const newValue = newUnit === "px" ? "600" : "81"
+    const newValue =
+      newUnit === "px"
+        ? LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PX
+        : LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PERCENT
     setTempUserQueryWidth(newValue)
     if (settings) {
       const current = currentUserQueryWidth || { enabled: false, value: newValue, unit: newUnit }
@@ -234,10 +251,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
   if (!settings) return null
 
   const tabs = [
-    { id: "layout", label: t("layoutTab") || "页面布局" },
-    { id: "modelLock", label: t("modelLockTitle") || "模型锁定" },
-    { id: "gemini", label: t("geminiSettingsTab") || "Gemini 专属" },
-    { id: "claude", label: t("claudeSettingsTab") || "Claude 专属" },
+    { id: SITE_SETTINGS_TAB_IDS.LAYOUT, label: t("tabLayout") || "页面布局" },
+    { id: SITE_SETTINGS_TAB_IDS.MODEL_LOCK, label: t("tabModelLock") || "模型锁定" },
+    { id: SITE_IDS.GEMINI, label: "Gemini / AI Studio" },
+    { id: SITE_IDS.CLAUDE, label: "Claude" },
   ]
 
   return (
@@ -250,10 +267,10 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* ========== 页面布局 Tab ========== */}
-      {activeTab === "layout" && (
+      {activeTab === SITE_SETTINGS_TAB_IDS.LAYOUT && (
         <>
           {/* 页面宽度卡片 */}
-          <SettingCard title={t("pageWidthSettings") || "页面宽度"}>
+          <SettingCard title={t("layoutSettingsTitle") || "页面宽度控制"}>
             <ToggleRow
               label={t("enablePageWidth") || "启用页面宽度"}
               description={t("pageWidthDesc") || "调整聊天页面的最大宽度"}
@@ -349,9 +366,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
       )}
 
       {/* ========== 模型锁定 Tab ========== */}
-      {activeTab === "modelLock" && (
+      {activeTab === SITE_SETTINGS_TAB_IDS.MODEL_LOCK && (
         <SettingCard
-          title={t("modelLockTitle") || "模型锁定"}
+          title={t("modelLockTitle") || "模型切换锁定"}
           description={t("modelLockDesc") || "进入页面后自动切换到指定模型"}>
           {/* Gemini */}
           <ModelLockRow

@@ -50,3 +50,41 @@ export interface Folder {
 export const DEFAULT_FOLDERS: Folder[] = [
   { id: "inbox", name: "📥 收件箱", icon: "📥", isDefault: true },
 ]
+
+// ==================== 布局配置默认值 ====================
+export const LAYOUT_CONFIG = {
+  PAGE_WIDTH: {
+    DEFAULT_PX: "1280",
+    DEFAULT_PERCENT: "81",
+    MIN_PERCENT: 40,
+    MAX_PERCENT: 100,
+    MIN_PX: 1200,
+  },
+  USER_QUERY_WIDTH: {
+    DEFAULT_PX: "600",
+    DEFAULT_PERCENT: "81",
+    MIN_PERCENT: 40,
+    MAX_PERCENT: 100,
+    MIN_PX: 600,
+  },
+} as const
+
+// ==================== 验证规则 ====================
+export const VALIDATION_PATTERNS = {
+  // Claude Session Key 格式：sk-ant-sidXX-
+  CLAUDE_KEY: /^sk-ant-sid\d{2}-/,
+} as const
+
+// ==================== 批量测试配置 ====================
+export const BATCH_TEST_CONFIG = {
+  INTERVAL_MS: 500, // 两次请求间隔
+} as const
+
+// ==================== 站点 ID ====================
+export const SITE_IDS = {
+  CLAUDE: "claude",
+  GEMINI: "gemini",
+  CHATGPT: "chatgpt",
+  GEMINI_ENTERPRISE: "gemini-enterprise",
+  GROK: "grok",
+} as const

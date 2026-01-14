@@ -15,7 +15,7 @@ import {
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
-import { TAB_IDS, type TabId } from "~constants"
+import { SITE_IDS, TAB_IDS, type TabId } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -156,7 +156,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   useEffect(() => {
     const siteId = adapter?.getSiteId()
 
-    if (isOpen && (siteId === "grok" || siteId === "claude")) {
+    if (isOpen && (siteId === SITE_IDS.GROK || siteId === SITE_IDS.CLAUDE)) {
       const panel = panelRef.current
       if (!panel) {
         return

@@ -6,6 +6,13 @@ import React, { useState } from "react"
 
 import { CopyIcon } from "~components/icons"
 import { ConfirmDialog, DialogOverlay, InputDialog } from "~components/ui"
+import {
+  BATCH_TEST_CONFIG,
+  SITE_IDS,
+  STATUS_COLORS,
+  TOAST_DURATION,
+  VALIDATION_PATTERNS,
+} from "~constants"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -45,7 +52,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   const [isBatchTesting, setIsBatchTesting] = useState(false)
   const [batchProgress, setBatchProgress] = useState("")
 
-  const isClaudeSite = siteId === "claude"
+  const isClaudeSite = siteId === SITE_IDS.CLAUDE
 
   // 获取当前 Session Key
   const currentKey = keys.find((k) => k.id === currentKeyId)
@@ -58,11 +65,11 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
     try {
       await navigator.clipboard.writeText(keyValue)
       setCopiedKeyId(keyId)
-      showToast(t("claudeKeyCopied"), 1500)
+      showToast(t("claudeKeyCopied"), TOAST_DURATION.SHORT)
       // 1.5秒后恢复图标
-      setTimeout(() => setCopiedKeyId(null), 1500)
+      setTimeout(() => setCopiedKeyId(null), TOAST_DURATION.SHORT)
     } catch {
-      showToast(t("claudeKeyCopyFailed"), 1500)
+      showToast(t("claudeKeyCopyFailed"), TOAST_DURATION.SHORT)
     }
   }
 
@@ -70,13 +77,13 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   const handleSwitchToken = async (keyId: string) => {
     // 禁止切换到空值（已移除默认选项）
     if (!keyId) {
-      showToast(t("claudePleaseSelectKey"), 1500)
+      showToast(t("claudePleaseSelectKey"), TOAST_DURATION.SHORT)
       return
     }
 
     // 如果点击的是当前使用的，提示无需切换
     if (keyId === currentKeyId) {
-      showToast(t("claudeAlreadyUsing"), 1500)
+      showToast(t("claudeAlreadyUsing"), TOAST_DURATION.SHORT)
       return
     }
 
@@ -91,7 +98,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         type: MSG_REQUEST_PERMISSIONS,
         permType: "cookies",
       })
-      showToast(t("claudeRequestPermission"), 3000)
+      showToast(t("claudeRequestPermission"), TOAST_DURATION.LONG)
       return
     }
 
@@ -104,7 +111,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
     // 3. 更新当前选中
     setCurrentKey(keyId)
-    showToast(t("claudeKeySwitched"), 2000)
+    showToast(t("claudeKeySwitched"), TOAST_DURATION.MEDIUM)
   }
 
   // 提取单个 Key 的测试逻辑，以便单独调用或批量调用
@@ -120,7 +127,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         type: MSG_CHECK_CLAUDE_GENERATING,
       })
       if (checkResult.isGenerating) {
-        if (showToastMsg) showToast(t("claudeGenerating"), 3000)
+        if (showToastMsg) showToast(t("claudeGenerating"), TOAST_DURATION.LONG)
         return false // 不能测试
       }
     } catch {
@@ -137,17 +144,20 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
       if (result.isValid) {
         testKey(id, { isValid: true, accountType: result.accountType })
-        if (showToastMsg) showToast(`${keyName}: ${result.accountType}`, 2000)
+        if (showToastMsg) showToast(`${keyName}: ${result.accountType}`, TOAST_DURATION.MEDIUM)
         return true
       } else {
         testKey(id, { isValid: false })
-        if (showToastMsg) showToast(`${keyName}: ${t("claudeKeyInvalid")}`, 2000)
+        if (showToastMsg) showToast(`${keyName}: ${t("claudeKeyInvalid")}`, TOAST_DURATION.MEDIUM)
         return false
       }
     } catch (error) {
       testKey(id, { isValid: false })
       if (showToastMsg)
-        showToast(`${keyName}: ${t("claudeKeyTest")} ${t("claudeKeyInvalid")}`, 2000)
+        showToast(
+          `${keyName}: ${t("claudeKeyTest")} ${t("claudeKeyInvalid")}`,
+          TOAST_DURATION.MEDIUM,
+        )
       return false
     } finally {
       setTesting((prev) => ({ ...prev, [id]: false }))
@@ -187,17 +197,17 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
         // 间隔 500ms
         if (i < keys.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await new Promise((resolve) => setTimeout(resolve, BATCH_TEST_CONFIG.INTERVAL_MS))
         }
       }
       showToast(
         t("claudeBatchTestDone")
           .replace("{valid}", String(validCount))
           .replace("{invalid}", String(invalidCount)),
-        3000,
+        TOAST_DURATION.LONG,
       )
     } catch (e) {
-      showToast(t("claudeBatchTestFailed"), 2000)
+      showToast(t("claudeBatchTestFailed"), TOAST_DURATION.MEDIUM)
     } finally {
       setIsBatchTesting(false)
       setBatchProgress("")
@@ -217,7 +227,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
           type: MSG_REQUEST_PERMISSIONS,
           permType: "cookies",
         })
-        showToast(t("claudeRequestPermission"), 3000)
+        showToast(t("claudeRequestPermission"), TOAST_DURATION.LONG)
         return
       }
 
@@ -226,13 +236,13 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
       })
 
       if (!result.success) {
-        showToast(result.error || t("claudeNoCookieFound"), 2000)
+        showToast(result.error || t("claudeNoCookieFound"), TOAST_DURATION.MEDIUM)
         return
       }
 
       const existingKey = keys.find((k) => k.key === result.sessionKey)
       if (existingKey) {
-        showToast(t("claudeTokenExists").replace("{name}", existingKey.name), 2000)
+        showToast(t("claudeTokenExists").replace("{name}", existingKey.name), TOAST_DURATION.MEDIUM)
         return
       }
 
@@ -241,14 +251,14 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         sessionKey: result.sessionKey,
       })
     } catch (error) {
-      showToast(t("claudeKeyCopyFailed") + ": " + (error as Error).message, 3000)
+      showToast(t("claudeKeyCopyFailed") + ": " + (error as Error).message, TOAST_DURATION.LONG)
     }
   }
 
   // 导出所有 Session Key
   const handleExportTokens = () => {
     if (keys.length === 0) {
-      showToast(t("claudeNoTokensToExport"), 1500)
+      showToast(t("claudeNoTokensToExport"), TOAST_DURATION.SHORT)
       return
     }
 
@@ -264,7 +274,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 
-    showToast(t("claudeExported"), 1500)
+    showToast(t("claudeExported"), TOAST_DURATION.SHORT)
   }
 
   // 导入 Session Key
@@ -281,7 +291,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         const imported = JSON.parse(text)
 
         if (!Array.isArray(imported)) {
-          showToast(t("claudeInvalidJSON"), 2000)
+          showToast(t("claudeInvalidJSON"), TOAST_DURATION.MEDIUM)
           return
         }
 
@@ -289,14 +299,17 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         const newKeys = imported.filter((k: any) => !existingKeys.has(k.key))
 
         if (newKeys.length === 0) {
-          showToast(t("claudeNoNewTokens"), 1500)
+          showToast(t("claudeNoNewTokens"), TOAST_DURATION.SHORT)
           return
         }
 
         setKeys([...keys, ...newKeys])
-        showToast(t("claudeImported").replace("{count}", String(newKeys.length)), 2000)
+        showToast(
+          t("claudeImported").replace("{count}", String(newKeys.length)),
+          TOAST_DURATION.MEDIUM,
+        )
       } catch (error) {
-        showToast(t("claudeInvalidJSON") + ": " + (error as Error).message, 3000)
+        showToast(t("claudeInvalidJSON") + ": " + (error as Error).message, TOAST_DURATION.LONG)
       }
     }
     input.click()
@@ -310,34 +323,34 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   // 添加 Session Key - 确认
   const handleAddTokenConfirm = (name: string, key: string) => {
     if (!name.trim()) {
-      showToast(t("claudeNameRequired"), 1500)
+      showToast(t("claudeNameRequired"), TOAST_DURATION.SHORT)
       return
     }
 
     if (!key.trim()) {
-      showToast(t("claudeKeyRequired"), 1500)
+      showToast(t("claudeKeyRequired"), TOAST_DURATION.SHORT)
       return
     }
 
-    if (!/^sk-ant-sid\d{2}-/.test(key)) {
-      showToast(t("claudeKeyInvalidFormat"), 2000)
+    if (!VALIDATION_PATTERNS.CLAUDE_KEY.test(key)) {
+      showToast(t("claudeKeyInvalidFormat"), TOAST_DURATION.MEDIUM)
       return
     }
 
     if (keys.some((k) => k.key === key)) {
-      showToast(t("claudeKeyExists"), 2000)
+      showToast(t("claudeKeyExists"), TOAST_DURATION.MEDIUM)
       return
     }
 
     addKey({ name: name.trim(), key: key.trim() })
-    showToast(t("claudeKeyAdded"), 1500)
+    showToast(t("claudeKeyAdded"), TOAST_DURATION.SHORT)
     closeDialog()
   }
 
   // 从浏览器导入 - 完成命名
   const handleImportComplete = (name: string) => {
     if (!name.trim()) {
-      showToast(t("claudeNameRequired"), 1500)
+      showToast(t("claudeNameRequired"), TOAST_DURATION.SHORT)
       return
     }
 
@@ -347,9 +360,9 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
     // 自动设为当前使用（因为这就是浏览器当前正在用的 key）
     setCurrentKey(newKey.id)
 
-    showToast(t("claudeKeyImported"), 1500)
+    showToast(t("claudeKeyImported"), TOAST_DURATION.SHORT)
     closeDialog()
-    setTimeout(() => handleTestToken(newKey.id), 500)
+    setTimeout(() => handleTestToken(newKey.id), BATCH_TEST_CONFIG.INTERVAL_MS)
   }
 
   // 删除 Session Key
@@ -360,17 +373,17 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   const confirmDelete = () => {
     const dialogState = dialog as { type: "delete"; id: string; name: string }
     deleteKey(dialogState.id)
-    showToast(t("claudeKeyDeleted"), 1500)
+    showToast(t("claudeKeyDeleted"), TOAST_DURATION.SHORT)
     closeDialog()
   }
 
   // 渲染状态标签
   const renderStatusBadge = (isValid: boolean | undefined) => {
-    if (isValid === undefined) return <span style={{ color: "var(--gh-text-secondary)" }}>-</span>
+    if (isValid === undefined) return <span style={{ color: STATUS_COLORS.INFO }}>-</span>
     return isValid ? (
-      <span style={{ color: "#10b981", fontWeight: 500 }}>✓ {t("claudeKeyValid")}</span>
+      <span style={{ color: STATUS_COLORS.SUCCESS, fontWeight: 500 }}>✓ {t("claudeKeyValid")}</span>
     ) : (
-      <span style={{ color: "#ef4444", fontWeight: 500 }}>✗ {t("claudeKeyInvalid")}</span>
+      <span style={{ color: STATUS_COLORS.ERROR, fontWeight: 500 }}>✗ {t("claudeKeyInvalid")}</span>
     )
   }
 

@@ -12,6 +12,7 @@
  * - document.documentElement.classList 包含 "light" 或 "dark"
  * - document.documentElement.style.colorScheme 同步
  */
+import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
@@ -24,6 +25,8 @@ import {
   type OutlineItem,
 } from "./base"
 
+const DEFAULT_TITLE = "Grok"
+
 export class GrokAdapter extends SiteAdapter {
   match(): boolean {
     // 匹配 grok.com 独立站点
@@ -32,7 +35,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getSiteId(): string {
-    return "grok"
+    return SITE_IDS.GROK
   }
 
   getName(): string {
@@ -325,8 +328,8 @@ export class GrokAdapter extends SiteAdapter {
   getSessionName(): string | null {
     // 从页面标题获取
     const title = document.title
-    if (title && title !== "Grok") {
-      return title.replace(" - Grok", "").trim()
+    if (title && title !== DEFAULT_TITLE) {
+      return title.replace(` - ${DEFAULT_TITLE}`, "").trim()
     }
     return super.getSessionName()
   }
@@ -334,8 +337,8 @@ export class GrokAdapter extends SiteAdapter {
   getConversationTitle(): string | null {
     // 尝试从页面标题获取
     const title = document.title
-    if (title && title !== "Grok") {
-      return title.replace(" - Grok", "").trim()
+    if (title && title !== DEFAULT_TITLE) {
+      return title.replace(` - ${DEFAULT_TITLE}`, "").trim()
     }
     return null
   }

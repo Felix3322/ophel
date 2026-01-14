@@ -24,6 +24,34 @@ export const TAB_IDS = {
 
 export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS]
 
+// ==================== Settings Navigation IDs ====================
+export const NAV_IDS = {
+  GENERAL: "general",
+  APPEARANCE: "appearance",
+  FEATURES: "features",
+  SITE_SETTINGS: "siteSettings",
+  SHORTCUTS: "shortcuts",
+  BACKUP: "backup",
+  PERMISSIONS: "permissions",
+  ABOUT: "about",
+} as const
+
+// ==================== Features Page Tab IDs ====================
+export const FEATURES_TAB_IDS = {
+  OUTLINE: "outline",
+  CONVERSATIONS: "conversations",
+  TAB_SETTINGS: "tab",
+  CONTENT: "content",
+  READING_HISTORY: "readingHistory",
+} as const
+
+// ==================== Site Settings Page Tab IDs ====================
+export const SITE_SETTINGS_TAB_IDS = {
+  LAYOUT: "layout",
+  MODEL_LOCK: "modelLock",
+  // 站点专属 Tab ID 直接使用 SITE_IDS
+} as const
+
 // ==================== Tab 定义 ====================
 // Tab 标签的显示配置
 export const TAB_DEFINITIONS: Record<
@@ -207,3 +235,18 @@ export const TAG_COLORS = [
   "#708090",
   "#2F4F4F",
 ]
+
+// ==================== Toast 显示时长 ====================
+export const TOAST_DURATION = {
+  SHORT: 1500,
+  MEDIUM: 2000,
+  LONG: 3000,
+} as const
+
+// ==================== 状态颜色 ====================
+export const STATUS_COLORS = {
+  SUCCESS: "#10b981", // green-500
+  ERROR: "#ef4444", // red-500
+  WARNING: "#f59e0b", // amber-500
+  INFO: "var(--gh-text-secondary)",
+} as const

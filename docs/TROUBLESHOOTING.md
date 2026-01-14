@@ -429,7 +429,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
   // 监听来自 Content Script 的消息
   window.addEventListener("message", (event) => {
-    if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
+    if (event.data?.type === "OPHEL_SCROLL_LOCK_TOGGLE") {
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })
@@ -442,7 +442,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
 export class ScrollLockManager {
   private enable() {
     // 通过 postMessage 通知主世界脚本启用
-    window.postMessage({ type: "CHAT_HELPER_SCROLL_LOCK_TOGGLE", enabled: true }, "*")
+    window.postMessage({ type: "OPHEL_SCROLL_LOCK_TOGGLE", enabled: true }, "*")
 
     // 启动 MutationObserver 回滚机制（保底）
     this.startObserver()

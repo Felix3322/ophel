@@ -14,6 +14,7 @@ import {
   PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
+import { NAV_IDS, SITE_IDS } from "~constants"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
 import AboutPage from "~tabs/options/pages/AboutPage"
@@ -30,34 +31,36 @@ import { setLanguage, t } from "~utils/i18n"
 // 导航菜单定义
 const NAV_ITEMS = [
   {
-    id: "general",
+    id: NAV_IDS.GENERAL,
     Icon: GeneralIcon,
     labelKey: "navGeneral",
     label: "基本设置",
   },
   {
-    id: "appearance",
+    id: NAV_IDS.APPEARANCE,
     Icon: AppearanceIcon,
     labelKey: "navAppearance",
     label: "外观主题",
   },
-  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
+  { id: NAV_IDS.FEATURES, Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   {
-    id: "siteSettings",
+    id: NAV_IDS.SITE_SETTINGS,
     Icon: PageContentIcon,
     labelKey: "navSiteSettings",
     label: "站点配置",
   },
-  { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
-  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "数据管理" },
+  { id: NAV_IDS.SHORTCUTS, Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
+  { id: NAV_IDS.BACKUP, Icon: BackupIcon, labelKey: "navBackup", label: "数据管理" },
   {
-    id: "permissions",
+    id: NAV_IDS.PERMISSIONS,
     Icon: PermissionsIcon,
     labelKey: "navPermissions",
     label: "权限管理",
   },
-  { id: "about", Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
+  { id: NAV_IDS.ABOUT, Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
 ]
+
+type NavId = (typeof NAV_IDS)[keyof typeof NAV_IDS]
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -66,7 +69,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, siteId }) => {
-  const [activePage, setActivePage] = useState("general")
+  const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
@@ -118,7 +121,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
   // 防止 Grok 和 Claude 在 keydown 时抢占焦点
   useEffect(() => {
-    if (isOpen && (siteId === "grok" || siteId === "claude")) {
+    if (isOpen && (siteId === SITE_IDS.GROK || siteId === SITE_IDS.CLAUDE)) {
       const container = containerRef.current
       if (!container) {
         return
@@ -177,21 +180,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     }
 
     switch (activePage) {
-      case "general":
+      case NAV_IDS.GENERAL:
         return <GeneralPage siteId={siteId} />
-      case "siteSettings":
+      case NAV_IDS.SITE_SETTINGS:
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
-      case "appearance":
+      case NAV_IDS.APPEARANCE:
         return <AppearancePage siteId={siteId} />
-      case "features":
+      case NAV_IDS.FEATURES:
         return <FeaturesPage siteId={siteId} />
-      case "shortcuts":
+      case NAV_IDS.SHORTCUTS:
         return <ShortcutsPage siteId={siteId} />
-      case "permissions":
+      case NAV_IDS.PERMISSIONS:
         return <PermissionsPage siteId={siteId} />
-      case "backup":
+      case NAV_IDS.BACKUP:
         return <BackupPage siteId={siteId} onNavigate={setActivePage} />
-      case "about":
+      case NAV_IDS.ABOUT:
         return <AboutPage />
       default:
         return <GeneralPage siteId={siteId} />

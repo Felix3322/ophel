@@ -8,6 +8,7 @@
 import type { PlasmoCSConfig } from "plasmo"
 
 import { getAdapter } from "~adapters"
+import { SITE_IDS } from "~constants"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
 import { MarkdownFixer } from "~core/markdown-fixer"
@@ -144,7 +145,7 @@ if (!window.ophelInitialized) {
       setTimeout(syncPageTheme, 1000)
 
       // 2. Markdown 修复 (仅 Gemini 标准版)
-      if (settings.content?.markdownFix && siteId === "gemini") {
+      if (settings.content?.markdownFix && siteId === SITE_IDS.GEMINI) {
         markdownFixer = new MarkdownFixer()
         markdownFixer.start()
       }
@@ -177,7 +178,7 @@ if (!window.ophelInitialized) {
 
       // 6. 水印移除 (仅 Gemini，需开启设置)
       if (
-        (siteId === "gemini" || siteId === "gemini-enterprise") &&
+        (siteId === SITE_IDS.GEMINI || siteId === SITE_IDS.GEMINI_ENTERPRISE) &&
         settings.content?.watermarkRemoval
       ) {
         watermarkRemover = new WatermarkRemover()
@@ -245,7 +246,7 @@ if (!window.ophelInitialized) {
         }
 
         // 4. Markdown Fix update
-        if (newSettings && siteId === "gemini") {
+        if (newSettings && siteId === SITE_IDS.GEMINI) {
           if (newSettings.content?.markdownFix) {
             if (!markdownFixer) {
               markdownFixer = new MarkdownFixer()
@@ -270,7 +271,7 @@ if (!window.ophelInitialized) {
         }
 
         // 6. Watermark Remover update
-        if (newSettings && (siteId === "gemini" || siteId === "gemini-enterprise")) {
+        if (newSettings && (siteId === SITE_IDS.GEMINI || siteId === SITE_IDS.GEMINI_ENTERPRISE)) {
           if (newSettings.content?.watermarkRemoval) {
             if (!watermarkRemover) {
               watermarkRemover = new WatermarkRemover()

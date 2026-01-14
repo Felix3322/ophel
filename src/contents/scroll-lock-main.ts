@@ -205,7 +205,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
   // 监听来自 Content Script 的消息（启用/禁用劫持）
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
-    if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
+    if (event.data?.type === "OPHEL_SCROLL_LOCK_TOGGLE") {
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })

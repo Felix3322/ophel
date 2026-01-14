@@ -7,6 +7,7 @@ import React, { useCallback, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
 import { Switch } from "~components/ui"
+import { FEATURES_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
@@ -21,14 +22,14 @@ interface FeaturesPageProps {
 
 const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
   const tabs = [
-    { id: "outline", label: t("tabOutline") || "大纲" },
-    { id: "conversations", label: t("tabConversations") || "会话" },
-    { id: "tab", label: t("tabSettingsTab") || "标签页" },
-    { id: "content", label: t("navContent") || "内容交互" },
-    { id: "readingHistory", label: t("readingHistoryTitle") || "阅读历史" },
+    { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") || "大纲" },
+    { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") || "会话" },
+    { id: FEATURES_TAB_IDS.TAB_SETTINGS, label: t("tabSettingsTab") || "标签页" },
+    { id: FEATURES_TAB_IDS.CONTENT, label: t("navContent") || "内容交互" },
+    { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") || "阅读历史" },
   ]
 
-  const [activeTab, setActiveTab] = useState(tabs[0].id)
+  const [activeTab, setActiveTab] = useState<string>(tabs[0].id)
   const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
 
   if (!settings) return null
@@ -41,7 +42,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* ========== 标签页 Tab ========== */}
-      {activeTab === "tab" && (
+      {activeTab === FEATURES_TAB_IDS.TAB_SETTINGS && (
         <>
           {/* 标签页行为卡片 */}
           <SettingCard title={t("tabBehaviorTitle") || "标签页行为"}>
@@ -211,7 +212,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
       )}
 
       {/* ========== 大纲 Tab ========== */}
-      {activeTab === "outline" && (
+      {activeTab === FEATURES_TAB_IDS.OUTLINE && (
         <>
           <SettingCard
             title={t("outlineSettings") || "大纲设置"}
@@ -296,7 +297,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
       )}
 
       {/* ========== 会话 Tab ========== */}
-      {activeTab === "conversations" && (
+      {activeTab === FEATURES_TAB_IDS.CONVERSATIONS && (
         <>
           <SettingCard
             title={t("conversationsSettingsTitle") || "会话管理"}
@@ -349,7 +350,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
       )}
 
       {/* ========== 阅读历史 Tab ========== */}
-      {activeTab === "readingHistory" && (
+      {activeTab === FEATURES_TAB_IDS.READING_HISTORY && (
         <SettingCard
           title={t("readingHistoryTitle") || "阅读历史"}
           description={t("readingHistoryDesc") || "记录和恢复会话阅读位置"}>
@@ -402,7 +403,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
       )}
 
       {/* ========== 内容交互 Tab ========== */}
-      {activeTab === "content" && (
+      {activeTab === FEATURES_TAB_IDS.CONTENT && (
         <SettingCard
           title={t("interactionEnhance") || "交互增强"}
           description={t("interactionEnhanceDesc") || "增强公式和表格的交互功能"}>

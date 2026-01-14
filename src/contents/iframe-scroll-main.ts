@@ -51,7 +51,7 @@ if (!(window as any).__ophelIframeScrollInitialized) {
   // 监听来自 Content Script 的滚动请求消息
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
-    if (event.data?.type !== "CHAT_HELPER_SCROLL_REQUEST") return
+    if (event.data?.type !== "OPHEL_SCROLL_REQUEST") return
 
     const { action, position } = event.data
     const container = getFlutterScrollContainer()
@@ -59,7 +59,7 @@ if (!(window as any).__ophelIframeScrollInitialized) {
     if (!container) {
       // 如果找不到 Flutter 容器，返回失败消息让 Content Script 使用普通滚动
       window.postMessage(
-        { type: "CHAT_HELPER_SCROLL_RESPONSE", success: false, reason: "no_flutter_container" },
+        { type: "OPHEL_SCROLL_RESPONSE", success: false, reason: "no_flutter_container" },
         "*",
       )
       return
@@ -92,6 +92,6 @@ if (!(window as any).__ophelIframeScrollInitialized) {
         result = { success: false }
     }
 
-    window.postMessage({ type: "CHAT_HELPER_SCROLL_RESPONSE", ...result }, "*")
+    window.postMessage({ type: "OPHEL_SCROLL_RESPONSE", ...result }, "*")
   })
 }

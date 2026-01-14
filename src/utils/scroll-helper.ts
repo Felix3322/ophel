@@ -28,7 +28,7 @@ function sendScrollRequest(
   return new Promise((resolve) => {
     const handler = (event: MessageEvent) => {
       if (event.source !== window) return
-      if (event.data?.type === "CHAT_HELPER_SCROLL_RESPONSE") {
+      if (event.data?.type === "OPHEL_SCROLL_RESPONSE") {
         window.removeEventListener("message", handler)
         resolve(event.data as ScrollResponse)
       }
@@ -37,7 +37,7 @@ function sendScrollRequest(
     window.addEventListener("message", handler)
 
     // 发送请求到 Main World
-    window.postMessage({ type: "CHAT_HELPER_SCROLL_REQUEST", action, position }, "*")
+    window.postMessage({ type: "OPHEL_SCROLL_REQUEST", action, position }, "*")
 
     // 超时处理（100ms 后如果没有响应，认为 Main World 脚本未加载或无 Flutter 容器）
     setTimeout(() => {

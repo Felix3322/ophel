@@ -1,6 +1,7 @@
 /**
  * Claude.ai 适配器
  */
+import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
@@ -22,7 +23,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getSiteId(): string {
-    return "claude"
+    return SITE_IDS.CLAUDE
   }
 
   getName(): string {
