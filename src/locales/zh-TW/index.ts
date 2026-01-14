@@ -864,4 +864,12 @@ export const zhTW = {
   claudeTokenExists: "該 Session Key 已存在: {name}",
   claudeNoCookieFound: "未找到當前Cookie",
   claudeRequestPermission: "請在彈出視窗中授權Cookie權限",
+  claudeNotOnSiteWarning: "即時切換和瀏覽器導入功能僅在 Claude 站點可用",
+  claudeNotOnSiteHint: "請在 Claude 站點使用此功能",
+  claudeShortcutOnlyOnSite: "快捷鍵僅在 Claude 站點可用",
+  claudeBatchTest: "批量檢測",
+  claudeBatchTesting: "檢測中... {current}/{total}",
+  claudeBatchTestDone: "批量檢測完成。{valid} 個有效，{invalid} 個失效。",
+  claudeBatchTestFailed: "批量檢測被中斷",
+  claudeOnlyOneKeyTip: "當前只有一個可用 Key，且正在使用中",
 }

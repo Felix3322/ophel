@@ -399,31 +399,56 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           // 1. 获取所有 keys 和当前 ID
           // Zustand persist 存储结构: { state: { keys: [], currentKeyId: "" }, version: 0 }
           const storageData = await localStorage.get<any>("claudeSessionKeys")
-          const keys = storageData?.state?.keys || []
+          const rawKeys = storageData?.state?.keys || []
 
-          if (keys.length === 0) {
+          if (rawKeys.length === 0) {
             sendResponse({ success: false, error: "No keys found" })
             return
           }
 
           const currentId = storageData?.state?.currentKeyId
 
-          // 2. 找到下一个 Key
-          let nextIndex = 0
-          if (currentId) {
-            const currentIndex = keys.findIndex((k: any) => k.id === currentId)
-            if (currentIndex !== -1) {
-              nextIndex = (currentIndex + 1) % keys.length
-            }
+          // 2. 筛选可用 Keys 并排序 (Pro 优先)
+          // 规则: isValid !== false (undefined 也视为可用)，优先Pro，其次按名称排序
+          let availableKeys = rawKeys.filter((k: any) => k.isValid !== false)
+
+          // 如果没有可用 Key，尝试使用所有 Key (防止死循环或无法切换)
+          if (availableKeys.length === 0) {
+            availableKeys = [...rawKeys]
           }
 
-          const nextKey = keys[nextIndex]
+          // 排序: Pro 优先，然后是名称
+          availableKeys.sort((a: any, b: any) => {
+            const isAPro = a.accountType?.toLowerCase()?.includes("pro")
+            const isBPro = b.accountType?.toLowerCase()?.includes("pro")
+            if (isAPro && !isBPro) return -1
+            if (!isAPro && isBPro) return 1
+            return a.name.localeCompare(b.name)
+          })
+
+          // 3. 找到下一个 Key
+          // 在排序后的列表里找当前 Key 的位置
+          const currentIndex = availableKeys.findIndex((k: any) => k.id === currentId)
+
+          // 如果只有一个 Key 且当前正在使用它，则不执行切换
+          if (availableKeys.length === 1 && currentIndex !== -1) {
+            sendResponse({ success: false, error: "claudeOnlyOneKey" })
+            return
+          }
+
+          let nextIndex = 0
+          if (currentIndex !== -1) {
+            nextIndex = (currentIndex + 1) % availableKeys.length
+          }
+          // 如果当前 Key 不在可用列表中（比如失效了），默认切换到排序后的第一个（Pro）
+
+          const nextKey = availableKeys[nextIndex]
           if (!nextKey) {
             sendResponse({ success: false, error: "Next key not found" })
             return
           }
 
-          // 3. 设置 Cookie
+          // 4. 设置 Cookie
           if (nextKey.key) {
             await chrome.cookies.set({
               url: "https://claude.ai",
@@ -436,17 +461,17 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             })
           }
 
-          // 4. 更新存储中的当前 Key ID (以保持状态一致)
+          // 5. 更新存储中的当前 Key ID (以保持状态一致)
           if (storageData?.state) {
             storageData.state.currentKeyId = nextKey.id
             await localStorage.set("claudeSessionKeys", storageData)
           }
 
-          // 5. 刷新标签页
+          // 6. 跳转到首页 (而非刷新)
           const claudeTabs = await chrome.tabs.query({ url: "*://claude.ai/*" })
           for (const tab of claudeTabs) {
             if (tab.id) {
-              await chrome.tabs.reload(tab.id)
+              await chrome.tabs.update(tab.id, { url: "https://claude.ai/" })
             }
           }
 

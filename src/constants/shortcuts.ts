@@ -278,7 +278,7 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   showShortcuts: { key: "\\", alt: true },
   openSettings: { key: ",", alt: true },
   openClaudeSettings: { key: "c", ctrl: true, alt: true },
-  switchClaudeKey: { key: "b", ctrl: true, alt: true },
+  switchClaudeKey: { key: "s", ctrl: true, alt: true },
   openGeminiSettings: { key: "g", ctrl: true, alt: true },
   openThemeSettings: { key: "t", ctrl: true, alt: true },
   openModelLockSettings: { key: "l", ctrl: true, alt: true },

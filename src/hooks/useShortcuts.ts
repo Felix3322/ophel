@@ -593,10 +593,10 @@ export function useShortcuts({
   // 一键切换 Claude Key
   const switchClaudeKey = useCallback(async () => {
     // 仅在 Claude 站点生效 (简单判断)
-    if (!location.hostname.includes("claude.ai")) {
-      // 或者不做限制，允许全局切换？
-      // 用户需求是 "一键切换可用claude key"，通常是在使用 claude 时。
-      // 但也没说必须在 claude。暂不限制，或者给个提示。
+    // 仅在 Claude 站点生效
+    if (!location.hostname.includes("claude.ai") && !location.hostname.includes("claude.com")) {
+      showToast(t("claudeShortcutOnlyOnSite") || "快捷键仅在 Claude 站点可用", 2000)
+      return
     }
 
     try {
@@ -610,7 +610,11 @@ export function useShortcuts({
       if (result.success) {
         showToast((t("claudeKeySwitched") || "Session Key 已切换") + `: ${result.keyName}`, 2000)
       } else {
-        showToast(result.error || "切换失败", 2000)
+        if (result.error === "claudeOnlyOneKey") {
+          showToast(t("claudeOnlyOneKeyTip") || "当前只有一个可用 Key，且正在使用中", 2000)
+        } else {
+          showToast(result.error || "切换失败", 2000)
+        }
       }
     } catch (e) {
       showToast("切换失败: " + (e as Error).message, 2000)

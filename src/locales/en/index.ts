@@ -885,4 +885,12 @@ Please output the optimized code block directly, followed by a brief summary of 
   claudeTokenExists: "Session Key already exists: {name}",
   claudeNoCookieFound: "No cookie found",
   claudeRequestPermission: "Please grant cookie permission in the popup",
+  claudeNotOnSiteWarning: "Instant switching and browser import are only available on Claude site",
+  claudeNotOnSiteHint: "Please use this feature on Claude site",
+  claudeShortcutOnlyOnSite: "Shortcut only available on Claude site",
+  claudeBatchTest: "Batch Check",
+  claudeBatchTesting: "Checking... {current}/{total}",
+  claudeBatchTestDone: "Batch check completed. {valid} valid, {invalid} invalid.",
+  claudeBatchTestFailed: "Batch check interrupted",
+  claudeOnlyOneKeyTip: "Only one key available and it is currently in use",
 }

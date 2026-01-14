@@ -898,4 +898,12 @@ export const zhCN = {
   claudeTokenExists: "该 Session Key 已存在: {name}",
   claudeNoCookieFound: "未找到当前Cookie",
   claudeRequestPermission: "请在弹出窗口中授权Cookie权限",
+  claudeNotOnSiteWarning: "即时切换和浏览器导入功能仅在 Claude 站点可用",
+  claudeNotOnSiteHint: "请在 Claude 站点使用此功能",
+  claudeShortcutOnlyOnSite: "快捷键仅在 Claude 站点可用",
+  claudeBatchTest: "批量检测",
+  claudeBatchTesting: "检测中... {current}/{total}",
+  claudeBatchTestDone: "批量检测完成。{valid} 个有效，{invalid} 个失效。",
+  claudeBatchTestFailed: "批量检测被中断",
+  claudeOnlyOneKeyTip: "当前只有一个可用 Key，且正在使用中",
 }
