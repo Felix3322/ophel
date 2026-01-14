@@ -770,6 +770,8 @@ export const ja = {
   globalShortcutsTitle: "グローバルショートカット",
   globalShortcutsDesc: "ブラウザのどこでも動作します。拡張機能の管理画面から設定してください。",
   openBrowserShortcuts: "ブラウザのショートカット設定を開く",
+  shortcutNotSet: "未設定",
+  shortcutRemove: "削除",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "ナビゲーション",

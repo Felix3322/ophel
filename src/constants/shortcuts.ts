@@ -15,7 +15,7 @@ export interface ShortcutBinding {
 export interface ShortcutsSettings {
   enabled: boolean // 总开关
   globalUrl: string // 全局快捷键打开的 URL
-  keybindings: Record<string, ShortcutBinding>
+  keybindings: Record<string, ShortcutBinding | null> // null 表示已移除
 }
 
 // 快捷键动作 ID

@@ -753,6 +753,8 @@ export const zhTW = {
   globalShortcutsTitle: "全域快捷鍵",
   globalShortcutsDesc: "在瀏覽器任何頁面都可使用，需要在瀏覽器擴充功能設置頁面配置。",
   openBrowserShortcuts: "開啟瀏覽器快捷鍵設置",
+  shortcutNotSet: "未設置",
+  shortcutRemove: "移除",
 
   // 快捷鍵分類
   shortcutCategoryNavigation: "導航",

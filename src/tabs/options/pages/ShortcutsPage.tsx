@@ -28,10 +28,11 @@ interface ShortcutsPageProps {
 
 // 快捷键录入组件
 const ShortcutInput: React.FC<{
-  binding: ShortcutBinding
+  binding: ShortcutBinding | null
   onChange: (binding: ShortcutBinding) => void
+  onRemove: () => void
   conflictWarning?: string
-}> = ({ binding, onChange, conflictWarning }) => {
+}> = ({ binding, onChange, onRemove, conflictWarning }) => {
   const [isRecording, setIsRecording] = useState(false)
   const isMac = isMacOS()
 
@@ -78,20 +79,33 @@ const ShortcutInput: React.FC<{
         }
       }
 
+      // 跨平台兼容：Mac 上将 meta (⌘) 转换为 ctrl，确保同步到 Windows 后可用
+      if (isMac && newBinding.meta) {
+        newBinding.ctrl = true
+        newBinding.meta = false
+      }
+
       onChange(newBinding)
       setIsRecording(false)
     },
-    [isRecording, onChange],
+    [isRecording, onChange, isMac],
   )
 
   const handleBlur = () => {
     setIsRecording(false)
   }
 
+  // 如果 binding 为 null，显示"未设置"
+  const displayText = isRecording
+    ? t("pressAnyKey") || "请按下快捷键..."
+    : binding
+      ? formatShortcut(binding, isMac)
+      : t("shortcutNotSet") || "未设置"
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <button
-        className={`shortcut-input ${isRecording ? "recording" : ""}`}
+        className={`shortcut-input ${isRecording ? "recording" : ""} ${!binding ? "not-set" : ""}`}
         onClick={() => setIsRecording(true)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
@@ -105,13 +119,32 @@ const ShortcutInput: React.FC<{
             : "1px solid var(--gh-border, #e5e7eb)",
           borderRadius: "6px",
           background: isRecording ? "var(--gh-bg-hover)" : "var(--gh-bg)",
-          color: "var(--gh-text)",
+          color: binding ? "var(--gh-text)" : "var(--gh-text-tertiary)",
           cursor: "pointer",
           textAlign: "center",
           transition: "all 0.2s",
+          fontStyle: binding ? "normal" : "italic",
         }}>
-        {isRecording ? t("pressAnyKey") || "请按下快捷键..." : formatShortcut(binding, isMac)}
+        {displayText}
       </button>
+      {/* 移除按钮 */}
+      {binding && (
+        <button
+          onClick={onRemove}
+          title={t("shortcutRemove") || "移除"}
+          style={{
+            padding: "4px 8px",
+            fontSize: "12px",
+            border: "1px solid var(--gh-border)",
+            borderRadius: "4px",
+            background: "var(--gh-bg)",
+            color: "var(--gh-text-secondary)",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}>
+          ✕
+        </button>
+      )}
       {conflictWarning && (
         <span style={{ fontSize: "12px", color: "var(--gh-error, #ef4444)" }}>
           {conflictWarning}
@@ -128,10 +161,12 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId }) => {
 
   // 检测快捷键冲突
   const checkConflict = useCallback(
-    (actionId: string, binding: ShortcutBinding): string | undefined => {
+    (actionId: string, binding: ShortcutBinding | null): string | undefined => {
+      if (!binding) return undefined // null 绑定没有冲突
       const allBindings = shortcuts?.keybindings || {}
       for (const [id, b] of Object.entries(allBindings)) {
         if (id === actionId) continue
+        if (b === null) continue // 跳过已移除的绑定
         // 跳过不在 SHORTCUT_META 中的旧配置
         const meta = SHORTCUT_META[id as ShortcutActionId]
         if (!meta) continue
@@ -162,6 +197,24 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId }) => {
           keybindings: {
             ...shortcuts?.keybindings,
             [actionId]: binding,
+          },
+        },
+      })
+    },
+    [shortcuts, setSettings],
+  )
+
+  // 移除单个快捷键
+  const removeKeybinding = useCallback(
+    (actionId: string) => {
+      setSettings({
+        shortcuts: {
+          ...shortcuts,
+          enabled: shortcuts?.enabled ?? true,
+          globalUrl: shortcuts?.globalUrl ?? "https://gemini.google.com",
+          keybindings: {
+            ...shortcuts?.keybindings,
+            [actionId]: null, // 设置为 null 表示移除
           },
         },
       })
@@ -311,7 +364,10 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId }) => {
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
         <SettingCard key={categoryId} title={t(categoryMeta.labelKey) || categoryMeta.label}>
           {actions.map(([actionId, meta]) => {
-            const binding = shortcuts?.keybindings?.[actionId] || DEFAULT_KEYBINDINGS[actionId]
+            // 获取绑定：用户设置 > 默认设置（若用户设置为 null 则为已移除）
+            const userBinding = shortcuts?.keybindings?.[actionId]
+            const binding =
+              userBinding === null ? null : userBinding || DEFAULT_KEYBINDINGS[actionId]
             const conflict = checkConflict(actionId, binding)
 
             return (
@@ -322,7 +378,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId }) => {
                 <ShortcutInput
                   binding={binding}
                   onChange={(b) => updateKeybinding(actionId, b)}
-                  conflictWarning={conflict}
+                  onRemove={() => removeKeybinding(actionId)}
+                  conflictWarning={conflict || undefined}
                 />
               </SettingRow>
             )

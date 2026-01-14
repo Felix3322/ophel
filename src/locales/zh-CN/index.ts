@@ -788,6 +788,8 @@ export const zhCN = {
   globalShortcutsTitle: "全局快捷键",
   globalShortcutsDesc: "在浏览器任何页面都可使用，需要在浏览器扩展设置页面配置。",
   openBrowserShortcuts: "打开浏览器快捷键设置",
+  shortcutNotSet: "未设置",
+  shortcutRemove: "移除",
 
   // 快捷键分类
   shortcutCategoryNavigation: "导航",

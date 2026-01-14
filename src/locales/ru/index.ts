@@ -756,6 +756,8 @@ export const ru = {
   globalShortcutsTitle: "Глобальные",
   globalShortcutsDesc: "Везде в браузере. Настройка в Chrome.",
   openBrowserShortcuts: "Настройки Chrome",
+  shortcutNotSet: "Не задано",
+  shortcutRemove: "Удалить",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Навигация",

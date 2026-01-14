@@ -776,6 +776,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalShortcutsTitle: "Global Shortcuts",
   globalShortcutsDesc: "Work on any browser page. Configure them in browser extension settings.",
   openBrowserShortcuts: "Open Browser Shortcut Settings",
+  shortcutNotSet: "Not set",
+  shortcutRemove: "Remove",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigation",

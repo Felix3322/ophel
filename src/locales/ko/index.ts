@@ -769,6 +769,8 @@ export const ko = {
   globalShortcutsDesc:
     "모든 브라우저 페이지에서 작동합니다. 브라우저 확장 프로그램 설정에서 구성하세요.",
   openBrowserShortcuts: "브라우저 단축키 설정 열기",
+  shortcutNotSet: "미설정",
+  shortcutRemove: "제거",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "탐색",

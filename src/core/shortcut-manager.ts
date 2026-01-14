@@ -170,6 +170,9 @@ export class ShortcutManager {
 
     // 遍历所有快捷键绑定，查找匹配项
     for (const [actionId, binding] of Object.entries(keybindings)) {
+      // 跳过已移除的快捷键（null 值）
+      if (binding === null) continue
+
       if (this.matchesBinding(e, binding)) {
         const handler = this.handlers.get(actionId as ShortcutActionId)
         if (handler) {

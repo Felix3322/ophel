@@ -758,6 +758,8 @@ Dame el código y luego un resumen de mejoras.`,
   globalShortcutsTitle: "Globales",
   globalShortcutsDesc: "Van en cualquier web. Ponlos en la gestión de Chrome.",
   openBrowserShortcuts: "Config de Chrome",
+  shortcutNotSet: "No configurado",
+  shortcutRemove: "Eliminar",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Ir a",

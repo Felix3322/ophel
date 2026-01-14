@@ -759,6 +759,8 @@ Donnez le code puis un résumé des améliorations.`,
   globalShortcutsTitle: "Globaux",
   globalShortcutsDesc: "Partout sur le web. Configurez-les dans Chrome.",
   openBrowserShortcuts: "Réglages Chrome",
+  shortcutNotSet: "Non défini",
+  shortcutRemove: "Supprimer",
 
   // Shortcut Categories
   shortcutCategoryNavigation: "Navigation",
