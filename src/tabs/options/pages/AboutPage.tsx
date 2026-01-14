@@ -56,7 +56,16 @@ const AboutPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="about-section-title">{t("projectLinks") || "项目链接"}</div>
+      <div className="about-section-title">{t("communityAndSupport") || "社区与支持"}</div>
+      <div
+        style={{
+          fontSize: "13px",
+          color: "var(--gh-text-secondary)",
+          marginBottom: 16,
+          fontStyle: "italic",
+        }}>
+        "{t("communityMotto")}"
+      </div>
 
       <div className="about-links-grid">
         {/* GitHub Link */}

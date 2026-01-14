@@ -6,7 +6,7 @@ export const zhCN = {
   disclaimerText:
     "本插件为通用辅助工具，无法涵盖特定站点的所有独有功能。插件依赖于第三方站点的页面结构和布局，如果原网站更新导致功能失效，请前往 GitHub 提交 Issue 反馈，我们将尽快修复。",
   disclaimerWarning: "请勿因第三方站点改版导致的问题在应用商店给出差评，感谢您的理解与支持！",
-  disclaimerQuoteText: "一个人可以走得很快，但一群人可以走得更远。",
+  communityMotto: "一个人可以走得很快，但一群人可以走得更远。",
   welcomeJoin: "欢迎",
   agreeButton: "我已知晓并同意",
 
@@ -175,6 +175,7 @@ export const zhCN = {
   aboutDescription:
     "Ophel 是一款专为 Gemini、ChatGPT、Claude 等 AI 平台打造的浏览器增强扩展。它为您提供会话管理与导出、智能大纲导航、提示词指令库等效率工具，同时具备阅读进度恢复、双向锚点定位、水印移除、排版修复、公式复制及模型锁定等实用功能，并支持深度自定义主题与页面美化，让您的 AI 交互体验更加流畅愉悦。",
   projectLinks: "项目链接",
+  communityAndSupport: "社区与支持",
   githubDesc: "查看源代码、提交问题或参与项目开发",
   giveStar: "点个 Star",
   projectWebsite: "项目官网",

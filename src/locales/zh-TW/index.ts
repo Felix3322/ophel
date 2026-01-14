@@ -7,7 +7,7 @@ export const zhTW = {
   disclaimerText:
     "本插件為一般輔助工具，無法涵蓋特定站點的所有獨有功能。插件依賴第三方站點的頁面結構和排版，若原網站更新導致功能失效，請前往 GitHub 提交 Issue 回報，我們將儘快修復。",
   disclaimerWarning: "請勿因第三方站點改版導致的問題在應用商店給予負評，感謝您的理解與支持！",
-  disclaimerQuoteText: "一個人可以走得很快，但一群人可以走得更遠。",
+  communityMotto: "一個人可以走得很快，但一群人可以走得更遠。",
   welcomeJoin: "歡迎",
   agreeButton: "我已知曉並同意",
 

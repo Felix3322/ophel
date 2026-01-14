@@ -8,7 +8,7 @@ export const fr = {
     "Cette extension est un outil à usage général et peut ne pas prendre en charge toutes les fonctionnalités exclusives de sites spécifiques. Elle dépend des structures de pages de tiers ; si des mises à jour interrompent le fonctionnement, veuillez nous en informer via GitHub Issues pour une correction rapide.",
   disclaimerWarning:
     "Veuillez ne pas laisser d'avis négatifs sur le store pour des problèmes causés par des modifications sur des sites tiers. Merci de votre compréhension et de votre soutien !",
-  disclaimerQuoteText: "Seul on va plus vite, ensemble on va plus loin.",
+  communityMotto: "Seul on va plus vite, ensemble on va plus loin.",
   welcomeJoin: "Bienvenue sur Ophel",
   agreeButton: "Je comprends et j'accepte",
 

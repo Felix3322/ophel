@@ -52,7 +52,7 @@ export const DisclaimerModal: React.FC = () => {
 
           <div className="disclaimer-section quote-section">
             <p className="disclaimer-quote-text">
-              {t("disclaimerQuoteText") || "一个人可以走的更快，但一群人可以走得更远。"}
+              {t("communityMotto") || "一个人可以走的更快，但一群人可以走得更远。"}
             </p>
 
             <a

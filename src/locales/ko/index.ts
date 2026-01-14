@@ -8,7 +8,7 @@ export const ko = {
     "본 확장 프로그램은 범용 도구이며 특정 사이트의 모든 고유 기능을 지원하지 않을 수 있습니다. 타사 페이지 구조에 의존하므로 업데이트로 인해 기능이 중단될 경우 GitHub Issues를 통해 보고해 주시면 신속히 수정하겠습니다.",
   disclaimerWarning:
     "타사 사이트 변경으로 인한 문제에 대해 스토어에 부정적인 리뷰를 남기지 말아주세요. 이해와 지원에 감사드립니다!",
-  disclaimerQuoteText: "빨리 가려면 혼자 가고, 멀리 가려면 함께 가라.",
+  communityMotto: "빨리 가려면 혼자 가고, 멀리 가려면 함께 가라.",
   welcomeJoin: "Ophel에 오신 것을 환영합니다",
   agreeButton: "이해했으며 동의합니다",
 

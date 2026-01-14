@@ -8,7 +8,7 @@ export const de = {
     "Diese Erweiterung ist ein Allzweck-Werkzeug und unterstützt möglicherweise nicht jede exklusive Funktion bestimmter Websites. Sie basiert auf Drittanbieter-Seitenstrukturen; falls Updates die Funktionalität beeinträchtigen, melden Sie dies bitte über GitHub Issues für eine schnelle Lösung.",
   disclaimerWarning:
     "Bitte hinterlassen Sie keine negativen Bewertungen im Store wegen Problemen, die durch Änderungen an Drittanbieter-Seiten verursacht wurden. Vielen Dank für Ihr Verständnis und Ihre Unterstützung!",
-  disclaimerQuoteText: "Wer schnell gehen will, geht allein. Wer weit gehen will, geht gemeinsam.",
+  communityMotto: "Wer schnell gehen will, geht allein. Wer weit gehen will, geht gemeinsam.",
   welcomeJoin: "Willkommen bei Ophel",
   agreeButton: "Verstanden & Akzeptieren",
 

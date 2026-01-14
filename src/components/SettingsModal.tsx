@@ -11,8 +11,10 @@ import {
   FeaturesIcon,
   GeneralIcon,
   KeyboardIcon,
+  MaximizeIcon,
   PageContentIcon,
   PermissionsIcon,
+  RestoreIcon,
 } from "~components/icons"
 import { NAV_IDS, SITE_IDS } from "~constants"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -71,6 +73,7 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, siteId }) => {
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
+  const [isMaximized, setIsMaximized] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
   const contentRef = useRef<HTMLDivElement>(null)
@@ -205,12 +208,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     <div className="settings-modal-overlay" onClick={onClose}>
       <div
         ref={containerRef}
-        className="settings-modal-container"
+        className={`settings-modal-container ${isMaximized ? "maximized" : ""}`}
         onClick={(e) => e.stopPropagation()}>
         {/* 关闭按钮 */}
-        <button className="settings-modal-close" onClick={onClose} title={t("close") || "关闭"}>
-          ✕
-        </button>
+        <div className="settings-modal-actions">
+          <button
+            className="settings-modal-action-btn"
+            onClick={() => setIsMaximized(!isMaximized)}
+            title={isMaximized ? t("restore") || "还原" : t("maximize") || "最大化"}>
+            {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
+          </button>
+          <button
+            className="settings-modal-action-btn close"
+            onClick={onClose}
+            title={t("close") || "关闭"}>
+            ✕
+          </button>
+        </div>
 
         {/* 侧边栏 */}
         <aside className="settings-sidebar">

@@ -709,6 +709,20 @@
   overflow: hidden;
   position: relative;
   animation: settings-modal-slide-in 0.25s ease;
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-modal-container.maximized {
+  width: calc(100vw - 48px);
+  height: calc(100vh - 48px);
+  max-width: none;
+  max-height: none;
+  border-radius: 12px;
 }
 
 @keyframes settings-modal-slide-in {
@@ -722,10 +736,16 @@
   }
 }
 
-.settings-modal-close {
+.settings-modal-actions {
   position: absolute;
   top: 12px;
   right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.settings-modal-action-btn {
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -738,12 +758,16 @@
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
-  z-index: 10;
 }
 
-.settings-modal-close:hover {
+.settings-modal-action-btn:hover {
   background: var(--gh-hover, #e5e7eb);
   color: var(--gh-text, #374151);
+}
+
+.settings-modal-action-btn.close:hover {
+  background: var(--gh-text-danger, #ef4444);
+  color: #fff;
 }
 
 /* 模态框内的布局微调 */

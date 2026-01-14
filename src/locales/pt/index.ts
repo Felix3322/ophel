@@ -8,7 +8,7 @@ export const pt = {
     "Esta extensão é uma ferramenta de uso geral e pode não suportar todas as funcionalidades exclusivas de sites específicos. Depende de estruturas de páginas de terceiros; se atualizações interromperem a funcionalidade, por favor informe via GitHub Issues para uma correção rápida.",
   disclaimerWarning:
     "Por favor, não deixe avaliações negativas na loja por problemas causados por mudanças em sites de terceiros. Obrigado pela sua compreensão e apoio!",
-  disclaimerQuoteText: "Se quer ir rápido, vá sozinho. Se quer ir longe, vá acompanhado.",
+  communityMotto: "Se quer ir rápido, vá sozinho. Se quer ir longe, vá acompanhado.",
   welcomeJoin: "Bem-vindo ao Ophel",
   agreeButton: "Entendo e Aceito",
 
