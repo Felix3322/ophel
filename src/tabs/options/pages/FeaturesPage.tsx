@@ -345,6 +345,36 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
                 )
               }
             />
+
+            <SettingRow
+              label={t("exportCustomUserName") || "自定义用户名称"}
+              description={
+                t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"
+              }>
+              <input
+                type="text"
+                className="settings-input"
+                value={settings.export?.customUserName || ""}
+                onChange={(e) => updateNestedSetting("export", "customUserName", e.target.value)}
+                placeholder="User"
+                style={{ width: "180px" }}
+              />
+            </SettingRow>
+
+            <SettingRow
+              label={t("exportCustomModelName") || "自定义 AI 名称"}
+              description={
+                t("exportCustomModelNameDesc") || "导出时使用的 AI 显示名称 (默认: 站点名称)"
+              }>
+              <input
+                type="text"
+                className="settings-input"
+                value={settings.export?.customModelName || ""}
+                onChange={(e) => updateNestedSetting("export", "customModelName", e.target.value)}
+                placeholder="Site Name"
+                style={{ width: "180px" }}
+              />
+            </SettingRow>
           </SettingCard>
         </>
       )}

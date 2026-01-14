@@ -4,6 +4,7 @@ import {
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
   MSG_FOCUS_TAB,
+  MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
@@ -716,6 +717,51 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           console.error("Check Claude generating failed:", err)
           // 出错时返回不确定，默认允许
           sendResponse({ success: true, isGenerating: false })
+        }
+      })()
+      break
+
+    case MSG_GET_AISTUDIO_MODELS:
+      // 获取 AI Studio 模型列表（从 content script 获取）
+      ;(async () => {
+        try {
+          // 查找 AI Studio 标签页
+          const aistudioTabs = await chrome.tabs.query({
+            url: "*://aistudio.google.com/*",
+          })
+
+          if (aistudioTabs.length === 0) {
+            sendResponse({
+              success: false,
+              error: "NO_AISTUDIO_TAB",
+              message: "请先打开 AI Studio 页面",
+            })
+            return
+          }
+
+          // 向第一个 AI Studio 标签页发送消息
+          const tab = aistudioTabs[0]
+          if (!tab.id) {
+            sendResponse({ success: false, error: "INVALID_TAB" })
+            return
+          }
+
+          try {
+            const result = await chrome.tabs.sendMessage(tab.id, {
+              type: "GET_MODEL_LIST",
+            })
+            sendResponse(result)
+          } catch (err) {
+            console.error("Send message to AI Studio tab failed:", err)
+            sendResponse({
+              success: false,
+              error: "SEND_MESSAGE_FAILED",
+              message: (err as Error).message,
+            })
+          }
+        } catch (err) {
+          console.error("Get AI Studio models failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
         }
       })()
       break

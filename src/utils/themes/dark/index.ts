@@ -58,7 +58,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-bg-danger": "rgba(239, 68, 68, 0.15)",
       "--gh-text-danger": "#fca5a5",
       "--gh-bg-danger-hover": "rgba(239, 68, 68, 0.25)",
-      "--gh-brand-gradient": "#1a1a1a",
+      "--gh-brand-gradient": "linear-gradient(135deg, #8ab4f8 0%, #81c995 100%)",
       "--gh-brand-border": "#333333",
       "--gh-glass-bg": "rgba(255, 255, 255, 0.08)",
       "--gh-glass-bg-hover": "rgba(255, 255, 255, 0.12)",

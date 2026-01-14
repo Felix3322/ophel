@@ -225,6 +225,11 @@ export class ReadingHistoryManager {
       return false
     }
 
+    // 如果是新会话（无 ID），不进行恢复
+    if (this.adapter.isNewConversation()) {
+      return false
+    }
+
     // 确保 store 已 hydrated
     await this.waitForHydration()
 

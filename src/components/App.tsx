@@ -570,8 +570,24 @@ export const App = () => {
 
     // Enter 键发送时
     const handleKeydown = (e: KeyboardEvent) => {
-      // 仅处理 Enter 键（不带 Shift 修饰符，避免干扰换行操作）
-      if (e.key !== "Enter" || e.shiftKey) return
+      if (e.key !== "Enter") return
+
+      // 获取当前适配器的发送键配置
+      const keyConfig = adapter.getSubmitKeyConfig()
+
+      // 根据配置判断是否为发送按键
+      // Mac 兼容：同时检测 Ctrl 和 Cmd (metaKey)
+      let isSubmitKey = false
+      if (keyConfig.key === "Ctrl+Enter") {
+        // Ctrl+Enter 模式：需要 Ctrl 或 Cmd 键，不能有 Shift 键
+        const hasModifier = e.ctrlKey || e.metaKey
+        isSubmitKey = hasModifier && !e.shiftKey
+      } else {
+        // Enter 模式：不能有 Ctrl、Cmd 或 Shift 键
+        isSubmitKey = !e.ctrlKey && !e.metaKey && !e.shiftKey
+      }
+
+      if (!isSubmitKey) return
 
       // 使用 composedPath 检查事件源是否来自输入框（兼容 Shadow DOM）
       const path = e.composedPath()

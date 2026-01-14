@@ -138,11 +138,10 @@
 
 /* ==================== 深色模式 ==================== */
 /* 
- * 注意：由于 Shadow DOM 隔离，:host-context() 在部分浏览器中支持不佳。
- * 实际的深色模式变量由 ThemeManager.syncPluginUITheme() 动态注入到 Shadow Root。
  * 此处定义仅用于普通 DOM 元素和作为备用。
  */
-body[data-gh-mode="dark"] {
+body[data-gh-mode="dark"],
+html[data-theme="dark"] {
   /* === 基础背景色 === */
   --gh-bg: #1e1e1e;
   --gh-bg-secondary: #0b0b0b;
@@ -251,4 +250,7 @@ body[data-gh-mode="dark"] {
   --gh-category-5: rgba(34, 211, 238, 0.3); /* 青 */
   --gh-category-6: rgba(129, 140, 248, 0.3); /* 蓝紫 */
   --gh-category-7: rgba(232, 121, 249, 0.3); /* 粉紫 */
+
+  /* === 品牌色（深色模式） === */
+  --gh-brand-gradient: linear-gradient(135deg, #8ab4f8 0%, #81c995 100%);
 }

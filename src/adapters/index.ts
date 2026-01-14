@@ -4,9 +4,9 @@
  * 根据当前页面 URL 自动选择合适的适配器
  */
 
+import { AIStudioAdapter } from "./aistudio"
 import { SiteAdapter } from "./base"
 import { ChatGPTAdapter } from "./chatgpt"
-// import { AIStudioAdapter } from "./ai-studio"
 import { ClaudeAdapter } from "./claude"
 import { GeminiAdapter } from "./gemini"
 import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
@@ -18,7 +18,7 @@ const adapters: SiteAdapter[] = [
   new GeminiAdapter(),
   new ChatGPTAdapter(),
   new GrokAdapter(),
-  // new AIStudioAdapter(),
+  new AIStudioAdapter(),
   new ClaudeAdapter(),
 ]
 

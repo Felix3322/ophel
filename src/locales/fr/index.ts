@@ -895,4 +895,41 @@ Donnez le code puis un résumé des améliorations.`,
   claudeBatchTestDone: "Finit. {valid} OK, {invalid} échecs.",
   claudeBatchTestFailed: "Stoppé",
   claudeOnlyOneKeyTip: "Sensation de déjà vu ? C'est votre seule clé.",
+
+  // ======== Paramètres AI Studio ========
+  aistudioSettingsTitle: "Paramètres AI Studio",
+  aistudioSettingsDesc: "Configurer le comportement par défaut au chargement d'AI Studio",
+  aistudioDefaultModel: "Modèle par défaut",
+  aistudioDefaultModelNone: "Non spécifié (utiliser le défaut système)",
+  aistudioDefaultModelCustom: "ID de modèle personnalisé...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "Réduire la barre latérale",
+  aistudioCollapseNavbarDesc:
+    "Réduire automatiquement la navigation gauche à l'ouverture de la page",
+  aistudioCollapseRunSettings: "Réduire le panneau des paramètres d'exécution",
+  aistudioCollapseRunSettingsDesc:
+    "Réduire automatiquement le panneau droit des paramètres d'exécution à l'ouverture",
+  aistudioCollapseTools: "Réduire la section outils",
+  aistudioCollapseToolsDesc:
+    "Réduire automatiquement la section outils dans les paramètres d'exécution à l'ouverture",
+  aistudioCollapseAdvanced: "Réduire les paramètres avancés",
+  aistudioCollapseAdvancedDesc:
+    "Réduire automatiquement les options avancées à l'ouverture de la page",
+  aistudioEnableSearch: "Activer l'outil de recherche",
+  aistudioEnableSearchDesc:
+    "Activer automatiquement la recherche Google en temps réel à l'ouverture",
+  aistudioModelsFetched: "Liste des modèles mise à jour",
+  aistudioNoTabError: "Veuillez d'abord ouvrir la page AI Studio",
+  aistudioModelsError: "Échec de la récupération de la liste des modèles",
+
+  aistudioRemoveWatermark: "Supprimer le filigrane",
+  aistudioRemoveWatermarkDesc:
+    "Supprimer le filigrane des images générées par AI Studio (Nécessite une actualisation)",
+  aistudioReloadHint: "Veuillez actualiser la page pour appliquer les changements",
+
+  exportCustomUserName: "Nom d'utilisateur personnalisé",
+  exportCustomUserNameDesc:
+    "Nom d'affichage de l'utilisateur pour les exportations (Défaut : User)",
+  exportCustomModelName: "Nom de l'IA personnalisé",
+  exportCustomModelNameDesc: "Nom d'affichage de l'IA pour les exportations (Défaut : Nom du site)",
 }

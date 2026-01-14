@@ -906,4 +906,36 @@ export const ja = {
   claudeBatchTestDone: "一括テスト完了。有効: {valid}, 無効: {invalid}",
   claudeBatchTestFailed: "一括テストが中断されました",
   claudeOnlyOneKeyTip: "キーが一つしかなく、かつ既に使用中です",
+
+  // ======== AI Studio 設定 ========
+  aistudioSettingsTitle: "AI Studio 設定",
+  aistudioSettingsDesc: "AI Studio ページ読み込み時のデフォルト動作を設定",
+  aistudioDefaultModel: "デフォルトモデル",
+  aistudioDefaultModelNone: "指定なし（システムデフォルト）",
+  aistudioDefaultModelCustom: "カスタムモデルID...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "サイドバーを折りたたむ",
+  aistudioCollapseNavbarDesc: "ページを開いたときに左ナビゲーションを自動で折りたたみます",
+  aistudioCollapseRunSettings: "実行設定パネルを折りたたむ",
+  aistudioCollapseRunSettingsDesc: "ページを開いたときに右側の実行設定パネルを自動で折りたたみます",
+  aistudioCollapseTools: "ツールセクションを折りたたむ",
+  aistudioCollapseToolsDesc:
+    "ページを開いたときに実行設定内のツールセクションを自動で折りたたみます",
+  aistudioCollapseAdvanced: "詳細設定を折りたたむ",
+  aistudioCollapseAdvancedDesc: "ページを開いたときに詳細オプションを自動で折りたたみます",
+  aistudioEnableSearch: "検索ツールを有効にする",
+  aistudioEnableSearchDesc: "ページを開いたときにGoogleリアルタイム検索を自動で有効にします",
+  aistudioModelsFetched: "モデルリストを更新しました",
+  aistudioNoTabError: "先にAI Studioページを開いてください",
+  aistudioModelsError: "モデルリストの取得に失敗しました",
+
+  aistudioRemoveWatermark: "画像の透かしを削除",
+  aistudioRemoveWatermarkDesc:
+    "AI Studioで生成された画像から透かしを削除します（ページの更新が必要です）",
+  aistudioReloadHint: "変更を適用するにはページを更新してください",
+
+  exportCustomUserName: "カスタムユーザー名",
+  exportCustomUserNameDesc: "エクスポート時のユーザー表示名（デフォルト: User）",
+  exportCustomModelName: "カスタムAI名",
+  exportCustomModelNameDesc: "エクスポート時のAI表示名（デフォルト: サイト名）",
 }

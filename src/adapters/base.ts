@@ -254,6 +254,16 @@ export abstract class SiteAdapter {
     return []
   }
 
+  /**
+   * 获取发送消息的快捷键配置
+   * 子类可覆盖以适配不同平台的发送键设置
+   * @returns 发送键配置：key 为 "Enter" 或 "Ctrl+Enter"
+   */
+  getSubmitKeyConfig(): { key: "Enter" | "Ctrl+Enter" } {
+    // 默认使用 Enter 键发送
+    return { key: "Enter" }
+  }
+
   /** 查找输入框元素 */
   findTextarea(): HTMLElement | null {
     for (const selector of this.getTextareaSelectors()) {

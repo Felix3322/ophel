@@ -1053,3 +1053,11 @@ html[data-theme="dark"] .about-privacy-banner {
   background-clip: text;
   display: inline-block;
 }
+
+/* 确保深色模式下 Slogan 清晰可见 */
+html[data-theme="dark"] .about-slogan {
+  background: linear-gradient(135deg, #8ab4f8 0%, #81c995 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

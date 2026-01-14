@@ -478,6 +478,14 @@ export const zhCN = {
   userQueryMarkdownDesc: "将用户提问中的 Markdown 语法渲染为格式化文本",
   watermarkRemovalLabel: "移除图片水印",
   watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
+  aistudioRemoveWatermark: "移除图片水印",
+  aistudioRemoveWatermarkDesc: "移除 AI Studio 生成图片的水印（需刷新页面生效）",
+  aistudioReloadHint: "请刷新页面使更改生效",
+
+  exportCustomUserName: "自定义用户名称",
+  exportCustomUserNameDesc: "导出时使用的用户显示名称 (默认: User)",
+  exportCustomModelName: "自定义 AI 名称",
+  exportCustomModelNameDesc: "导出时使用的 AI 显示名称 (默认: 站点名称)",
   // 大纲高级设置
   outlineAutoUpdateLabel: "对话期间自动更新大纲",
   outlineAutoUpdateDesc: "AI 生成内容时自动刷新目录结构",
@@ -924,4 +932,27 @@ export const zhCN = {
   claudeBatchTestDone: "批量检测完成。{valid} 个有效，{invalid} 个失效。",
   claudeBatchTestFailed: "批量检测被中断",
   claudeOnlyOneKeyTip: "当前只有一个可用 Key，且正在使用中",
+
+  // ======== AI Studio 设置 ========
+  aistudioSettingsTitle: "AI Studio 设置",
+  aistudioSettingsDesc: "配置 AI Studio 页面加载后的默认行为",
+  aistudioDefaultModel: "默认模型",
+  aistudioDefaultModelNone: "不指定（使用系统默认）",
+  aistudioDefaultModelCustom: "自定义模型 ID...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "默认折叠侧边栏",
+  aistudioCollapseNavbarDesc: "打开页面时自动折叠左侧导航栏",
+  aistudioCollapseRunSettings: "默认收起运行设置面板",
+  aistudioCollapseRunSettingsDesc: "打开页面时自动收起右侧的运行设置面板",
+  aistudioCollapseTools: "默认收起工具栏",
+  aistudioCollapseToolsDesc: "打开页面时自动收起运行设置中的工具栏",
+  aistudioCollapseAdvanced: "默认收起高级设置",
+  aistudioCollapseAdvancedDesc: "打开页面时自动收起运行设置中的高级选项",
+  aistudioEnableSearch: "默认启用搜索工具",
+  aistudioEnableSearchDesc: "打开页面时自动启用 Google 实时搜索",
+
+  // AI Studio 模型列表获取
+  aistudioModelsFetched: "模型列表已更新",
+  aistudioNoTabError: "请先打开 AI Studio 页面",
+  aistudioModelsError: "获取模型列表失败",
 }

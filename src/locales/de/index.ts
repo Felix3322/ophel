@@ -893,4 +893,37 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   claudeBatchTestDone: "Fertig. {valid} OK, {invalid} Fehler.",
   claudeBatchTestFailed: "Abgebrochen",
   claudeOnlyOneKeyTip: "Ihre einzige Option hier.",
+
+  // ======== AI Studio Einstellungen ========
+  aistudioSettingsTitle: "AI Studio Einstellungen",
+  aistudioSettingsDesc: "Standardverhalten beim Laden der AI Studio-Seite konfigurieren",
+  aistudioDefaultModel: "Standardmodell",
+  aistudioDefaultModelNone: "Nicht angegeben (Systemstandard)",
+  aistudioDefaultModelCustom: "Benutzerdefinierte Modell-ID...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "Seitenleiste einklappen",
+  aistudioCollapseNavbarDesc: "Linke Navigation beim Öffnen der Seite automatisch einklappen",
+  aistudioCollapseRunSettings: "Ausführungseinstellungen einklappen",
+  aistudioCollapseRunSettingsDesc:
+    "Rechtes Ausführungseinstellungsfeld beim Öffnen automatisch einklappen",
+  aistudioCollapseTools: "Werkzeugbereich einklappen",
+  aistudioCollapseToolsDesc:
+    "Werkzeugbereich in den Ausführungseinstellungen beim Öffnen automatisch einklappen",
+  aistudioCollapseAdvanced: "Erweiterte Optionen einklappen",
+  aistudioCollapseAdvancedDesc: "Erweiterte Optionen beim Öffnen der Seite automatisch einklappen",
+  aistudioEnableSearch: "Suchwerkzeug aktivieren",
+  aistudioEnableSearchDesc: "Google-Echtzeitsuche beim Öffnen der Seite automatisch aktivieren",
+  aistudioModelsFetched: "Modellliste aktualisiert",
+  aistudioNoTabError: "Bitte öffnen Sie zuerst die AI Studio-Seite",
+  aistudioModelsError: "Fehler beim Abrufen der Modellliste",
+
+  aistudioRemoveWatermark: "Wasserzeichen entfernen",
+  aistudioRemoveWatermarkDesc:
+    "Entfernen Sie das Wasserzeichen von in AI Studio generierten Bildern (Seite neu laden)",
+  aistudioReloadHint: "Bitte aktualisieren Sie die Seite, um Änderungen zu übernehmen",
+
+  exportCustomUserName: "Benutzerdefinierter Name",
+  exportCustomUserNameDesc: "Anzeigename des Benutzers für den Export (Standard: User)",
+  exportCustomModelName: "Benutzerdefinierter AI-Name",
+  exportCustomModelNameDesc: "Anzeigename der AI für den Export (Standard: Website-Name)",
 }

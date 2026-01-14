@@ -212,6 +212,9 @@ if (!window.ophelInitialized) {
         modelLocker.start()
       }
 
+      // ⭐ AI Studio 设置由 aistudio-preload.ts 在 document_start 阶段处理
+      // 不再在此处调用 applySettings，避免时机过晚导致设置不生效
+
       // 9. 滚动锁定（始终创建以支持动态开关）
       scrollLockManager = new ScrollLockManager(adapter, settings)
 
@@ -401,6 +404,27 @@ if (!window.ophelInitialized) {
           sendResponse({ isGenerating })
           return true // 保持消息通道打开
         }
+
+        // AI Studio 获取模型列表
+        if (message.type === "GET_MODEL_LIST") {
+          // 检查是否是 AI Studio 适配器且有 getModelList 方法
+          if (siteId === SITE_IDS.AISTUDIO && typeof (adapter as any).getModelList === "function") {
+            ;(async () => {
+              try {
+                const models = await (adapter as any).getModelList()
+                sendResponse({ success: true, models })
+              } catch (err) {
+                console.error("[Ophel] getModelList failed:", err)
+                sendResponse({ success: false, error: (err as Error).message })
+              }
+            })()
+            return true // 保持消息通道打开
+          } else {
+            sendResponse({ success: false, error: "NOT_AISTUDIO" })
+            return true
+          }
+        }
+
         return false
       })
     })()

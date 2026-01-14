@@ -905,4 +905,35 @@ export const ko = {
   claudeBatchTestDone: "일괄 체크 완료. 유효: {valid}, 유효하지 않음: {invalid}",
   claudeBatchTestFailed: "일괄 체크가 중단되었습니다",
   claudeOnlyOneKeyTip: "제공된 키가 하나뿐이며 이미 사용 중입니다",
+
+  // ======== AI Studio 설정 ========
+  aistudioSettingsTitle: "AI Studio 설정",
+  aistudioSettingsDesc: "AI Studio 페이지 로드 시 기본 동작 구성",
+  aistudioDefaultModel: "기본 모델",
+  aistudioDefaultModelNone: "지정 안 함 (시스템 기본값 사용)",
+  aistudioDefaultModelCustom: "사용자 정의 모델 ID...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "사이드바 접기",
+  aistudioCollapseNavbarDesc: "페이지 열 때 왼쪽 탐색을 자동으로 접습니다",
+  aistudioCollapseRunSettings: "실행 설정 패널 접기",
+  aistudioCollapseRunSettingsDesc: "페이지 열 때 오른쪽 실행 설정 패널을 자동으로 접습니다",
+  aistudioCollapseTools: "도구 섹션 접기",
+  aistudioCollapseToolsDesc: "페이지 열 때 실행 설정 내 도구 섹션을 자동으로 접습니다",
+  aistudioCollapseAdvanced: "고급 설정 접기",
+  aistudioCollapseAdvancedDesc: "페이지 열 때 고급 옵션을 자동으로 접습니다",
+  aistudioEnableSearch: "검색 도구 활성화",
+  aistudioEnableSearchDesc: "페이지 열 때 Google 실시간 검색을 자동으로 활성화합니다",
+  aistudioModelsFetched: "모델 목록이 업데이트되었습니다",
+  aistudioNoTabError: "먼저 AI Studio 페이지를 열어주세요",
+  aistudioModelsError: "모델 목록을 가져오지 못했습니다",
+
+  aistudioRemoveWatermark: "이미지 워터마크 제거",
+  aistudioRemoveWatermarkDesc:
+    "AI Studio에서 생성된 이미지의 워터마크를 제거합니다 (페이지 새로고침 필요)",
+  aistudioReloadHint: "변경 사항을 적용하려면 페이지를 새로 고치세요",
+
+  exportCustomUserName: "사용자 지정 사용자 이름",
+  exportCustomUserNameDesc: "내보내기 시 표시될 사용자 이름 (기본값: User)",
+  exportCustomModelName: "사용자 지정 AI 이름",
+  exportCustomModelNameDesc: "내보내기 시 표시될 AI 이름 (기본값: 사이트 이름)",
 }

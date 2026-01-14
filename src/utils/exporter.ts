@@ -21,6 +21,8 @@ export interface ExportMetadata {
   url: string
   exportTime: string
   source: string
+  customUserName?: string
+  customModelName?: string
 }
 
 export type ExportFormat = "markdown" | "json" | "txt" | "clipboard"
@@ -213,14 +215,16 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   // 对话内容
   messages.forEach((msg) => {
     if (msg.role === "user") {
-      lines.push(`## 🙋 ${t("exportUserLabel")}`)
+      const userLabel = metadata.customUserName || t("exportUserLabel")
+      lines.push(`## 🙋 ${userLabel}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
       lines.push("---")
       lines.push("")
     } else {
-      lines.push(`## 🤖 ${metadata.source}`)
+      const modelLabel = metadata.customModelName || metadata.source
+      lines.push(`## 🤖 ${modelLabel}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
@@ -268,9 +272,11 @@ export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[])
 
   messages.forEach((msg) => {
     if (msg.role === "user") {
-      lines.push(`[${t("exportUserLabel")}]`)
+      const userLabel = metadata.customUserName || t("exportUserLabel")
+      lines.push(`[${userLabel}]`)
     } else {
-      lines.push(`[${metadata.source}]`)
+      const modelLabel = metadata.customModelName || metadata.source
+      lines.push(`[${modelLabel}]`)
     }
     lines.push(msg.content)
     lines.push("")
@@ -324,12 +330,19 @@ export async function copyToClipboard(content: string): Promise<boolean> {
 /**
  * 创建导出元数据
  */
-export function createExportMetadata(title: string, source: string, id?: string): ExportMetadata {
+export function createExportMetadata(
+  title: string,
+  source: string,
+  id?: string,
+  options?: { customUserName?: string; customModelName?: string },
+): ExportMetadata {
   return {
     title: title || t("exportUntitled"),
     id,
     url: window.location.href,
     exportTime: new Date().toLocaleString(),
     source,
+    customUserName: options?.customUserName,
+    customModelName: options?.customModelName,
   }
 }

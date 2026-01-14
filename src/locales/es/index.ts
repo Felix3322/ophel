@@ -894,4 +894,39 @@ Dame el código y luego un resumen de mejoras.`,
   claudeBatchTestDone: "Hecho. {valid} OK, {invalid} mal.",
   claudeBatchTestFailed: "Parado",
   claudeOnlyOneKeyTip: "Solo tienes esta y ya la usas",
+
+  // ======== Configuración de AI Studio ========
+  aistudioSettingsTitle: "Configuración de AI Studio",
+  aistudioSettingsDesc: "Configura el comportamiento predeterminado al cargar AI Studio",
+  aistudioDefaultModel: "Modelo predeterminado",
+  aistudioDefaultModelNone: "No especificado (usar predeterminado del sistema)",
+  aistudioDefaultModelCustom: "ID de modelo personalizado...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "Contraer barra lateral",
+  aistudioCollapseNavbarDesc: "Contraer automáticamente la navegación izquierda al abrir la página",
+  aistudioCollapseRunSettings: "Contraer panel de configuración de ejecución",
+  aistudioCollapseRunSettingsDesc:
+    "Contraer automáticamente el panel derecho de configuración de ejecución al abrir",
+  aistudioCollapseTools: "Contraer sección de herramientas",
+  aistudioCollapseToolsDesc:
+    "Contraer automáticamente la sección de herramientas en configuración de ejecución al abrir",
+  aistudioCollapseAdvanced: "Contraer configuración avanzada",
+  aistudioCollapseAdvancedDesc:
+    "Contraer automáticamente las opciones avanzadas al abrir la página",
+  aistudioEnableSearch: "Habilitar herramienta de búsqueda",
+  aistudioEnableSearchDesc:
+    "Habilitar automáticamente la búsqueda en tiempo real de Google al abrir",
+  aistudioModelsFetched: "Lista de modelos actualizada",
+  aistudioNoTabError: "Por favor, abra primero la página de AI Studio",
+  aistudioModelsError: "Error al obtener la lista de modelos",
+
+  aistudioRemoveWatermark: "Eliminar marca de agua",
+  aistudioRemoveWatermarkDesc:
+    "Elimina la marca de agua de las imágenes de AI Studio (Requiere actualizar)",
+  aistudioReloadHint: "Actualice la página para aplicar cambios",
+
+  exportCustomUserName: "Nombre de usuario",
+  exportCustomUserNameDesc: "Nombre para mostrar en exportaciones (Predeterminado: User)",
+  exportCustomModelName: "Nombre de IA",
+  exportCustomModelNameDesc: "Nombre para mostrar de IA en exportaciones (Predeterminado: Sitio)",
 }

@@ -354,6 +354,15 @@ export const en = {
   exportImagesToBase64Label: "Export Images to Base64",
   exportImagesToBase64Desc:
     "Convert images to Base64 when exporting conversations for offline viewing",
+  aistudioRemoveWatermark: "Remove Image Watermark",
+  aistudioRemoveWatermarkDesc:
+    "Remove watermarks from AI Studio generated images (Requires page refresh)",
+  aistudioReloadHint: "Please refresh the page for changes to take effect",
+
+  exportCustomUserName: "Custom User Name",
+  exportCustomUserNameDesc: "Display name for user in exports (Default: User)",
+  exportCustomModelName: "Custom AI Name",
+  exportCustomModelNameDesc: "Display name for AI in exports (Default: Site Name)",
   userQueryMarkdownLabel: "User Query Markdown Render",
   userQueryMarkdownDesc: "Render Markdown syntax in user queries as formatted text",
   watermarkRemovalLabel: "Remove Image Watermark",
@@ -912,4 +921,27 @@ Please output the optimized code block directly, followed by a brief summary of 
   claudeBatchTestDone: "Batch check completed. {valid} valid, {invalid} invalid.",
   claudeBatchTestFailed: "Batch check interrupted",
   claudeOnlyOneKeyTip: "Only one key available and it is currently in use",
+
+  // ======== AI Studio Settings ========
+  aistudioSettingsTitle: "AI Studio Settings",
+  aistudioSettingsDesc: "Configure default behavior when AI Studio page loads",
+  aistudioDefaultModel: "Default Model",
+  aistudioDefaultModelNone: "Not specified (use system default)",
+  aistudioDefaultModelCustom: "Custom Model ID...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "Collapse Sidebar by Default",
+  aistudioCollapseNavbarDesc: "Auto-collapse left navigation bar when opening page",
+  aistudioCollapseRunSettings: "Collapse Run Settings Panel by Default",
+  aistudioCollapseRunSettingsDesc: "Auto-collapse the right run settings panel when opening page",
+  aistudioCollapseTools: "Collapse Tools Section by Default",
+  aistudioCollapseToolsDesc: "Auto-collapse tools section in run settings when opening page",
+  aistudioCollapseAdvanced: "Collapse Advanced Settings by Default",
+  aistudioCollapseAdvancedDesc: "Auto-collapse advanced options in run settings when opening page",
+  aistudioEnableSearch: "Enable Search Tool by Default",
+  aistudioEnableSearchDesc: "Auto-enable Google real-time search when opening page",
+
+  // AI Studio Model List
+  aistudioModelsFetched: "Model list updated",
+  aistudioNoTabError: "Please open AI Studio page first",
+  aistudioModelsError: "Failed to fetch model list",
 }

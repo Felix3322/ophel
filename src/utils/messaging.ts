@@ -164,11 +164,24 @@ export type ExtensionMessage =
   | GetClaudeSessionKeyMessage
   | CheckClaudeGeneratingMessage
   | SwitchNextClaudeKeyMessage
+  | GetAIStudioModelsMessage
 
 export const MSG_SWITCH_NEXT_CLAUDE_KEY = "SWITCH_NEXT_CLAUDE_KEY"
 
 export interface SwitchNextClaudeKeyMessage {
   type: typeof MSG_SWITCH_NEXT_CLAUDE_KEY
+}
+
+// 获取 AI Studio 模型列表（从 content script 获取）
+export const MSG_GET_AISTUDIO_MODELS = "GET_AISTUDIO_MODELS"
+
+export interface GetAIStudioModelsMessage {
+  type: typeof MSG_GET_AISTUDIO_MODELS
+}
+
+export interface AIStudioModelInfo {
+  id: string
+  name: string
 }
 
 /**

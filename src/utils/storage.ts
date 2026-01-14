@@ -27,7 +27,7 @@ export const STORAGE_KEYS = {
 // ==================== 类型定义 ====================
 
 // 站点 ID 类型
-export type SiteId = "gemini" | "gemini-enterprise" | "_default"
+export type SiteId = "gemini" | "gemini-enterprise" | "aistudio" | "_default"
 
 // 主题模式
 export type ThemeMode = "light" | "dark"
@@ -60,6 +60,33 @@ export interface ModelLockConfig {
   keyword: string
 }
 
+// 导出设置
+export interface ExportSettings {
+  customUserName?: string // 自定义用户名称
+  customModelName?: string // 自定义 AI 名称
+}
+
+// AI Studio 设置
+export interface AIStudioSettings {
+  // 界面状态
+  collapseNavbar?: boolean // 默认折叠侧边栏
+  collapseRunSettings?: boolean // 默认收起运行设置面板（整个右侧面板）
+  collapseTools?: boolean // 默认收起工具栏（运行设置中的工具栏区域）
+  collapseAdvanced?: boolean // 默认收起高级设置
+
+  // 功能开关
+  enableSearch?: boolean // 默认启用 Google 搜索工具
+
+  // 默认模型
+  defaultModel?: string // 模型 ID，如 "models/gemini-3-flash-preview"
+
+  // 缓存的模型列表（从 DOM 动态抓取）
+  cachedModels?: Array<{ id: string; name: string }>
+
+  // 去水印开关
+  removeWatermark?: boolean
+}
+
 export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
@@ -86,6 +113,9 @@ export interface Settings {
     exportImagesToBase64: boolean
     userQueryMarkdown: boolean // 用户提问 Markdown 渲染
   }
+
+  // 导出设置
+  export?: ExportSettings
 
   // 主题（按站点独立 + 共享自定义样式）
   theme: {
@@ -172,6 +202,9 @@ export interface Settings {
 
   // 快捷键设置
   shortcuts: ShortcutsSettings
+
+  // AI Studio 专属设置
+  aistudio?: AIStudioSettings
 }
 
 // 默认站点主题配置
@@ -220,6 +253,11 @@ export const DEFAULT_SETTINGS: Settings = {
     userQueryMarkdown: false, // 默认关闭
   },
 
+  export: {
+    customUserName: "",
+    customModelName: "",
+  },
+
   theme: {
     sites: {
       gemini: { ...DEFAULT_SITE_THEME },
@@ -233,11 +271,13 @@ export const DEFAULT_SETTINGS: Settings = {
     pageWidth: {
       gemini: { ...DEFAULT_PAGE_WIDTH },
       "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
+      aistudio: { ...DEFAULT_PAGE_WIDTH },
       _default: { ...DEFAULT_PAGE_WIDTH },
     },
     userQueryWidth: {
       gemini: { ...DEFAULT_USER_QUERY_WIDTH },
       "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
+      aistudio: { ...DEFAULT_USER_QUERY_WIDTH },
       _default: { ...DEFAULT_USER_QUERY_WIDTH },
     },
   },
@@ -316,6 +356,15 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   shortcuts: DEFAULT_SHORTCUTS_SETTINGS,
+
+  aistudio: {
+    collapseNavbar: false,
+    collapseTools: false,
+    collapseAdvanced: false,
+    enableSearch: true,
+    defaultModel: "", // 空表示不覆盖
+    removeWatermark: false,
+  },
 }
 
 export interface Folder {

@@ -5,13 +5,19 @@
  */
 import React, { useCallback, useEffect, useState } from "react"
 
-import { PageContentIcon as LayoutIcon } from "~components/icons"
+import { PageContentIcon as LayoutIcon, RefreshIcon } from "~components/icons"
 import { Switch } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
-import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
-import type { Settings } from "~utils/storage"
+import {
+  MSG_CHECK_PERMISSIONS,
+  MSG_GET_AISTUDIO_MODELS,
+  MSG_REQUEST_PERMISSIONS,
+  sendToBackground,
+  type AIStudioModelInfo,
+} from "~utils/messaging"
+import type { AIStudioSettings, Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
@@ -88,6 +94,131 @@ const ModelLockRow: React.FC<{
           opacity: currentConfig.enabled ? 1 : 0.5,
         }}
       />
+      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
+    </div>
+  )
+}
+
+// AI Studio 专用模型锁定行组件 - 带刷新按钮和下拉选择
+const AIStudioModelLockRow: React.FC<{
+  settings: Settings
+  setSettings: (settings: Partial<Settings>) => void
+}> = ({ settings, setSettings }) => {
+  const siteKey = "aistudio"
+  const currentConfig = settings.modelLock?.[siteKey] || { enabled: false, keyword: "" }
+
+  // 缓存的模型列表
+  const [modelList, setModelList] = useState<AIStudioModelInfo[]>(
+    settings.aistudio?.cachedModels || [],
+  )
+  const [isLoading, setIsLoading] = useState(false)
+
+  // 同步缓存的模型列表
+  useEffect(() => {
+    if (settings.aistudio?.cachedModels) {
+      setModelList(settings.aistudio.cachedModels)
+    }
+  }, [settings.aistudio?.cachedModels])
+
+  // 刷新模型列表
+  const handleRefresh = async () => {
+    setIsLoading(true)
+    try {
+      const response = await sendToBackground({
+        type: MSG_GET_AISTUDIO_MODELS,
+      })
+
+      if (response.success && response.models) {
+        setModelList(response.models)
+        // 保存到缓存
+        setSettings({
+          aistudio: {
+            ...settings.aistudio,
+            cachedModels: response.models,
+          },
+        })
+        showToast(t("aistudioModelsFetched") || `获取到 ${response.models.length} 个模型`, 2000)
+      } else {
+        // 根据错误码显示本地化消息
+        const errorMsg =
+          response.error === "NO_AISTUDIO_TAB"
+            ? t("aistudioNoTabError") || "请先打开 AI Studio 页面"
+            : t("aistudioModelsError") || "获取模型失败"
+        showToast(errorMsg, 3000)
+      }
+    } catch (err) {
+      showToast(t("aistudioModelsError") || "获取模型列表失败", 3000)
+      console.error("Refresh model list failed:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 切换启用状态
+  const toggleEnabled = () => {
+    setSettings({
+      modelLock: {
+        ...settings.modelLock,
+        [siteKey]: { ...currentConfig, enabled: !currentConfig.enabled },
+      },
+    })
+  }
+
+  // 选择模型
+  const handleModelChange = (modelId: string) => {
+    setSettings({
+      modelLock: {
+        ...settings.modelLock,
+        [siteKey]: { ...currentConfig, keyword: modelId },
+      },
+    })
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        marginBottom: "12px",
+      }}>
+      <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>AI Studio</span>
+      {/* 刷新按钮 */}
+      <button
+        className="icon-button"
+        onClick={handleRefresh}
+        disabled={isLoading}
+        title="点击在 AI Studio 页面刷新模型列表"
+        style={{
+          padding: "4px",
+          opacity: isLoading ? 0.5 : 1,
+          cursor: isLoading ? "not-allowed" : "pointer",
+          background: "transparent",
+          border: "none",
+          borderRadius: "4px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+        <RefreshIcon size={16} />
+      </button>
+      {/* 模型选择下拉框 */}
+      <select
+        className="settings-select"
+        value={currentConfig.keyword || ""}
+        onChange={(e) => handleModelChange(e.target.value)}
+        disabled={!currentConfig.enabled || modelList.length === 0}
+        style={{
+          width: "200px",
+          opacity: currentConfig.enabled ? 1 : 0.5,
+        }}>
+        {modelList.length === 0 && <option value="">请先刷新模型列表</option>}
+        {modelList.map((model) => (
+          <option key={model.id} value={model.id}>
+            {model.name}
+          </option>
+        ))}
+      </select>
       <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
     </div>
   )
@@ -254,6 +385,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     { id: SITE_SETTINGS_TAB_IDS.LAYOUT, label: t("tabLayout") || "页面布局" },
     { id: SITE_SETTINGS_TAB_IDS.MODEL_LOCK, label: t("tabModelLock") || "模型锁定" },
     { id: SITE_IDS.GEMINI, label: t("tabGemini") || "Gemini" },
+    { id: SITE_IDS.AISTUDIO, label: "AI Studio" },
     { id: SITE_IDS.CLAUDE, label: "Claude" },
   ]
 
@@ -388,6 +520,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
           />
 
+          {/* AI Studio - 使用下拉选择器 */}
+          <AIStudioModelLockRow settings={settings} setSettings={setSettings} />
+
           {/* ChatGPT */}
           <ModelLockRow
             label="ChatGPT"
@@ -457,6 +592,106 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               } else {
                 updateNestedSetting("content", "watermarkRemoval", false)
               }
+            }}
+          />
+        </SettingCard>
+      )}
+
+      {/* ========== AI Studio 专属 Tab ========== */}
+      {activeTab === SITE_IDS.AISTUDIO && (
+        <SettingCard
+          title={t("aistudioSettingsTitle") || "AI Studio 设置"}
+          description={t("aistudioSettingsDesc") || "配置 AI Studio 页面的默认行为"}>
+          {/* 界面状态开关 */}
+          <ToggleRow
+            label={t("aistudioCollapseNavbar") || "默认折叠侧边栏"}
+            description={t("aistudioCollapseNavbarDesc") || "打开页面时自动折叠左侧导航栏"}
+            checked={settings.aistudio?.collapseNavbar ?? false}
+            onChange={() =>
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  collapseNavbar: !settings.aistudio?.collapseNavbar,
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("aistudioCollapseRunSettings") || "默认收起运行设置面板"}
+            description={
+              t("aistudioCollapseRunSettingsDesc") || "打开页面时自动收起右侧的运行设置面板"
+            }
+            checked={settings.aistudio?.collapseRunSettings ?? false}
+            onChange={() =>
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  collapseRunSettings: !settings.aistudio?.collapseRunSettings,
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("aistudioCollapseTools") || "默认收起工具面板"}
+            description={t("aistudioCollapseToolsDesc") || "打开页面时自动收起右侧运行设置面板"}
+            checked={settings.aistudio?.collapseTools ?? false}
+            onChange={() =>
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  collapseTools: !settings.aistudio?.collapseTools,
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("aistudioCollapseAdvanced") || "默认收起高级设置"}
+            description={
+              t("aistudioCollapseAdvancedDesc") || "打开页面时自动收起运行设置中的高级选项"
+            }
+            checked={settings.aistudio?.collapseAdvanced ?? false}
+            onChange={() =>
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  collapseAdvanced: !settings.aistudio?.collapseAdvanced,
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("aistudioEnableSearch") || "默认启用搜索工具"}
+            description={t("aistudioEnableSearchDesc") || "打开页面时自动启用 Google 实时搜索"}
+            checked={settings.aistudio?.enableSearch ?? true}
+            onChange={() =>
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  enableSearch: !settings.aistudio?.enableSearch,
+                },
+              })
+            }
+          />
+
+          <ToggleRow
+            label={t("aistudioRemoveWatermark") || "移除图片水印"}
+            description={
+              t("aistudioRemoveWatermarkDesc") ||
+              "阻止加载水印图片，让生成图片无水印 (需刷新页面生效)"
+            }
+            checked={settings.aistudio?.removeWatermark ?? false}
+            onChange={() => {
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  removeWatermark: !settings.aistudio?.removeWatermark,
+                },
+              })
+              showToast(t("aistudioReloadHint") || "设置已保存，请刷新 AI Studio 页面以生效", 3000)
             }}
           />
         </SettingCard>

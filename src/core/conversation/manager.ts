@@ -2,6 +2,7 @@ import type { ConversationInfo, ConversationObserverConfig, SiteAdapter } from "
 import { type Folder } from "~constants"
 import { getConversationsStore, useConversationsStore } from "~stores/conversations-store"
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
+import { useSettingsStore } from "~stores/settings-store"
 import { getTagsStore, useTagsStore } from "~stores/tags-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
@@ -271,9 +272,19 @@ export class ConversationManager {
       if (Array.isArray(elements)) {
         elements.forEach((el) => {
           const info = config.extractInfo(el)
-          if (info?.id && !this.conversations[info.id]) {
+          if (!info?.id) return
+
+          const existing = this.conversations[info.id]
+          if (!existing) {
+            // 新会话
             this.updateConversationFromObservation(info, true)
             this.monitorConversationTitle(el as HTMLElement, info.id)
+          } else {
+            // 检测标题变更
+            if (info.title && info.title !== existing.title) {
+              getConversationsStore().updateConversation(info.id, { title: info.title })
+              this.notifyDataChange()
+            }
           }
         })
       }
@@ -628,10 +639,15 @@ export class ConversationManager {
         .replace(/[<>:"/\\|?*]/g, "_")
         .substring(0, 50)
 
+      const settings = useSettingsStore.getState().settings
       const metadata = createExportMetadata(
         conv.title || "未命名",
         this.siteAdapter.getName(),
         conv.id,
+        {
+          customUserName: settings.export?.customUserName,
+          customModelName: settings.export?.customModelName,
+        },
       )
 
       let content: string

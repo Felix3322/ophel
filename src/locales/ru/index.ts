@@ -892,4 +892,38 @@ export const ru = {
   claudeBatchTestDone: "Готово. {valid} Ок, {invalid} Брак.",
   claudeBatchTestFailed: "Сбой",
   claudeOnlyOneKeyTip: "Ваш единственный вариант.",
+
+  // ======== Настройки AI Studio ========
+  aistudioSettingsTitle: "Настройки AI Studio",
+  aistudioSettingsDesc: "Настройте поведение по умолчанию при загрузке страницы AI Studio",
+  aistudioDefaultModel: "Модель по умолчанию",
+  aistudioDefaultModelNone: "Не указано (использовать системную)",
+  aistudioDefaultModelCustom: "Пользовательский ID модели...",
+  aistudioDefaultModelPlaceholder: "models/gemini-xxx",
+  aistudioCollapseNavbar: "Свернуть боковую панель",
+  aistudioCollapseNavbarDesc: "Автоматически сворачивать левую навигацию при открытии страницы",
+  aistudioCollapseRunSettings: "Свернуть панель настроек выполнения",
+  aistudioCollapseRunSettingsDesc:
+    "Автоматически сворачивать правую панель настроек выполнения при открытии",
+  aistudioCollapseTools: "Свернуть раздел инструментов",
+  aistudioCollapseToolsDesc:
+    "Автоматически сворачивать раздел инструментов в настройках выполнения при открытии",
+  aistudioCollapseAdvanced: "Свернуть расширенные настройки",
+  aistudioCollapseAdvancedDesc:
+    "Автоматически сворачивать расширенные параметры при открытии страницы",
+  aistudioEnableSearch: "Включить поисковый инструмент",
+  aistudioEnableSearchDesc: "Автоматически включать поиск Google в реальном времени при открытии",
+  aistudioModelsFetched: "Список моделей обновлён",
+  aistudioNoTabError: "Сначала откройте страницу AI Studio",
+  aistudioModelsError: "Ошибка получения списка моделей",
+
+  aistudioRemoveWatermark: "Удалить водяной знак",
+  aistudioRemoveWatermarkDesc:
+    "Удалить водяной знак с изображений AI Studio (Требуется обновление)",
+  aistudioReloadHint: "Обновите страницу для применения изменений",
+
+  exportCustomUserName: "Имя пользователя",
+  exportCustomUserNameDesc: "Отображаемое имя при экспорте (По умолчанию: User)",
+  exportCustomModelName: "Имя ИИ",
+  exportCustomModelNameDesc: "Отображаемое имя ИИ при экспорте (По умолчанию: Имя сайта)",
 }
