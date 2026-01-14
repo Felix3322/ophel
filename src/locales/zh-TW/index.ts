@@ -1,5 +1,16 @@
 export const zhTW = {
   panelTitle: "Ophel",
+
+  // 免責聲明彈窗
+  welcomeSlogan: "AI 之益，觸手可及",
+  disclaimerTitle: "聲明",
+  disclaimerText:
+    "本插件為一般輔助工具，無法涵蓋特定站點的所有獨有功能。插件依賴第三方站點的頁面結構和排版，若原網站更新導致功能失效，請前往 GitHub 提交 Issue 回報，我們將儘快修復。",
+  disclaimerWarning: "請勿因第三方站點改版導致的問題在應用商店給予負評，感謝您的理解與支持！",
+  disclaimerQuoteText: "一個人可以走得很快，但一群人可以走得更遠。",
+  welcomeJoin: "歡迎",
+  agreeButton: "我已知曉並同意",
+
   tabPrompts: "提示詞",
   tabSettings: "設置",
 
@@ -272,6 +283,10 @@ export const zhTW = {
   contentStyleTab: "內容處理",
   claudeSettingsTab: "Claude 專屬",
   pageWidthSettings: "頁面寬度",
+  layoutSettingsTitle: "頁面寬度控制",
+  tabLayout: "頁面佈局",
+  tabModelLock: "模型鎖定",
+  tabGemini: "Gemini",
   enablePageWidthDesc: "調整聊天頁面的最大寬度",
   userQueryWidthSettings: "使用者問題寬度",
   scrollSettings: "滾動設定",

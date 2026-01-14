@@ -1,5 +1,15 @@
 export const zhCN = {
   panelTitle: "Ophel",
+  // 免责声明弹窗
+  welcomeSlogan: "AI 之益，触手可及",
+  disclaimerTitle: "声明",
+  disclaimerText:
+    "本插件为通用辅助工具，无法涵盖特定站点的所有独有功能。插件依赖于第三方站点的页面结构和布局，如果原网站更新导致功能失效，请前往 GitHub 提交 Issue 反馈，我们将尽快修复。",
+  disclaimerWarning: "请勿因第三方站点改版导致的问题在应用商店给出差评，感谢您的理解与支持！",
+  disclaimerQuoteText: "一个人可以走得很快，但一群人可以走得更远。",
+  welcomeJoin: "欢迎",
+  agreeButton: "我已知晓并同意",
+
   tabPrompts: "提示词",
   tabSettings: "设置",
 
@@ -89,6 +99,10 @@ export const zhCN = {
   contentStyleTab: "内容处理",
   claudeSettingsTab: "Claude 专属",
   pageWidthSettings: "页面宽度",
+  layoutSettingsTitle: "页面宽度控制",
+  tabLayout: "页面布局",
+  tabModelLock: "模型锁定",
+  tabGemini: "Gemini",
   enablePageWidthDesc: "调整聊天页面的最大宽度",
   userQueryWidthSettings: "用户问题宽度",
   scrollSettings: "滚动设置",

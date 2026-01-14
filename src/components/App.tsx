@@ -17,6 +17,7 @@ import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
+import { DisclaimerModal } from "./DisclaimerModal"
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
@@ -785,6 +786,7 @@ export const App = () => {
         }}
         siteId={adapter.getSiteId()}
       />
+      <DisclaimerModal />
     </div>
   )
 }

@@ -1,5 +1,17 @@
 export const en = {
   panelTitle: "Gemini Helper",
+
+  // Disclaimer Modal
+  welcomeSlogan: "AI's Benefit, Within Reach",
+  disclaimerTitle: "Notice",
+  disclaimerText:
+    "This extension is a general-purpose tool and may not support every unique feature of specific sites. It relies on third-party page structures; if updates break functionality, please report via GitHub Issues for a prompt fix.",
+  disclaimerWarning:
+    "Please do not leave negative reviews in the generic store for issues caused by third-party site changes. Thank you for your understanding and support!",
+  disclaimerQuoteText: "If you want to go fast, go alone. If you want to go far, go together.",
+  welcomeJoin: "Welcome to",
+  agreeButton: "I Understand and Agree",
+
   tabPrompts: "Prompts",
   tabSettings: "Settings",
 
@@ -92,6 +104,10 @@ export const en = {
   contentStyleTab: "Content Processing",
   claudeSettingsTab: "Claude Settings",
   pageWidthSettings: "Page Width",
+  layoutSettingsTitle: "Page Width Control",
+  tabLayout: "Page Layout",
+  tabModelLock: "Model Lock",
+  tabGemini: "Gemini",
   enablePageWidthDesc: "Adjust the maximum width of the chat page",
   userQueryWidthSettings: "User Query Width",
   scrollSettings: "Scroll Settings",

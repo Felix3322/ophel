@@ -253,7 +253,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
   const tabs = [
     { id: SITE_SETTINGS_TAB_IDS.LAYOUT, label: t("tabLayout") || "页面布局" },
     { id: SITE_SETTINGS_TAB_IDS.MODEL_LOCK, label: t("tabModelLock") || "模型锁定" },
-    { id: SITE_IDS.GEMINI, label: "Gemini / AI Studio" },
+    { id: SITE_IDS.GEMINI, label: t("tabGemini") || "Gemini" },
     { id: SITE_IDS.CLAUDE, label: "Claude" },
   ]
 

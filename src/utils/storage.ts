@@ -62,6 +62,7 @@ export interface ModelLockConfig {
 
 export interface Settings {
   language: string
+  hasAgreedToTerms: boolean // 用户是否同意免责声明
 
   // 面板行为
   panel: {
@@ -196,6 +197,7 @@ const DEFAULT_USER_QUERY_WIDTH: PageWidthConfig = {
 
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
+  hasAgreedToTerms: false,
 
   panel: {
     defaultOpen: true,
