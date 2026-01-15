@@ -35,11 +35,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build extension
-        run: pnpm build
+      - name: Build all platforms
+        run: pnpm build:all
 
-      - name: Package extension
-        run: pnpm package
+      - name: Package all platforms
+        run: pnpm package:all
 
       - name: Get version
         id: get_version
@@ -50,6 +50,12 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Rename artifacts for release
+        run: |
+          cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+          cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
+          cp build/firefox-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -57,28 +63,34 @@ jobs:
           body: |
             ## Ophel ${{ steps.get_version.outputs.VERSION }}
 
-            ### 安装说明
-            1. 下载 `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip`
-            2. 打开 Chrome，进入 `chrome://extensions/`
+            ### 下载说明
+
+            | 浏览器 | 下载文件 | 说明 |
+            |--------|----------|------|
+            | Chrome | `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | Chrome Web Store 或开发者模式加载 |
+            | Edge | `ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons 或开发者模式加载 |
+            | Firefox | `ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons 或临时加载 |
+
+            ### 安装方法
+
+            **Chrome / Edge:**
+            1. 下载对应的 zip 文件并解压
+            2. 打开 `chrome://extensions/`（Chrome）或 `edge://extensions/`（Edge）
             3. 启用「开发者模式」
-            4. 将 zip 文件解压后，点击「加载已解压的扩展程序」选择解压目录
+            4. 点击「加载已解压的扩展程序」选择解压目录
+
+            **Firefox:**
+            1. 下载 Firefox 版本的 zip 文件
+            2. 打开 `about:debugging#/runtime/this-firefox`
+            3. 点击「临时载入附加组件」选择 zip 文件
 
             ---
             *完整更新日志请查看 [ROADMAP.md](https://github.com/urzeye/ophel/blob/main/docs/ROADMAP.md)*
           files: |
-            build/chrome-mv3-prod.zip
+            build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+            build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
+            build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Rename artifact for release
-        run: |
-          cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
-
-      - name: Upload renamed artifact to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
