@@ -1,0 +1,84 @@
+name: "Build and Release"
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # 匹配 v1.0.0, v1.2.3 等格式的 tag
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号 (如 v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 需要写权限来创建 release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build extension
+        run: pnpm build
+
+      - name: Package extension
+        run: pnpm package
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Ophel ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Ophel ${{ steps.get_version.outputs.VERSION }}
+
+            ### 安装说明
+            1. 下载 `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip`
+            2. 打开 Chrome，进入 `chrome://extensions/`
+            3. 启用「开发者模式」
+            4. 将 zip 文件解压后，点击「加载已解压的扩展程序」选择解压目录
+
+            ---
+            *完整更新日志请查看 [ROADMAP.md](https://github.com/urzeye/ophel/blob/main/docs/ROADMAP.md)*
+          files: |
+            build/chrome-mv3-prod.zip
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename artifact for release
+        run: |
+          cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+
+      - name: Upload renamed artifact to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
