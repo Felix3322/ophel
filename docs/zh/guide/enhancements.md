@@ -153,4 +153,4 @@ AI 回复完成时发送提醒：
 - 🔧 完全可自定义
 - ⚠️ 冲突检测
 
-[查看快捷键设置 →](/guide/shortcuts)
+[查看快捷键设置 →](/zh/guide/shortcuts)

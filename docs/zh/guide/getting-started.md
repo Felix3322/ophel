@@ -2,20 +2,20 @@
 
 Ophel 是一款浏览器扩展，为主流 AI 对话平台提供统一的增强体验。
 
-> 💡 **Ophel** 这个名字源于古希腊语 *Ὀφέλεια (Ophelia)*，意为「帮助」与「益处」。我们的愿景是：**AI 之益，触手可及**。
+> 💡 **Ophel** 这个名字源于古希腊语 _Ὀφέλεια (Ophelia)_，意为「帮助」与「益处」。我们的愿景是：**AI 之益，触手可及**。
 
 ## 支持平台
 
 Ophel 深度适配以下 AI 平台，提供一致的使用体验：
 
-| 平台 | 网址 | 支持状态 |
-|------|------|:--------:|
-| **Gemini** | gemini.google.com | ✅ 完全支持 |
+| 平台                  | 网址                   |  支持状态   |
+| --------------------- | ---------------------- | :---------: |
+| **Gemini**            | gemini.google.com      | ✅ 完全支持 |
 | **Gemini Enterprise** | business.gemini.google | ✅ 完全支持 |
-| **AI Studio** | aistudio.google.com | ✅ 完全支持 |
-| **ChatGPT** | chatgpt.com | ✅ 完全支持 |
-| **Claude** | claude.ai | ✅ 完全支持 |
-| **Grok** | grok.com | ✅ 完全支持 |
+| **AI Studio**         | aistudio.google.com    | ✅ 完全支持 |
+| **ChatGPT**           | chatgpt.com            | ✅ 完全支持 |
+| **Claude**            | claude.ai              | ✅ 完全支持 |
+| **Grok**              | grok.com               | ✅ 完全支持 |
 
 ## 核心功能预览
 
@@ -23,15 +23,15 @@ Ophel 深度适配以下 AI 平台，提供一致的使用体验：
 
 ### 🧠 智能大纲
 
-自动解析对话结构，生成可导航的大纲树。滚动时自动高亮当前位置，点击即可跳转。[查看详情 →](/guide/features/outline)
+自动解析对话结构，生成可导航的大纲树。滚动时自动高亮当前位置，点击即可跳转。[查看详情 →](/zh/guide/features/outline)
 
 ### 💬 会话管理
 
-标签系统 + 彩色文件夹，让海量对话井井有条。支持多格式导出和 WebDAV 同步。[查看详情 →](/guide/features/conversation)
+标签系统 + 彩色文件夹，让海量对话井井有条。支持多格式导出和 WebDAV 同步。[查看详情 →](/zh/guide/features/conversation)
 
 ### ⌨️ 提示词助手
 
-变量模板 + 分类管理，常用提示词一键直达。[查看详情 →](/guide/features/prompt)
+变量模板 + 分类管理，常用提示词一键直达。[查看详情 →](/zh/guide/features/prompt)
 
 </div>
 
@@ -78,10 +78,10 @@ Firefox 临时加载的扩展在浏览器关闭后会失效，需要重新加载
 
 1. **查看大纲面板**：页面右侧会自动显示对话大纲
 2. **打开设置**：点击浏览器工具栏的 Ophel 图标
-3. **探索功能**：前往 [功能介绍](/guide/features/) 深入了解各项能力
+3. **探索功能**：前往 [功能介绍](/zh/guide/features/) 深入了解各项能力
 
 ## 下一步
 
-- 📖 [功能介绍](/guide/features/) — 了解 Ophel 的全部能力
-- ⚙️ [个性化设置](/guide/settings) — 定制你的专属体验
-- ❓ [常见问题](/guide/faq) — 解决使用中的疑问
+- 📖 [功能介绍](/zh/guide/features/) — 了解 Ophel 的全部能力
+- 🎨 [外观定制](/zh/guide/appearance) — 定制你的专属体验
+- ❓ [常见问题](/zh/guide/faq) — 解决使用中的疑问
