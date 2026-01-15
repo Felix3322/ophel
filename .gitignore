@@ -33,3 +33,4 @@ dist/
 .tsbuildinfo
 
 tsconfig.tsbuildinfo
+.dev
