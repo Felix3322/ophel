@@ -33,4 +33,6 @@ dist/
 .tsbuildinfo
 
 tsconfig.tsbuildinfo
-.devdocs/.vitepress/cache
+# VitePress
+docs/.vitepress/cache
+docs/.vitepress/dist
