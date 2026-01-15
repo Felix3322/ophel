@@ -3,53 +3,53 @@ layout: home
 
 hero:
   name: Ophel
-  text: AI 对话增强助手
-  tagline: 为 Gemini、AI Studio、Grok、ChatGPT、Claude 提供统一的大纲导航、会话管理与提示词系统
+  text: AI Conversation Enhancement
+  tagline: Unified outline navigation, conversation management, and prompt system for Gemini, AI Studio, Grok, ChatGPT, and Claude
   image:
     src: /logo.png
     alt: Ophel
   actions:
     - theme: brand
-      text: 快速开始 →
-      link: /guide/getting-started
+      text: 快速开始 / Get Started →
+      link: /zh/guide/getting-started
     - theme: alt
-      text: 核心功能
-      link: /guide/features/
+      text: English
+      link: /en/
     - theme: alt
       text: GitHub
       link: https://github.com/urzeye/ophel
 
 features:
   - icon: 🧠
-    title: 智能大纲
-    details: 自动解析对话结构，生成多层级导航树。支持智能过滤、一键复制、滚动跟随，让长对话阅读如行云流水。
-    link: /guide/features/outline
-    linkText: 了解更多
+    title: 智能大纲 / Smart Outline
+    details: Auto-parse conversation structure into a multi-level navigation tree with smart filtering and scroll following.
+    link: /zh/guide/features/outline
+    linkText: Learn More
   - icon: 💬
-    title: 会话管理
-    details: 无限滚动加载历史会话，支持标签系统、彩色文件夹分类。多格式导出、批量操作、WebDAV 同步，轻松掌控所有对话。
-    link: /guide/features/conversation
-    linkText: 了解更多
+    title: 会话管理 / Conversations
+    details: Infinite scroll history, tag system, colorful folders. Multi-format export and WebDAV sync.
+    link: /zh/guide/features/conversation
+    linkText: Learn More
   - icon: ⌨️
-    title: 提示词助手
-    details: 支持变量模板、Markdown 预览、分类管理。置顶常用、快速访问，让提示词管理井井有条。
-    link: /guide/features/prompt
-    linkText: 了解更多
+    title: 提示词 / Prompts
+    details: Variable templates, Markdown preview, category management. Pin favorites for quick access.
+    link: /zh/guide/features/prompt
+    linkText: Learn More
   - icon: 🎨
-    title: 外观定制
-    details: 多款深浅色主题，跟随系统自动切换。支持自定义 CSS，打造专属界面风格。
-    link: /guide/appearance
-    linkText: 了解更多
+    title: 外观 / Appearance
+    details: Multiple light/dark themes with system sync. Custom CSS support for unique styling.
+    link: /zh/guide/appearance
+    linkText: Learn More
   - icon: ⚡
-    title: 体验增强
-    details: 滚动锁定、阅读历史、公式复制、表格转换、模型锁定、标签页管理等 20+ 项实用功能。
-    link: /guide/enhancements
-    linkText: 了解更多
+    title: 增强 / Enhancements
+    details: Scroll lock, reading history, formula copy, table conversion, model lock, and 20+ more features.
+    link: /zh/guide/enhancements
+    linkText: Learn More
   - icon: 🔒
-    title: 隐私优先
-    details: 所有数据本地存储，按需授权权限。支持 WebDAV 同步备份，数据安全完全自掌。
-    link: /guide/privacy
-    linkText: 了解更多
+    title: 隐私 / Privacy
+    details: All data stored locally with on-demand permissions. WebDAV sync backup supported.
+    link: /zh/guide/privacy
+    linkText: Learn More
 ---
 
 <style>
