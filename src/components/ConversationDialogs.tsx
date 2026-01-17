@@ -26,6 +26,7 @@ const DIALOG_STYLES = `
     border-radius: 12px;
     padding: 20px;
     min-width: 320px;
+    max-width: min(480px, calc(100vw - 40px));
     box-shadow: var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.2));
   }
   .conversations-dialog-title {
@@ -40,6 +41,8 @@ const DIALOG_STYLES = `
     margin-bottom: 20px;
     line-height: 1.5;
     white-space: pre-line;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   .conversations-dialog-section {
     margin-bottom: 16px;
@@ -157,9 +160,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   return (
     <DialogOverlay onClose={onCancel}>
       <div className="conversations-dialog-title">{title}</div>
-      <div style={{ marginBottom: "20px", color: "var(--gh-text-secondary, #6b7280)" }}>
-        {message}
-      </div>
+      <div className="conversations-dialog-message">{message}</div>
       <div className="conversations-dialog-buttons">
         <Button variant="secondary" onClick={onCancel}>
           {cancelText || t("cancel") || "取消"}
