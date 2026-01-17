@@ -23,6 +23,12 @@
 
 👋 **Ophel** 是一款浏览器扩展，旨在为您提供更加流畅、高效的 AI 交互体验。它深度集成了 **Gemini**、**Gemini Enterprise**、**AI Studio**、**ChatGPT**、**Grok**、**Claude** 等主流 AI 平台，为您带来统一的大纲导航、会话管理、提示词助手以及极致的个性化定制功能。
 
+## 📹 功能演示
+
+|                                                        大纲 Outline                                                        |                                                     会话 Conversations                                                     |                                                       功能 Features                                                        |
+| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
+| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/4f0628cc-32f2-4b1a-97a3-0188013bd3c0" width="280" controls></video> |
+
 ## ✨ 核心功能
 
 ### 1. 🧠 智能大纲 (Smart Outline)
@@ -63,6 +69,7 @@
 ### 4. 🛠️ 体验增强 (UX Enhancements)
 
 - **Claude 增强**：
+
   - **Session Key 管理**：一键切换 Session Key，支持多账号轮询，方便管理身份凭证。
 
 - **界面定制**：
@@ -99,15 +106,7 @@
 - **多端同步**：支持 **WebDAV** 协议同步备份（含 Claude Session Key 等敏感数据，安全自掌）。
 - **全量备份**：支持导出完整数据或模块化导出（如仅提示词、仅设置）。
 
-## 📹 功能演示
-
-> � **视频录制中...**
-
-| 大纲 Outline | 会话 Conversations | 功能 Features |
-|:---:|:---:|:---:|
-| Coming Soon | Coming Soon | Coming Soon |
-
-## �📦 安装
+## 📦 安装
 
 ### 应用商店
 

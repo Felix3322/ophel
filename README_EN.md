@@ -25,6 +25,12 @@
 
 ## ✨ Core Features
 
+## 📹 Demo
+
+|                                                          Outline                                                           |                                                       Conversations                                                        |                                                          Features                                                          |
+| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
+| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/4f0628cc-32f2-4b1a-97a3-0188013bd3c0" width="280" controls></video> |
+
 ### 1. 🧠 Smart Outline
 
 - **Multi-Level Navigation**: Automatically parses user questions and H1-H6 headings to generate a clear conversation structure.
@@ -63,6 +69,7 @@
 ### 4. 🛠️ UX Enhancements
 
 - **Claude Integration**:
+
   - **Session Key Management**: One-click Session Key switching with multi-account polling support.
 
 - **Interface Customization**:
@@ -96,14 +103,6 @@
 - **Permissions Management**: Dedicated permissions panel, request only when needed, protecting privacy.
 - **Multi-Device Sync**: Supports **WebDAV** backup (including sensitive data like Claude Session Keys, fully under your control).
 - **Full Backup**: Full export or modular export (e.g., just Prompts, just Settings).
-
-## 📹 Demo
-
-> 🚧 **Recording in progress...**
-
-| Outline | Conversations | Features |
-|:---:|:---:|:---:|
-| Coming Soon | Coming Soon | Coming Soon |
 
 ## 📦 Installation
 
