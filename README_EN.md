@@ -183,11 +183,12 @@ Build outputs are located in the `build/` directory.
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
 
-If Ophel helps you, consider supporting the project:
-
-<a href="https://opencollective.com/urzeye-oss">
-  <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
-</a>
+<p align="center">
+  If Ophel helps you, consider supporting:<br/><br/>
+  <a href="https://opencollective.com/urzeye-oss">
+    <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
+  </a>
+</p>
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>

@@ -185,11 +185,12 @@ pnpm package:firefox    # Firefox
   <em>"一个人可以走得很快，但一群人可以走得更远。"</em>
 </p>
 
-如果 Ophel 对你有帮助，欢迎支持：
-
-<a href="https://opencollective.com/urzeye-oss">
-  <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
-</a>
+<p align="center">
+  如果 Ophel 对你有帮助，欢迎支持：<br/><br/>
+  <a href="https://opencollective.com/urzeye-oss">
+    <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
+  </a>
+</p>
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
