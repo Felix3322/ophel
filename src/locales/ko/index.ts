@@ -930,6 +930,8 @@ export const ko = {
   aistudioRemoveWatermark: "이미지 워터마크 제거",
   aistudioRemoveWatermarkDesc:
     "AI Studio에서 생성된 이미지의 워터마크를 제거합니다 (페이지 새로고침 필요)",
+  aistudioMarkdownFixLabel: "Markdown 굵게 수정",
+  aistudioMarkdownFixDesc: "AI Studio 응답에서 렌더링되지 않은 **굵게** 텍스트를 수정합니다",
   aistudioReloadHint: "변경 사항을 적용하려면 페이지를 새로 고치세요",
 
   exportCustomUserName: "사용자 지정 사용자 이름",

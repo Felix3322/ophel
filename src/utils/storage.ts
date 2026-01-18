@@ -76,6 +76,7 @@ export interface AIStudioSettings {
 
   // 功能开关
   enableSearch?: boolean // 默认启用 Google 搜索工具
+  markdownFix?: boolean // 修复响应中未渲染的加粗文本
 
   // 默认模型
   defaultModel?: string // 模型 ID，如 "models/gemini-3-flash-preview"
@@ -362,6 +363,7 @@ export const DEFAULT_SETTINGS: Settings = {
     collapseTools: false,
     collapseAdvanced: false,
     enableSearch: true,
+    markdownFix: false, // 默认关闭
     defaultModel: "", // 空表示不覆盖
     removeWatermark: false,
   },

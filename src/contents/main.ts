@@ -11,7 +11,11 @@ import { getAdapter } from "~adapters"
 import { SITE_IDS } from "~constants"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
-import { MarkdownFixer } from "~core/markdown-fixer"
+import {
+  AISTUDIO_MARKDOWN_FIXER_CONFIG,
+  GEMINI_MARKDOWN_FIXER_CONFIG,
+  MarkdownFixer,
+} from "~core/markdown-fixer"
 import { ModelLocker } from "~core/model-locker"
 import { ReadingHistoryManager } from "~core/reading-history"
 import { ScrollLockManager } from "~core/scroll-lock-manager"
@@ -144,9 +148,14 @@ if (!window.ophelInitialized) {
       // 延迟执行同步,等待页面UI就绪
       setTimeout(syncPageTheme, 1000)
 
-      // 2. Markdown 修复 (仅 Gemini 标准版)
-      if (settings.content?.markdownFix && siteId === SITE_IDS.GEMINI) {
-        markdownFixer = new MarkdownFixer()
+      // 2. Markdown 修复 (Gemini 标准版 + AI Studio)
+      // Gemini 使用全局 content.markdownFix 设置
+      // AI Studio 使用专属 aistudio.markdownFix 设置（默认关闭）
+      if (siteId === SITE_IDS.GEMINI && settings.content?.markdownFix) {
+        markdownFixer = new MarkdownFixer(GEMINI_MARKDOWN_FIXER_CONFIG)
+        markdownFixer.start()
+      } else if (siteId === SITE_IDS.AISTUDIO && settings.aistudio?.markdownFix) {
+        markdownFixer = new MarkdownFixer(AISTUDIO_MARKDOWN_FIXER_CONFIG)
         markdownFixer.start()
       }
 
@@ -248,11 +257,20 @@ if (!window.ophelInitialized) {
           scrollLockManager.updateSettings(newSettings)
         }
 
-        // 4. Markdown Fix update
+        // 4. Markdown Fix update (Gemini 使用 content.markdownFix，AI Studio 使用 aistudio.markdownFix)
         if (newSettings && siteId === SITE_IDS.GEMINI) {
           if (newSettings.content?.markdownFix) {
             if (!markdownFixer) {
-              markdownFixer = new MarkdownFixer()
+              markdownFixer = new MarkdownFixer(GEMINI_MARKDOWN_FIXER_CONFIG)
+            }
+            markdownFixer.start()
+          } else {
+            markdownFixer?.stop()
+          }
+        } else if (newSettings && siteId === SITE_IDS.AISTUDIO) {
+          if (newSettings.aistudio?.markdownFix) {
+            if (!markdownFixer) {
+              markdownFixer = new MarkdownFixer(AISTUDIO_MARKDOWN_FIXER_CONFIG)
             }
             markdownFixer.start()
           } else {

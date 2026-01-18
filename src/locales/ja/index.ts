@@ -932,6 +932,8 @@ export const ja = {
   aistudioRemoveWatermark: "画像の透かしを削除",
   aistudioRemoveWatermarkDesc:
     "AI Studioで生成された画像から透かしを削除します（ページの更新が必要です）",
+  aistudioMarkdownFixLabel: "Markdown 太字修正",
+  aistudioMarkdownFixDesc: "AI Studioの回答でレンダリングされない **太字** テキストを修正します",
   aistudioReloadHint: "変更を適用するにはページを更新してください",
 
   exportCustomUserName: "カスタムユーザー名",

@@ -51,13 +51,38 @@ const REGEX_BOLD_TAG = /<b\b[^>]*>([\s\S]*?)<\/b>/gi
 const REGEX_MD_BOLD = /\*\*([\s\S]+?)\*\*/g
 const REGEX_PLACEHOLDER = /###OPHEL_CODE_(\d+)###/g
 
+/**
+ * MarkdownFixer 配置
+ */
+export interface MarkdownFixerConfig {
+  /** 查找段落的选择器，如 "message-content p" 或 "ms-cmark-node span" */
+  selector: string
+  /** 是否修复 <span> 内部的内容（AI Studio 需要） */
+  fixSpanContent?: boolean
+}
+
+/** Gemini 默认配置 */
+export const GEMINI_MARKDOWN_FIXER_CONFIG: MarkdownFixerConfig = {
+  selector: "message-content p",
+  fixSpanContent: false,
+}
+
+/** AI Studio 默认配置 */
+export const AISTUDIO_MARKDOWN_FIXER_CONFIG: MarkdownFixerConfig = {
+  selector: "ms-cmark-node span.ng-star-inserted",
+  fixSpanContent: true,
+}
+
 export class MarkdownFixer {
   private processedNodes = new WeakSet<HTMLElement>()
   private stopObserver: (() => void) | null = null
   private enabled = false
   private policyReady = false
+  private config: MarkdownFixerConfig
 
-  constructor() {}
+  constructor(config: MarkdownFixerConfig = GEMINI_MARKDOWN_FIXER_CONFIG) {
+    this.config = config
+  }
 
   /**
    * 启动修复器
@@ -77,7 +102,7 @@ export class MarkdownFixer {
     this.fixAllParagraphs()
 
     // 监听新增的段落
-    this.stopObserver = DOMToolkit.each("message-content p", (p, isNew) => {
+    this.stopObserver = DOMToolkit.each(this.config.selector, (p, isNew) => {
       if (isNew) {
         // 延迟处理，避免和流式输出冲突
         setTimeout(() => this.fixParagraph(p as HTMLElement), 100)
@@ -101,7 +126,7 @@ export class MarkdownFixer {
    * 修复所有段落
    */
   private fixAllParagraphs() {
-    const paragraphs = DOMToolkit.query("message-content p", {
+    const paragraphs = DOMToolkit.query(this.config.selector, {
       all: true,
     }) as Element[]
     paragraphs.forEach((p) => this.fixParagraph(p as HTMLElement))

@@ -920,6 +920,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   aistudioRemoveWatermark: "Wasserzeichen entfernen",
   aistudioRemoveWatermarkDesc:
     "Entfernen Sie das Wasserzeichen von in AI Studio generierten Bildern (Seite neu laden)",
+  aistudioMarkdownFixLabel: "Markdown Fettschrift-Fix",
+  aistudioMarkdownFixDesc: "Nicht gerenderten **fetten** Text in AI Studio-Antworten reparieren",
   aistudioReloadHint: "Bitte aktualisieren Sie die Seite, um Änderungen zu übernehmen",
 
   exportCustomUserName: "Benutzerdefinierter Name",

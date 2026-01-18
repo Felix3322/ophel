@@ -920,6 +920,8 @@ export const ru = {
   aistudioRemoveWatermark: "Удалить водяной знак",
   aistudioRemoveWatermarkDesc:
     "Удалить водяной знак с изображений AI Studio (Требуется обновление)",
+  aistudioMarkdownFixLabel: "Исправление жирного Markdown",
+  aistudioMarkdownFixDesc: "Исправить нерендеренный **жирный** текст в ответах AI Studio",
   aistudioReloadHint: "Обновите страницу для применения изменений",
 
   exportCustomUserName: "Имя пользователя",

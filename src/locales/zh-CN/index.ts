@@ -480,6 +480,8 @@ export const zhCN = {
   watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
   aistudioRemoveWatermark: "移除图片水印",
   aistudioRemoveWatermarkDesc: "移除 AI Studio 生成图片的水印（需刷新页面生效）",
+  aistudioMarkdownFixLabel: "Markdown 加粗修复",
+  aistudioMarkdownFixDesc: "修复 AI Studio 响应中未渲染的 **加粗** 文本",
   aistudioReloadHint: "请刷新页面使更改生效",
 
   exportCustomUserName: "自定义用户名称",

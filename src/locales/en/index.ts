@@ -357,6 +357,8 @@ export const en = {
   aistudioRemoveWatermark: "Remove Image Watermark",
   aistudioRemoveWatermarkDesc:
     "Remove watermarks from AI Studio generated images (Requires page refresh)",
+  aistudioMarkdownFixLabel: "Markdown Bold Fix",
+  aistudioMarkdownFixDesc: "Fix unrendered **bold** text in AI Studio responses",
   aistudioReloadHint: "Please refresh the page for changes to take effect",
 
   exportCustomUserName: "Custom User Name",

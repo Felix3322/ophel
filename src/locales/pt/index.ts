@@ -920,6 +920,8 @@ Dê o código e depois um resumo de melhorias.`,
   aistudioRemoveWatermark: "Remover marca d'água",
   aistudioRemoveWatermarkDesc:
     "Remover a marca d'água de imagens do AI Studio (Requer atualização)",
+  aistudioMarkdownFixLabel: "Correção de Negrito Markdown",
+  aistudioMarkdownFixDesc: "Corrigir texto **negrito** não renderizado nas respostas do AI Studio",
   aistudioReloadHint: "Atualize a página para aplicar as alterações",
 
   exportCustomUserName: "Nome de usuário",

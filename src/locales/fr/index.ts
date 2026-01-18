@@ -925,6 +925,8 @@ Donnez le code puis un résumé des améliorations.`,
   aistudioRemoveWatermark: "Supprimer le filigrane",
   aistudioRemoveWatermarkDesc:
     "Supprimer le filigrane des images générées par AI Studio (Nécessite une actualisation)",
+  aistudioMarkdownFixLabel: "Correction du Gras Markdown",
+  aistudioMarkdownFixDesc: "Corriger le texte **gras** non rendu dans les réponses AI Studio",
   aistudioReloadHint: "Veuillez actualiser la page pour appliquer les changements",
 
   exportCustomUserName: "Nom d'utilisateur personnalisé",

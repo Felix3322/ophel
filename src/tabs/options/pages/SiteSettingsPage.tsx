@@ -694,6 +694,22 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               showToast(t("aistudioReloadHint") || "设置已保存，请刷新 AI Studio 页面以生效", 3000)
             }}
           />
+
+          <ToggleRow
+            label={t("aistudioMarkdownFixLabel") || "Markdown 加粗修复"}
+            description={
+              t("aistudioMarkdownFixDesc") || "修复 AI Studio 响应中未渲染的 **加粗** 文本"
+            }
+            checked={settings.aistudio?.markdownFix ?? false}
+            onChange={() =>
+              setSettings({
+                aistudio: {
+                  ...settings.aistudio,
+                  markdownFix: !settings.aistudio?.markdownFix,
+                },
+              })
+            }
+          />
         </SettingCard>
       )}
 

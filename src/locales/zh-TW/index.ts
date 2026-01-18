@@ -913,6 +913,8 @@ export const zhTW = {
 
   aistudioRemoveWatermark: "移除圖片浮水印",
   aistudioRemoveWatermarkDesc: "移除 AI Studio 生成圖片的浮水印（需重新整理頁面生效）",
+  aistudioMarkdownFixLabel: "Markdown 加粗修復",
+  aistudioMarkdownFixDesc: "修復 AI Studio 回應中未渲染的 **加粗** 文字",
   aistudioReloadHint: "請重新整理頁面使變更生效",
 
   exportCustomUserName: "自訂使用者名稱",
