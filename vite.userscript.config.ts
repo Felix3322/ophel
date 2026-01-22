@@ -1,7 +1,59 @@
+import fs from "fs"
 import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import monkey from "vite-plugin-monkey"
+
+// ========== Dynamic Metadata Loading ==========
+// Read version from package.json
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
+const version: string = pkg.version
+
+// Locale directory to userscript locale code mapping
+const localeMapping: Record<string, string> = {
+  zh_CN: "zh-cn",
+  zh_TW: "zh-tw",
+  en: "en",
+  de: "de",
+  es: "es",
+  fr: "fr",
+  ja: "ja",
+  ko: "ko",
+  pt_BR: "pt",
+  ru: "ru",
+}
+
+// Read name and description from locale files
+function loadLocalizedMetadata(): {
+  name: Record<string, string>
+  description: Record<string, string>
+} {
+  const name: Record<string, string> = { "": "Ophel" } // Default fallback
+  const description: Record<string, string> = {
+    "": "AI conversation enhancement tool for Gemini/ChatGPT/Claude/Grok/AI Studio",
+  }
+
+  const localesDir = path.resolve(__dirname, "locales")
+  for (const [dirName, localeCode] of Object.entries(localeMapping)) {
+    const messagesPath = path.join(localesDir, dirName, "messages.json")
+    if (fs.existsSync(messagesPath)) {
+      try {
+        const messages = JSON.parse(fs.readFileSync(messagesPath, "utf-8"))
+        if (messages.extensionName?.message) {
+          name[localeCode] = messages.extensionName.message
+        }
+        if (messages.extensionDescription?.message) {
+          description[localeCode] = messages.extensionDescription.message
+        }
+      } catch {
+        console.warn(`Failed to parse ${messagesPath}`)
+      }
+    }
+  }
+  return { name, description }
+}
+
+const { name: localizedName, description: localizedDescription } = loadLocalizedMetadata()
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,34 +62,9 @@ export default defineConfig({
     monkey({
       entry: "src/platform/userscript/entry.tsx",
       userscript: {
-        name: {
-          "": "Ophel",
-          de: "Ophel - KI-Chat-Verbesserungstool",
-          en: "Ophel - AI Chat Enhancement Toolkit",
-          es: "Ophel - Herramienta de mejora de chat IA",
-          fr: "Ophel - Outil d'amélioration de chat IA",
-          ja: "Ophel - AIチャット強化ツール",
-          ko: "Ophel - AI 채팅 향상 도구",
-          pt: "Ophel - Ferramenta de melhoria de chat IA",
-          ru: "Ophel - Инструмент улучшения AI-чата",
-          "zh-cn": "Ophel - AI 对话增强工具",
-          "zh-tw": "Ophel - AI 對話增強工具",
-        },
-        description: {
-          "": "AI conversation enhancement tool for Gemini/ChatGPT/Claude/Grok/AI Studio",
-          de: "Verbessern Sie Gemini/ChatGPT/Claude/Grok/AI Studio mit intelligenten Gliederungen, Konversationsverwaltung, Prompt-Bibliothek, Tastenkürzel, Benachrichtigungen, Theme-Anpassung, Leseverlauf-Wiederherstellung, WebDAV-Synchronisierung und mehr!",
-          en: "Enhance Gemini/ChatGPT/Claude/Grok/AI Studio with smart outlines, conversation management, prompt library, shortcuts, completion notifications, theme customization, reading history restoration, WebDAV sync and more!",
-          es: "Mejore Gemini/ChatGPT/Claude/Grok/AI Studio con esquemas inteligentes, gestión de conversaciones, biblioteca de prompts, atajos, notificaciones, personalización de temas, restauración del historial, sincronización WebDAV y más!",
-          fr: "Améliorez Gemini/ChatGPT/Claude/Grok/AI Studio avec plans intelligents, gestion de conversations, bibliothèque de prompts, raccourcis, notifications, personnalisation de thèmes, restauration de l'historique, synchronisation WebDAV et plus!",
-          ja: "Gemini/ChatGPT/Claude/Grok/AI Studio向けにスマートアウトライン、会話管理、プロンプトライブラリ、ショートカット、完了通知、テーマカスタマイズ、閲覧履歴復元、WebDAV同期などの機能を提供し、AI対話体験を向上させます！",
-          ko: "Gemini/ChatGPT/Claude/Grok/AI Studio용 스마트 아웃라인, 대화 관리, 프롬프트 라이브러리, 단축키, 완료 알림, 테마 커스터마이징, 읽기 기록 복원, WebDAV 동기화 등 다양한 기능을 제공합니다!",
-          pt: "Melhore o Gemini/ChatGPT/Claude/Grok/AI Studio com esboços inteligentes, gestão de conversas, biblioteca de prompts, atalhos, notificações, personalização de temas, restauração do histórico, sincronização WebDAV e mais!",
-          ru: "Улучшите Gemini/ChatGPT/Claude/Grok/AI Studio с помощью умных контуров, управления беседами, библиотеки промптов, горячих клавиш, уведомлений, настройки тем, восстановления истории чтения, синхронизации WebDAV и многого другого!",
-          "zh-cn":
-            "为 Gemini/ChatGPT/Claude/Grok/AI Studio 等提供智能大纲、会话管理、提示词库、快捷键、完成通知、主题布局定制、阅读记录恢复、WebDAV 同步等增强功能，全面提升您的交互体验！",
-          "zh-tw":
-            "為 Gemini/ChatGPT/Claude/Grok/AI Studio 等提供智能大綱、會話管理、提示詞庫、快捷鍵、完成通知、主題佈局定制、閱讀記錄恢復、WebDAV 同步等增強功能，全面提升您的交互體驗！",
-        },
+        name: localizedName,
+        description: localizedDescription,
+        version,
 
         license: "CC-BY-NC-SA-4.0",
         icon: "https://raw.githubusercontent.com/urzeye/ophel/main/assets/icon.png",
