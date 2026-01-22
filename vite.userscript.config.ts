@@ -115,5 +115,13 @@ export default defineConfig({
         comments: /==\/?UserScript==|@/,
       },
     },
+    rollupOptions: {
+      // 构建警告抑制
+      onwarn(warning, warn) {
+        if (warning.message.includes("dynamic import will not move module into another chunk"))
+          return
+        warn(warning)
+      },
+    },
   },
 })

@@ -2,11 +2,12 @@
 
 ## 功能适配问题 (Functionality & Adaptation)
 
-1. **权限管理显示问题**
+1. ~~**权限管理显示问题**~~ ✅ 已解决
 
    - **现象**：油猴脚本环境中不应展示“权限管理”相关的菜单或页面。
    - **原因**：userscript 无法动态申请权限，也没有 extension 的权限 api。
    - **TODO**：在 features 配置或 UI 渲染中屏蔽 permissions 相关入口。
+   - **解决方案**：通过 `platform.hasCapability('permissions')` 判断平台，在油猴环境隐藏菜单并跳过权限检查。
 
 2. **Markdown 渲染修复失效**
 
@@ -35,5 +36,5 @@
 
 ## 其他 (Others)
 
-5. **未验证问题**
+1. **未验证问题**
    - 需继续排查其他潜在的兼容性问题。

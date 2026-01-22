@@ -8,6 +8,12 @@ import { Storage } from "@plasmohq/storage"
 
 import { DEFAULT_SHORTCUTS_SETTINGS, type ShortcutsSettings } from "~constants/shortcuts"
 
+// 构建时注入的平台标识
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+// 油猴脚本环境标识（用于设置默认值）
+const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
 // 本地存储 - 用于非 Zustand 管理的数据
 export const localStorage = new Storage({ area: "local" })
 
@@ -246,7 +252,8 @@ export const DEFAULT_SETTINGS: Settings = {
 
   content: {
     markdownFix: true,
-    watermarkRemoval: false, // 默认关闭，需要授权 <all_urls> 权限
+    // 油猴脚本环境默认开启（GM_xmlhttpRequest 已通过 @grant 声明）
+    watermarkRemoval: isUserscript,
     formulaCopy: true,
     formulaDelimiter: true,
     tableCopy: true,
@@ -315,7 +322,8 @@ export const DEFAULT_SETTINGS: Settings = {
     renameInterval: 3,
     showStatus: true,
     titleFormat: "{status}{title}->{model}",
-    showNotification: false,
+    // 油猴脚本环境默认开启（GM_notification 已通过 @grant 声明）
+    showNotification: isUserscript,
     notificationSound: true,
     notificationVolume: 0.6,
     notifyWhenFocused: false,
@@ -363,9 +371,10 @@ export const DEFAULT_SETTINGS: Settings = {
     collapseTools: false,
     collapseAdvanced: false,
     enableSearch: true,
-    markdownFix: false, // 默认关闭
     defaultModel: "", // 空表示不覆盖
-    removeWatermark: false,
+    // 油猴脚本环境默认开启
+    markdownFix: isUserscript,
+    removeWatermark: isUserscript,
   },
 }
 
