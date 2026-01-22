@@ -58,6 +58,7 @@ export default defineConfig({
           "GM_removeValueChangeListener",
           "GM_xmlhttpRequest",
           "GM_notification",
+          "GM_cookie",
           "window.focus",
         ],
         connect: ["*"],

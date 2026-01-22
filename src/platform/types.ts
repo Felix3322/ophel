@@ -113,3 +113,4 @@ export type PlatformCapability =
   | "permissions" // 动态权限
   | "tabs" // 跨标签页操作
   | "declarativeNetRequest" // 网络请求规则
+  | "commands" // 浏览器命令（全局快捷键）

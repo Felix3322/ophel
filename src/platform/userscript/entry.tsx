@@ -174,15 +174,13 @@ async function init() {
   // 初始化适配器
   adapter.afterPropertiesSet({})
 
-  // 等待 Zustand hydration 完成后初始化 ThemeManager
+  // 等待 Zustand hydration 完成后初始化核心模块
   const { useSettingsStore, getSettingsState } = await import("~stores/settings-store")
   const { useConversationsStore } = await import("~stores/conversations-store")
   const { useFoldersStore } = await import("~stores/folders-store")
   const { useTagsStore } = await import("~stores/tags-store")
   const { usePromptsStore } = await import("~stores/prompts-store")
   const { useClaudeSessionKeysStore } = await import("~stores/claude-sessionkeys-store")
-  const { ThemeManager } = await import("~core/theme-manager")
-  const { DEFAULT_SETTINGS } = await import("~utils/storage")
 
   // 等待所有 store hydration 完成
   const waitForHydration = (store: {
@@ -216,22 +214,22 @@ async function init() {
   const settings = getSettingsState()
   const siteId = adapter.getSiteId()
 
-  // 获取站点主题配置
-  const siteTheme =
-    settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-    settings?.theme?.sites?._default ||
-    DEFAULT_SETTINGS.theme.sites._default
-
-  // 创建 ThemeManager 并挂载到全局
-  const themeManager = new ThemeManager(
-    siteTheme.mode || "light",
-    undefined,
-    adapter,
-    siteTheme.lightStyleId || "google-gradient",
-    siteTheme.darkStyleId || "classic-dark",
+  // ========== 初始化所有核心模块（使用共享模块） ==========
+  const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
+    "~core/modules-init"
   )
-  themeManager.apply()
-  ;(window as any).__ophelThemeManager = themeManager
+
+  const ctx = { adapter, settings, siteId }
+
+  // 初始化所有模块
+  await initCoreModules(ctx)
+  console.log("[Ophel Userscript] Core modules initialized")
+
+  // 订阅设置变化
+  subscribeModuleUpdates(ctx)
+
+  // 初始化 URL 变化监听 (SPA 导航)
+  initUrlChangeObserver(ctx)
 
   // 创建 Shadow DOM 容器
   const shadowHost = document.createElement("div")

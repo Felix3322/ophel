@@ -162,6 +162,7 @@ export const platform: Platform = {
       "permissions",
       "tabs",
       "declarativeNetRequest",
+      "commands",
     ]
     return !unsupported.includes(cap)
   },

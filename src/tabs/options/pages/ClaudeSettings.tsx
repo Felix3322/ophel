@@ -13,6 +13,7 @@ import {
   TOAST_DURATION,
   VALIDATION_PATTERNS,
 } from "~constants"
+import { platform } from "~platform"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -87,19 +88,21 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
       return
     }
 
-    // 1. 检查cookies权限
-    const checkResult = await sendToBackground({
-      type: MSG_CHECK_PERMISSIONS,
-      permissions: ["cookies"],
-    })
-
-    if (!checkResult.hasPermission) {
-      await sendToBackground({
-        type: MSG_REQUEST_PERMISSIONS,
-        permType: "cookies",
+    // 1. 检查cookies权限 (仅当平台支持动态权限时)
+    if (platform.hasCapability("permissions")) {
+      const checkResult = await sendToBackground({
+        type: MSG_CHECK_PERMISSIONS,
+        permissions: ["cookies"],
       })
-      showToast(t("claudeRequestPermission"), TOAST_DURATION.LONG)
-      return
+
+      if (!checkResult.hasPermission) {
+        await sendToBackground({
+          type: MSG_REQUEST_PERMISSIONS,
+          permType: "cookies",
+        })
+        showToast(t("claudeRequestPermission"), TOAST_DURATION.LONG)
+        return
+      }
     }
 
     // 2. 设置cookie
@@ -217,18 +220,20 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   // 从浏览器导入当前Cookie
   const handleImportFromBrowser = async () => {
     try {
-      const checkResult = await sendToBackground({
-        type: MSG_CHECK_PERMISSIONS,
-        permissions: ["cookies"],
-      })
-
-      if (!checkResult.hasPermission) {
-        await sendToBackground({
-          type: MSG_REQUEST_PERMISSIONS,
-          permType: "cookies",
+      if (platform.hasCapability("permissions")) {
+        const checkResult = await sendToBackground({
+          type: MSG_CHECK_PERMISSIONS,
+          permissions: ["cookies"],
         })
-        showToast(t("claudeRequestPermission"), TOAST_DURATION.LONG)
-        return
+
+        if (!checkResult.hasPermission) {
+          await sendToBackground({
+            type: MSG_REQUEST_PERMISSIONS,
+            permType: "cookies",
+          })
+          showToast(t("claudeRequestPermission"), TOAST_DURATION.LONG)
+          return
+        }
       }
 
       const result = await sendToBackground({

@@ -6,7 +6,6 @@ import hljs from "highlight.js/lib/core"
 import css from "highlight.js/lib/languages/css"
 import { nanoid } from "nanoid"
 import React, { useState } from "react"
-import Editor from "react-simple-code-editor"
 
 import { AppearanceIcon } from "~components/icons"
 import { useSettingsStore } from "~stores/settings-store"
@@ -20,8 +19,10 @@ import {
   type ThemeVariables,
 } from "~utils/themes"
 import { showToast as showDomToast } from "~utils/toast"
+import { createSafeHTML } from "~utils/trusted-types"
 
 import { PageTitle, SettingCard, TabGroup } from "../components"
+import { SafeCodeEditor } from "../components/SafeCodeEditor"
 import { ThemePreview } from "../components/ThemePreview"
 
 hljs.registerLanguage("css", css)
@@ -512,10 +513,12 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
                     display: "flex",
                     flexDirection: "column",
                   }}>
-                  <Editor
+                  <SafeCodeEditor
                     value={editingStyle.css}
                     onValueChange={(code) => setEditingStyle({ ...editingStyle, css: code })}
-                    highlight={(code) => hljs.highlight(code, { language: "css" }).value}
+                    highlight={(code) =>
+                      createSafeHTML(hljs.highlight(code, { language: "css" }).value)
+                    }
                     padding={12}
                     style={{
                       fontFamily: '"Menlo", "Monaco", "Consolas", monospace',
