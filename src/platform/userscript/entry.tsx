@@ -81,7 +81,56 @@ if (typeof chrome === "undefined" || !chrome.storage) {
           callback?.()
         },
         clear: (callback?: () => void) => {
-          console.warn("[Chrome Polyfill] clear() is not supported in userscript")
+          // 遍历所有已知的 storage keys 并删除
+          for (const key of KNOWN_STORAGE_KEYS) {
+            GM_deleteValue(key)
+          }
+          callback?.()
+        },
+      },
+      // sync 在油猴脚本中与 local 共用相同实现
+      sync: {
+        get: (
+          keys: string | string[] | null,
+          callback: (items: Record<string, unknown>) => void,
+        ) => {
+          if (keys === null) {
+            const result: Record<string, unknown> = {}
+            for (const key of KNOWN_STORAGE_KEYS) {
+              const value = GM_getValue(key)
+              if (value !== undefined && value !== null) {
+                result[key] = value
+              }
+            }
+            callback(result)
+          } else if (typeof keys === "string") {
+            const value = GM_getValue(keys)
+            callback({ [keys]: value })
+          } else {
+            const result: Record<string, unknown> = {}
+            for (const key of keys) {
+              result[key] = GM_getValue(key)
+            }
+            callback(result)
+          }
+        },
+        set: (items: Record<string, unknown>, callback?: () => void) => {
+          for (const [key, value] of Object.entries(items)) {
+            GM_setValue(key, value)
+          }
+          callback?.()
+        },
+        remove: (keys: string | string[], callback?: () => void) => {
+          const keyArray = typeof keys === "string" ? [keys] : keys
+          for (const key of keyArray) {
+            GM_deleteValue(key)
+          }
+          callback?.()
+        },
+        clear: (callback?: () => void) => {
+          for (const key of KNOWN_STORAGE_KEYS) {
+            GM_deleteValue(key)
+          }
           callback?.()
         },
       },
@@ -127,22 +176,41 @@ async function init() {
 
   // 等待 Zustand hydration 完成后初始化 ThemeManager
   const { useSettingsStore, getSettingsState } = await import("~stores/settings-store")
+  const { useConversationsStore } = await import("~stores/conversations-store")
+  const { useFoldersStore } = await import("~stores/folders-store")
+  const { useTagsStore } = await import("~stores/tags-store")
+  const { usePromptsStore } = await import("~stores/prompts-store")
+  const { useClaudeSessionKeysStore } = await import("~stores/claude-sessionkeys-store")
   const { ThemeManager } = await import("~core/theme-manager")
   const { DEFAULT_SETTINGS } = await import("~utils/storage")
 
-  // 等待 hydration
-  await new Promise<void>((resolve) => {
-    if (useSettingsStore.getState()._hasHydrated) {
-      resolve()
-      return
-    }
-    const unsub = useSettingsStore.subscribe((state) => {
-      if (state._hasHydrated) {
-        unsub()
+  // 等待所有 store hydration 完成
+  const waitForHydration = (store: {
+    getState: () => { _hasHydrated: boolean }
+    subscribe: (fn: (state: { _hasHydrated: boolean }) => void) => () => void
+  }) => {
+    return new Promise<void>((resolve) => {
+      if (store.getState()._hasHydrated) {
         resolve()
+        return
       }
+      const unsub = store.subscribe((state) => {
+        if (state._hasHydrated) {
+          unsub()
+          resolve()
+        }
+      })
     })
-  })
+  }
+
+  await Promise.all([
+    waitForHydration(useSettingsStore),
+    waitForHydration(useConversationsStore),
+    waitForHydration(useFoldersStore),
+    waitForHydration(useTagsStore),
+    waitForHydration(usePromptsStore),
+    waitForHydration(useClaudeSessionKeysStore),
+  ])
 
   // 获取用户设置
   const settings = getSettingsState()

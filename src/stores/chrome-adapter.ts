@@ -18,9 +18,13 @@ declare function GM_deleteValue(key: string): void
 
 /**
  * 油猴脚本存储适配器
+ *
+ * 关键设计：GM_* API 是同步的，我们直接返回 string | null（而非 Promise）
+ * 让 Zustand persist 执行**同步 hydration**，在 store 创建时立即完成数据加载
+ * 这彻底消除了异步 hydration 带来的竞态条件问题
  */
 const userscriptStorageAdapter: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
+  getItem: (name: string): string | null => {
     const value = GM_getValue(name)
     if (value === undefined || value === null) {
       return null
@@ -29,12 +33,11 @@ const userscriptStorageAdapter: StateStorage = {
     return typeof value === "string" ? value : JSON.stringify(value)
   },
 
-  setItem: async (name: string, value: string): Promise<void> => {
-    // Zustand persist 传入的是 JSON 字符串，直接存储
+  setItem: (name: string, value: string): void => {
     GM_setValue(name, value)
   },
 
-  removeItem: async (name: string): Promise<void> => {
+  removeItem: (name: string): void => {
     GM_deleteValue(name)
   },
 }

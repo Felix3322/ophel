@@ -77,11 +77,7 @@ export default defineConfig({
       // ========== Userscript Polyfills ==========
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
-      // 替换 chrome-adapter 为 GM_* 实现（注意：必须匹配实际文件路径）
-      [path.resolve(__dirname, "src/stores/chrome-adapter.ts")]: path.resolve(
-        __dirname,
-        "src/platform/userscript/chrome-adapter-polyfill.ts",
-      ),
+      // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========
       "~adapters": path.resolve(__dirname, "src/adapters"),
