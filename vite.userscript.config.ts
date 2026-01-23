@@ -88,6 +88,7 @@ export default defineConfig({
           "GM_xmlhttpRequest",
           "GM_notification",
           "GM_cookie",
+          "unsafeWindow",
           "window.focus",
         ],
         connect: ["*", "api.claude.ai"],

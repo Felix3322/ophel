@@ -4,9 +4,15 @@
  * 封装与 Main World 脚本的通信，处理 iframe 内 Flutter 滚动容器（图文并茂模式）
  * Content Script (Isolated World) 无法直接访问 iframe 的 contentDocument，
  * 需要通过 postMessage 与 Main World 脚本通信。
+ *
+ * 油猴脚本环境：通过 unsafeWindow 直接访问主世界 DOM
  */
 
 import type { SiteAdapter } from "~adapters/base"
+
+// 平台检测
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
 
 interface ScrollResponse {
   success: boolean
@@ -16,7 +22,48 @@ interface ScrollResponse {
 }
 
 /**
- * 通过 Main World 脚本执行 iframe 内滚动操作
+ * 获取主世界的 window 对象
+ * 油猴脚本：使用 unsafeWindow
+ * 浏览器插件：使用普通 window
+ */
+function getMainWindow(): Window {
+  if (isUserscript && (window as any).unsafeWindow) {
+    return (window as any).unsafeWindow
+  }
+  return window
+}
+
+/**
+ * 直接在油猴脚本环境中查找 Flutter 滚动容器
+ * 通过 unsafeWindow.document 访问主世界的 DOM
+ */
+function getFlutterScrollContainerDirect(): HTMLElement | null {
+  const mainWindow = getMainWindow()
+  const iframes = mainWindow.document.querySelectorAll("iframe")
+
+  for (const iframe of iframes) {
+    try {
+      const iframeDoc =
+        (iframe as HTMLIFrameElement).contentDocument ||
+        (iframe as HTMLIFrameElement).contentWindow?.document
+      if (iframeDoc) {
+        const scrollContainer = iframeDoc.querySelector(
+          'flt-semantics[style*="overflow-y: scroll"]',
+        ) as HTMLElement
+        if (scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+          return scrollContainer
+        }
+      }
+    } catch (e) {
+      // 跨域 iframe 会抛出错误，忽略
+    }
+  }
+  return null
+}
+
+/**
+ * 通过 Main World 脚本执行 iframe 内滚动操作（浏览器插件使用）
+ * 油猴脚本则直接操作 Flutter 容器
  * @param action 滚动动作
  * @param position 目标位置（仅 scrollTo 需要）
  * @returns Promise 返回滚动结果
@@ -25,6 +72,43 @@ function sendScrollRequest(
   action: "scrollToTop" | "scrollToBottom" | "scrollTo" | "getScrollInfo",
   position?: number,
 ): Promise<ScrollResponse> {
+  // 油猴脚本：直接访问 Flutter 容器
+  if (isUserscript) {
+    const container = getFlutterScrollContainerDirect()
+    if (!container) {
+      return Promise.resolve({ success: false, reason: "no_flutter_container" })
+    }
+
+    let result: ScrollResponse
+    switch (action) {
+      case "scrollToTop":
+        container.scrollTop = 0
+        result = { success: true, scrollTop: container.scrollTop }
+        break
+      case "scrollToBottom":
+        container.scrollTop = container.scrollHeight
+        result = { success: true, scrollTop: container.scrollTop }
+        break
+      case "scrollTo":
+        if (typeof position === "number") {
+          container.scrollTop = position
+        }
+        result = { success: true, scrollTop: container.scrollTop }
+        break
+      case "getScrollInfo":
+        result = {
+          success: true,
+          scrollTop: container.scrollTop,
+          scrollHeight: container.scrollHeight,
+        }
+        break
+      default:
+        result = { success: false }
+    }
+    return Promise.resolve(result)
+  }
+
+  // 浏览器插件：通过 postMessage 与 Main World 脚本通信
   return new Promise((resolve) => {
     const handler = (event: MessageEvent) => {
       if (event.source !== window) return

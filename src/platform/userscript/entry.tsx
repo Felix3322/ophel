@@ -162,6 +162,9 @@ if ((window as any).ophelUserscriptInitialized) {
 }
 ;(window as any).ophelUserscriptInitialized = true
 
+// 注意：Flutter 滚动容器现在在 scroll-helper.ts 中直接通过 unsafeWindow 访问
+// 不再需要在这里注入 Main World 监听器
+
 /**
  * 初始化油猴脚本
  */
