@@ -12,15 +12,15 @@ const license: string = pkg.license
 
 // Locale directory to userscript locale code mapping
 const localeMapping: Record<string, string> = {
-  zh_CN: "zh-cn",
-  zh_TW: "zh-tw",
+  zh_CN: "zh-CN",
+  zh_TW: "zh-TW",
   en: "en",
   de: "de",
   es: "es",
   fr: "fr",
   ja: "ja",
   ko: "ko",
-  pt_BR: "pt",
+  pt_BR: "pt-BR",
   ru: "ru",
 }
 
