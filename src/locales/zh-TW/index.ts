@@ -889,6 +889,8 @@ export const zhTW = {
   claudeBatchTestDone: "批量檢測完成。{valid} 個有效，{invalid} 個失效。",
   claudeBatchTestFailed: "批量檢測被中斷",
   claudeOnlyOneKeyTip: "當前只有一個可用 Key，且正在使用中",
+  noClaudeKeys: "未配置任何 Session Key",
+  restoreSuccess: "恢復成功，即將重新整理頁面...",
 
   // ======== AI Studio 設定 ========
   aistudioSettingsTitle: "AI Studio 設定",
@@ -934,4 +936,12 @@ export const zhTW = {
   popupCopyFailed: "複製失敗",
   popupFeedback: "反饋",
   popupSettings: "設定",
+
+  // Policy Retry
+  policyRetryLabel: "策略攔截自動重發",
+  policyRetryDesc: "當回覆被企業策略攔截時，嘗試自動重新發送訊息",
+  maxRetriesLabel: "最大重試次數",
+  retryCountSuffix: "次 (同一問題)",
+  policyRetryActive: "策略攔截，自動重試 ({current}/{max})",
+  policyRetryLimitReached: "重試次數已達上限",
 }

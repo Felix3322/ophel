@@ -892,6 +892,8 @@ export const ru = {
   claudeBatchTestDone: "Готово. {valid} Ок, {invalid} Брак.",
   claudeBatchTestFailed: "Сбой",
   claudeOnlyOneKeyTip: "Ваш единственный вариант.",
+  noClaudeKeys: "Нет настроенных Session Key",
+  restoreSuccess: "Восстановление успешно, страница обновится...",
 
   // ======== Настройки AI Studio ========
   aistudioSettingsTitle: "Настройки AI Studio",
@@ -941,4 +943,13 @@ export const ru = {
   popupCopyFailed: "Ошибка копии",
   popupFeedback: "Обратная связь",
   popupSettings: "Настройки",
+
+  // Policy Retry
+  policyRetryLabel: "Автоповтор при блокировке политикой",
+  policyRetryDesc:
+    "Автоматически повторно отправлять сообщение, если оно заблокировано корпоративной политикой",
+  maxRetriesLabel: "Макс. попыток",
+  retryCountSuffix: "раз (тот же вопрос)",
+  policyRetryActive: "Блокировка политикой, повторная попытка ({current}/{max})",
+  policyRetryLimitReached: "Достигнут лимит попыток",
 }

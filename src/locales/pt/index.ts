@@ -893,6 +893,8 @@ Dê o código e depois um resumo de melhorias.`,
   claudeBatchTestDone: "Pronto. {valid} OK, {invalid} falhas.",
   claudeBatchTestFailed: "Parado",
   claudeOnlyOneKeyTip: "Você só tem esta e já está usando",
+  noClaudeKeys: "Nenhuma Session Key configurada",
+  restoreSuccess: "Restauração bem-sucedida, a página será atualizada...",
 
   // ======== Configurações do AI Studio ========
   aistudioSettingsTitle: "Configurações do AI Studio",
@@ -941,4 +943,12 @@ Dê o código e depois um resumo de melhorias.`,
   popupCopyFailed: "Falha ao copiar",
   popupFeedback: "Feedback",
   popupSettings: "Ajustes",
+
+  // Policy Retry
+  policyRetryLabel: "Auto-repetição por Política",
+  policyRetryDesc: "Reenviar mensagem automaticamente quando bloqueada pela política empresarial",
+  maxRetriesLabel: "Máx. Tentativas",
+  retryCountSuffix: "vezes (mesma pergunta)",
+  policyRetryActive: "Bloqueio de política, tentando novamente ({current}/{max})",
+  policyRetryLimitReached: "Limite de tentativas alcançado",
 }

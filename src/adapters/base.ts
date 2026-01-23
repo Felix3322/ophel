@@ -4,6 +4,7 @@
  * 每个支持的站点（Gemini/ChatGPT/Claude 等）需要继承此类并实现抽象方法
  */
 
+import { SITE_IDS } from "~constants/defaults"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 // ==================== 类型定义 ====================
@@ -335,24 +336,27 @@ export abstract class SiteAdapter {
       return this._cachedFlutterScrollContainer
     }
 
-    // 尝试在 iframe 中查找（Gemini 图文并茂模式）
-    const iframes = document.querySelectorAll('iframe[sandbox*="allow-same-origin"]')
-    for (const iframe of Array.from(iframes)) {
-      try {
-        const iframeDoc =
-          (iframe as HTMLIFrameElement).contentDocument ||
-          (iframe as HTMLIFrameElement).contentWindow?.document
-        if (iframeDoc) {
-          const scrollContainer = iframeDoc.querySelector(
-            'flt-semantics[style*="overflow-y: scroll"]:not([style*="overflow-x: scroll"])',
-          ) as HTMLElement
-          if (scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
-            this._cachedFlutterScrollContainer = scrollContainer
-            return scrollContainer
+    // 尝试在 iframe 中查找（Gemini 图文并茂模式专用）
+    // 只在 Gemini 普通版站点遍历 iframe，其他站点跳过以避免跨域警告
+    if (this.getSiteId() === SITE_IDS.GEMINI) {
+      const iframes = document.querySelectorAll('iframe[sandbox*="allow-same-origin"]')
+      for (const iframe of Array.from(iframes)) {
+        try {
+          const iframeDoc =
+            (iframe as HTMLIFrameElement).contentDocument ||
+            (iframe as HTMLIFrameElement).contentWindow?.document
+          if (iframeDoc) {
+            const scrollContainer = iframeDoc.querySelector(
+              'flt-semantics[style*="overflow-y: scroll"]:not([style*="overflow-x: scroll"])',
+            ) as HTMLElement
+            if (scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+              this._cachedFlutterScrollContainer = scrollContainer
+              return scrollContainer
+            }
           }
+        } catch (e) {
+          console.warn("[Ophel] Failed to access iframe:", (e as Error).message)
         }
-      } catch (e) {
-        console.warn("[Ophel] Failed to access iframe:", (e as Error).message)
       }
     }
 

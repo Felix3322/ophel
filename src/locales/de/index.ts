@@ -893,6 +893,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   claudeBatchTestDone: "Fertig. {valid} OK, {invalid} Fehler.",
   claudeBatchTestFailed: "Abgebrochen",
   claudeOnlyOneKeyTip: "Ihre einzige Option hier.",
+  noClaudeKeys: "Keine Session Keys konfiguriert",
+  restoreSuccess: "Wiederherstellung erfolgreich, Seite wird aktualisiert...",
 
   // ======== AI Studio Einstellungen ========
   aistudioSettingsTitle: "AI Studio Einstellungen",
@@ -941,4 +943,13 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   popupCopyFailed: "Kopie fehlgeschlagen",
   popupFeedback: "Feedback",
   popupSettings: "Einstellungen",
+
+  // Policy Retry
+  policyRetryLabel: "Autom. Wiederholung bei Richtlinienblockierung",
+  policyRetryDesc:
+    "Nachricht automatisch erneut senden, wenn sie durch Unternehmensrichtlinien blockiert wurde",
+  maxRetriesLabel: "Max. Wiederholungen",
+  retryCountSuffix: "Mal (gleiche Frage)",
+  policyRetryActive: "Richtlinienblockierung, erneuter versuch ({current}/{max})",
+  policyRetryLimitReached: "Wiederholungslimit erreicht",
 }

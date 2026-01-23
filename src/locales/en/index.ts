@@ -923,6 +923,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   claudeBatchTestDone: "Batch check completed. {valid} valid, {invalid} invalid.",
   claudeBatchTestFailed: "Batch check interrupted",
   claudeOnlyOneKeyTip: "Only one key available and it is currently in use",
+  noClaudeKeys: "No Session Keys configured",
+  restoreSuccess: "Restore successful, page will refresh...",
 
   // ======== AI Studio Settings ========
   aistudioSettingsTitle: "AI Studio Settings",
@@ -959,4 +961,12 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupCopyFailed: "Copy failed",
   popupFeedback: "Feedback",
   popupSettings: "Settings",
+
+  // Policy Retry
+  policyRetryLabel: "Auto-retry on Policy Block",
+  policyRetryDesc: "Automatically resend message when blocked by enterprise policy",
+  maxRetriesLabel: "Max Retries",
+  retryCountSuffix: "times (same question)",
+  policyRetryActive: "Policy blocked, retrying ({current}/{max})",
+  policyRetryLimitReached: "Retry limit reached",
 }

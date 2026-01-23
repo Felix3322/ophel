@@ -895,6 +895,8 @@ Donnez le code puis un résumé des améliorations.`,
   claudeBatchTestDone: "Finit. {valid} OK, {invalid} échecs.",
   claudeBatchTestFailed: "Stoppé",
   claudeOnlyOneKeyTip: "Sensation de déjà vu ? C'est votre seule clé.",
+  noClaudeKeys: "Aucune Session Key configurée",
+  restoreSuccess: "Restauration réussie, la page va se rafraîchir...",
 
   // ======== Paramètres AI Studio ========
   aistudioSettingsTitle: "Paramètres AI Studio",
@@ -947,4 +949,13 @@ Donnez le code puis un résumé des améliorations.`,
   popupCopyFailed: "Échec copie",
   popupFeedback: "Feedback",
   popupSettings: "Réglages",
+
+  // Policy Retry
+  policyRetryLabel: "Réessai auto après blocage politique",
+  policyRetryDesc:
+    "Renvoyer automatiquement le message s'il est bloqué par la politique de l'entreprise",
+  maxRetriesLabel: "Max Réessais",
+  retryCountSuffix: "fois (même question)",
+  policyRetryActive: "Politique bloquée, nouvel essai ({current}/{max})",
+  policyRetryLimitReached: "Limite de réessais atteinte",
 }
