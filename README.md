@@ -1,4 +1,4 @@
-# Ophel
+# Ophel 🚀
 
 <p align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
@@ -17,7 +17,14 @@
 </p>
 
 <p align="center">
-  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong>
+  <a href="#-核心功能">核心功能</a> •
+  <a href="#-功能演示">功能演示</a> •
+  <a href="#-快速开始">快速开始</a> •
+  <a href="#-支持项目">支持项目</a>
+</p>
+
+<p align="center">
+  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
 </p>
 
 ---
@@ -28,7 +35,7 @@
 
 |                                                        大纲 Outline                                                        |                                                     会话 Conversations                                                     |                                                       功能 Features                                                        |
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/4f0628cc-32f2-4b1a-97a3-0188013bd3c0" width="280" controls></video> |
+| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ 核心功能
 
@@ -87,7 +94,7 @@ pnpm build:userscript # 油猴脚本生产构建
 
 </details>
 
-### 问题反馈
+### 🐛问题反馈
 
 如有问题或建议，欢迎在 [GitHub Issues](https://github.com/urzeye/ophel/issues) 反馈。
 

@@ -1,4 +1,4 @@
-name: "📦 Build & Release Extension"
+name: "🚀 Build & Release Extension"
 
 on:
   push:
@@ -105,3 +105,20 @@ jobs:
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy README for Userscript
+        run: |
+          cp README*.md build/userscript/
+          mkdir -p build/userscript/docs/i18n
+          cp docs/i18n/README*.md build/userscript/docs/i18n/ 2>/dev/null || true
+
+      - name: Deploy Userscript to release branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/userscript
+          publish_branch: release
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_message: "Deploy userscript ${{ steps.get_version.outputs.VERSION }} [skip ci]"
+          force_orphan: true
