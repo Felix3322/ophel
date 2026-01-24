@@ -5,6 +5,15 @@
   "description": "为 Gemini/ChatGPT/Claude/Grok/AI Studio 等提供智能大纲、会话管理、提示词库、快捷键、完成通知、主题布局定制、阅读记录恢复、WebDAV 同步等增强功能，全提升您的交互体验！",
   "author": "urzeye",
   "license": "CC-BY-NC-SA-4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/urzeye/ophel.git"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -30,19 +39,18 @@
     "markdown-it-mark": "^4.0.0",
     "markdown-it-task-lists": "^2.1.1",
     "plasmo": "0.90.5",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-simple-code-editor": "^0.13.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@ianvs/prettier-plugin-sort-imports": "4.1.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
-    "@types/chrome": "0.0.258",
+    "@types/chrome": "^0.0.258",
     "@types/markdown-it": "^14.1.2",
-    "@types/node": "20.11.5",
-    "@types/react": "18.2.48",
-    "@types/react-dom": "18.2.18",
+    "@types/node": "^20.11.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^5.1.2",
     "prettier": "3.2.4",
     "terser": "^5.46.0",
