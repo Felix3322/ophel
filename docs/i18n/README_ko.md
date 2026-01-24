@@ -17,8 +17,9 @@
 </p>
 
 <p align="center">
-  <a href="#-핵심-기능">핵심 기능</a> •
   <a href="#-데모">데모</a> •
+  <a href="#-핵심-기능">핵심 기능</a> •
+  <a href="#%EF%B8%8F-기술-아키텍처">기술 아키텍처</a> •
   <a href="#-빠른-시작">빠른 시작</a> •
   <a href="#-프로젝트-후원">프로젝트 후원</a>
 </p>
@@ -49,9 +50,105 @@
 - 🎭 **Claude 향상** — 세션 키 관리, 다중 계정 전환
 - 🔒 **개인정보 보호 우선** — 로컬 저장소, WebDAV 동기화, 데이터 수집 없음
 
+## 🏗️ 기술 아키텍처
+
+**기술 스택**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
+
+<details>
+<summary>📐 아키텍처 다이어그램 (클릭하여 확장)</summary>
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#94a3b8', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0', 'background': '#ffffff'}}}%%
+flowchart TB
+    subgraph Platforms["🚀 듀얼 플랫폼 빌드"]
+        direction LR
+        EXT["🧩 브라우저 확장 프로그램<br/><small>Plasmo + Manifest V3</small>"]
+        US["🛢️ 유저스크립트<br/><small>Vite + vite-plugin-monkey</small>"]
+    end
+
+    subgraph Entry["📦 입구 레이어"]
+        direction LR
+        CE["Content Script<br/><small>ui-entry.tsx</small>"]
+        BG["Background<br/><small>background.ts</small>"]
+        OPT["Options Page<br/><small>tabs/options.tsx</small>"]
+        USE["Userscript Entry<br/><small>platform/userscript/entry.tsx</small>"]
+    end
+
+    subgraph Adapters["🔌 사이트 어댑터"]
+        direction LR
+        GEM["Gemini"]
+        GPT["ChatGPT"]
+        CLA["Claude"]
+        GRK["Grok"]
+        AIS["AI Studio"]
+        GEE["Gemini<br/>Enterprise"]
+    end
+
+    subgraph Core["⚙️ 코어 모듈"]
+        direction TB
+        TM["🎨 Theme Manager<br/><small>테마 전환 · View Transitions</small>"]
+        OM["📑 Outline Manager<br/><small>아웃라인 생성 · 네비게이션</small>"]
+        RH["📖 Reading History<br/><small>읽기 위치 복원</small>"]
+        ML["🔒 Model Lock<br/><small>모델 잠금</small>"]
+        NM["📡 Network Monitor<br/><small>요청 인터셉트 · 상태 감지</small>"]
+    end
+
+    subgraph State["💾 상태 관리"]
+        direction LR
+        ZS["Zustand Stores<br/><small>settings · prompts · conversations</small>"]
+        CS["Chrome Storage<br/><small>local · sync</small>"]
+        GM["GM_* Storage<br/><small>유저스크립트 API</small>"]
+    end
+
+    subgraph UI["🎯 UI 컴포넌트"]
+        direction TB
+        APP["App.tsx"]
+        MP["MainPanel<br/><small>사이드 패널</small>"]
+        SM["SettingsModal<br/><small>설정 다이얼로그</small>"]
+        TABS["Tabs<br/><small>아웃라인 · 대화 · 프롬프트</small>"]
+    end
+
+    subgraph CSS["🎨 스타일 시스템"]
+        direction LR
+        SD["Shadow DOM<br/><small>스타일 격리</small>"]
+        TV["CSS Variables<br/><small>테마 변수</small>"]
+        TH["Theme Presets<br/><small>20+ 프리셋 테마</small>"]
+    end
+
+    EXT --> CE & BG & OPT
+    US --> USE
+    CE --> Adapters
+    USE --> Adapters
+    Adapters --> Core
+    Core --> State
+    CE --> UI
+    USE --> UI
+    UI --> CSS
+    ZS <--> CS
+    ZS <-.-> GM
+
+    classDef platform fill:#818cf8,stroke:#6366f1,color:#fff
+    classDef entry fill:#34d399,stroke:#10b981,color:#fff
+    classDef adapter fill:#fbbf24,stroke:#f59e0b,color:#1f2937
+    classDef core fill:#60a5fa,stroke:#3b82f6,color:#fff
+    classDef state fill:#f472b6,stroke:#ec4899,color:#fff
+    classDef ui fill:#a78bfa,stroke:#8b5cf6,color:#fff
+    classDef css fill:#fb923c,stroke:#f97316,color:#fff
+
+    class EXT,US platform
+    class CE,BG,OPT,USE entry
+    class GEM,GPT,CLA,GRK,AIS,GEE adapter
+    class TM,OM,RH,ML,NM core
+    class ZS,CS,GM state
+    class APP,MP,SM,TABS ui
+    class SD,TV,TH css
+```
+
+</details>
+
 ## 🚀 빠른 시작
 
-> [!note]
+> [!tip]
 > **브라우저 확장 프로그램(Extension) 버전을 사용하는 것이 좋습니다.** 기능이 더 완벽하고 경험이 좋으며 호환성이 뛰어납니다. 유저스크립트(Tampermonkey) 버전은 기능이 제한적입니다(예: 쿠키 읽기 불가, 독립 팝업 없음 등).
 
 ### 앱 스토어

@@ -17,8 +17,9 @@
 </p>
 
 <p align="center">
-  <a href="#-características-principales">Características</a> •
   <a href="#-demo">Demo</a> •
+  <a href="#-características-principales">Características</a> •
+  <a href="#%EF%B8%8F-arquitectura-técnica">Arquitectura técnica</a> •
   <a href="#-inicio-rápido">Inicio rápido</a> •
   <a href="#-support">Apoyar el proyecto</a>
 </p>
@@ -49,9 +50,105 @@
 - 🎭 **Mejoras para Claude** — Gestión de Session Key, cambio de cuentas
 - 🔒 **Privacidad primero** — Almacenamiento local, sincronización WebDAV, sin recolección de datos
 
+## 🏗️ Arquitectura técnica
+
+**Stack tecnológico**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
+
+<details>
+<summary>📐 Diagrama de arquitectura (clic para expandir)</summary>
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#94a3b8', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0', 'background': '#ffffff'}}}%%
+flowchart TB
+    subgraph Platforms["🚀 Construcción Dual Plataforma"]
+        direction LR
+        EXT["🧩 Extensión de navegador<br/><small>Plasmo + Manifest V3</small>"]
+        US["🛢️ Userscript<br/><small>Vite + vite-plugin-monkey</small>"]
+    end
+
+    subgraph Entry["📦 Capa de entrada"]
+        direction LR
+        CE["Content Script<br/><small>ui-entry.tsx</small>"]
+        BG["Background<br/><small>background.ts</small>"]
+        OPT["Options Page<br/><small>tabs/options.tsx</small>"]
+        USE["Userscript Entry<br/><small>platform/userscript/entry.tsx</small>"]
+    end
+
+    subgraph Adapters["🔌 Adaptadores de sitios"]
+        direction LR
+        GEM["Gemini"]
+        GPT["ChatGPT"]
+        CLA["Claude"]
+        GRK["Grok"]
+        AIS["AI Studio"]
+        GEE["Gemini<br/>Enterprise"]
+    end
+
+    subgraph Core["⚙️ Módulos centrales"]
+        direction TB
+        TM["🎨 Theme Manager<br/><small>Cambio de tema · View Transitions</small>"]
+        OM["📑 Outline Manager<br/><small>Generación de esquema · Navegación</small>"]
+        RH["📖 Reading History<br/><small>Restauración de posición</small>"]
+        ML["🔒 Model Lock<br/><small>Bloqueo de modelo</small>"]
+        NM["📡 Network Monitor<br/><small>Interceptación de solicitudes · Detección de estado</small>"]
+    end
+
+    subgraph State["💾 Gestión de estado"]
+        direction LR
+        ZS["Zustand Stores<br/><small>settings · prompts · conversations</small>"]
+        CS["Chrome Storage<br/><small>local · sync</small>"]
+        GM["GM_* Storage<br/><small>API Userscript</small>"]
+    end
+
+    subgraph UI["🎯 Componentes UI"]
+        direction TB
+        APP["App.tsx"]
+        MP["MainPanel<br/><small>Panel lateral</small>"]
+        SM["SettingsModal<br/><small>Diálogo de configuración</small>"]
+        TABS["Tabs<br/><small>Esquema · Conversaciones · Prompts</small>"]
+    end
+
+    subgraph CSS["🎨 Sistema de estilos"]
+        direction LR
+        SD["Shadow DOM<br/><small>Aislamiento de estilos</small>"]
+        TV["CSS Variables<br/><small>Variables de tema</small>"]
+        TH["Theme Presets<br/><small>20+ temas predefinidos</small>"]
+    end
+
+    EXT --> CE & BG & OPT
+    US --> USE
+    CE --> Adapters
+    USE --> Adapters
+    Adapters --> Core
+    Core --> State
+    CE --> UI
+    USE --> UI
+    UI --> CSS
+    ZS <--> CS
+    ZS <-.-> GM
+
+    classDef platform fill:#818cf8,stroke:#6366f1,color:#fff
+    classDef entry fill:#34d399,stroke:#10b981,color:#fff
+    classDef adapter fill:#fbbf24,stroke:#f59e0b,color:#1f2937
+    classDef core fill:#60a5fa,stroke:#3b82f6,color:#fff
+    classDef state fill:#f472b6,stroke:#ec4899,color:#fff
+    classDef ui fill:#a78bfa,stroke:#8b5cf6,color:#fff
+    classDef css fill:#fb923c,stroke:#f97316,color:#fff
+
+    class EXT,US platform
+    class CE,BG,OPT,USE entry
+    class GEM,GPT,CLA,GRK,AIS,GEE adapter
+    class TM,OM,RH,ML,NM core
+    class ZS,CS,GM state
+    class APP,MP,SM,TABS ui
+    class SD,TV,TH css
+```
+
+</details>
+
 ## 🚀 Inicio rápido
 
-> [!note]
+> [!tip]
 > **Se recomienda usar la versión de extensión de navegador.** Ofrece más funciones, mejor experiencia y mayor compatibilidad. La versión Userscript (Tampermonkey) tiene limitaciones (sin acceso a cookies, sin popups independientes, etc.).
 
 ### Tiendas de aplicaciones
