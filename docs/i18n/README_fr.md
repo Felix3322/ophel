@@ -149,6 +149,7 @@ flowchart TB
 ## 🚀 Démarrage rapide
 
 > [!tip]
+>
 > **Il est recommandé d'utiliser la version extension de navigateur.** Elle offre plus de fonctionnalités, une meilleure expérience et une meilleure compatibilité. La version Userscript (Tampermonkey) est limitée (par exemple, pas d'accès aux cookies, pas de popups indépendants).
 
 ### Magasins d'applications

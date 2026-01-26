@@ -149,6 +149,7 @@ flowchart TB
 ## 🚀 Schnellstart
 
 > [!tip]
+>
 > **Es wird empfohlen, die Browsererweiterung (Extension) zu verwenden.** Sie bietet mehr Funktionen, ein besseres Erlebnis und eine bessere Kompatibilität. Die Userscript-Version (Tampermonkey) ist in ihrer Funktionalität eingeschränkt (z. B. kein Zugriff auf Cookies, keine unabhängigen Popups).
 
 ### App Stores

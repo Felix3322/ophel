@@ -149,6 +149,7 @@ flowchart TB
 ## 🚀 Quick Start
 
 > [!tip]
+>
 > **We highly recommend using the Browser Extension version** for a more complete feature set, better experience, and higher compatibility. The Userscript version has limitations (e.g., cannot read cookies, no independent popup).
 
 ### Web Store
