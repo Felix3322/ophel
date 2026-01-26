@@ -44,7 +44,6 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
     "@types/chrome": "^0.0.258",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^20.19.0",

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { defineConfig } from "vitepress"
 
 // 中文配置

@@ -14,21 +14,10 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 ## Table of Contents
 
 - [Contributing to Ophel](#contributing-to-ophel)
- 	- [Table of Contents](#table-of-contents)
- 	- [I Have a Question](#i-have-a-question)
- 	- [I Want To Contribute](#i-want-to-contribute)
-  		- [Reporting Bugs](#reporting-bugs)
-   			- [Before Submitting a Bug Report](#before-submitting-a-bug-report)
-   			- [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
-  		- [Suggesting Enhancements](#suggesting-enhancements)
-   			- [Before Submitting an Enhancement](#before-submitting-an-enhancement)
-   			- [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
-  		- [Your First Code Contribution](#your-first-code-contribution)
-   			- [Setup](#setup)
-   			- [Development](#development)
-   			- [Verification](#verification)
- 	- [Styleguides](#styleguides)
-  		- [Commit Messages](#commit-messages)
+  - [Table of Contents](#table-of-contents)
+  - [I Have a Question](#i-have-a-question)
+  - [I Want To Contribute](#i-want-to-contribute) - [Reporting Bugs](#reporting-bugs) - [Before Submitting a Bug Report](#before-submitting-a-bug-report) - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report) - [Suggesting Enhancements](#suggesting-enhancements) - [Before Submitting an Enhancement](#before-submitting-an-enhancement) - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion) - [Your First Code Contribution](#your-first-code-contribution) - [Setup](#setup) - [Development](#development) - [Verification](#verification)
+  - [Styleguides](#styleguides) - [Commit Messages](#commit-messages)
 
 ## I Have a Question
 
@@ -71,7 +60,7 @@ We use GitHub issues to track bugs and errors. If you run into an issue with the
 
 - Open an [Issue](https://github.com/urzeye/ophel/issues/new). (Since we can't be sure at this point whether it is a bug or not, we ask you not to talk about a bug yet and not to label the issue.)
 - Explain the behavior you would expect and the actual behavior.
-- Please provide as much context as possible and describe the *reproduction steps* that someone else can follow to recreate the issue on their own. This usually includes your code. For good bug reports you should isolate the problem and create a reduced test case.
+- Please provide as much context as possible and describe the _reproduction steps_ that someone else can follow to recreate the issue on their own. This usually includes your code. For good bug reports you should isolate the problem and create a reduced test case.
 - Provide the information you collected in the previous section.
 
 Once it's filed:

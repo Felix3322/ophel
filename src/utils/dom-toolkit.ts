@@ -16,13 +16,13 @@ const CONFIG = {
   MAX_DEPTH: 15,
   DEFAULT_TIMEOUT: 5000,
   POLL_INTERVAL: 50,
-  CACHE_TTL: 300000
+  CACHE_TTL: 300000,
 }
 
 const NODE_TYPES = {
   ELEMENT: 1,
   DOCUMENT: 9,
-  FRAGMENT: 11
+  FRAGMENT: 11,
 }
 
 // ============================================================================
@@ -118,9 +118,9 @@ const Utils = {
       },
       get size() {
         return tasks.size
-      }
+      },
     }
-  }
+  },
 }
 
 // ============================================================================
@@ -210,9 +210,7 @@ class SharedObserverManager {
 
   getSharedObserver(rootNode: Node) {
     if (!this.observers.has(rootNode)) {
-      const callbacks = new Set<
-        (node: Node, mutation: MutationRecord) => void
-      >()
+      const callbacks = new Set<(node: Node, mutation: MutationRecord) => void>()
       const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
           for (const addedNode of mutation.addedNodes) {
@@ -234,7 +232,7 @@ class SharedObserverManager {
       this.observers.set(rootNode, {
         observer,
         callbacks,
-        refCount: 0
+        refCount: 0,
       })
     }
 
@@ -251,7 +249,7 @@ class SharedObserverManager {
           manager.observer.disconnect()
           this.observers.delete(rootNode)
         }
-      }
+      },
     }
   }
 
@@ -293,17 +291,14 @@ class DOMToolkitClass {
   /**
    * 同步查询 DOM 元素（支持 Shadow DOM 穿透）
    */
-  query(
-    selector: string | string[],
-    options: QueryOptions = {}
-  ): Element | Element[] | null {
+  query(selector: string | string[], options: QueryOptions = {}): Element | Element[] | null {
     const {
       parent = this.doc,
       all = false,
       shadow = true,
       maxDepth = CONFIG.MAX_DEPTH,
       useCache = true,
-      filter = null
+      filter = null,
     } = options
 
     const selectors = Array.isArray(selector) ? selector : [selector]
@@ -319,9 +314,7 @@ class DOMToolkitClass {
     for (const sel of selectors) {
       try {
         if (all) {
-          const candidates = Array.from(
-            (parent as ParentNode).querySelectorAll(sel)
-          )
+          const candidates = Array.from((parent as ParentNode).querySelectorAll(sel))
           const results = filter ? candidates.filter(filter) : [...candidates]
           if (shadow) {
             this.collectInShadow(parent, sel, results, 0, maxDepth, filter)
@@ -358,7 +351,7 @@ class DOMToolkitClass {
     selectors: string[],
     depth: number,
     maxDepth: number,
-    filter: ((el: Element) => boolean) | null
+    filter: ((el: Element) => boolean) | null,
   ): Element | null {
     if (depth > maxDepth) return null
 
@@ -380,13 +373,7 @@ class DOMToolkitClass {
       : []
     for (const el of elements) {
       if (el.shadowRoot) {
-        const found = this.findInShadow(
-          el.shadowRoot,
-          selectors,
-          depth + 1,
-          maxDepth,
-          filter
-        )
+        const found = this.findInShadow(el.shadowRoot, selectors, depth + 1, maxDepth, filter)
         if (found) return found
       }
     }
@@ -400,7 +387,7 @@ class DOMToolkitClass {
     results: Element[],
     depth: number,
     maxDepth: number,
-    filter: ((el: Element) => boolean) | null
+    filter: ((el: Element) => boolean) | null,
   ) {
     if (depth > maxDepth) return
 
@@ -420,14 +407,7 @@ class DOMToolkitClass {
       : []
     for (const el of elements) {
       if (el.shadowRoot) {
-        this.collectInShadow(
-          el.shadowRoot,
-          selector,
-          results,
-          depth + 1,
-          maxDepth,
-          filter
-        )
+        this.collectInShadow(el.shadowRoot, selector, results, depth + 1, maxDepth, filter)
       }
     }
   }
@@ -437,15 +417,12 @@ class DOMToolkitClass {
   /**
    * 异步获取元素（等待元素出现）
    */
-  async get(
-    selector: string | string[],
-    options: GetOptions = {}
-  ): Promise<Element | null> {
+  async get(selector: string | string[], options: GetOptions = {}): Promise<Element | null> {
     const {
       parent = this.doc,
       timeout = CONFIG.DEFAULT_TIMEOUT,
       shadow = true,
-      filter = null
+      filter = null,
     } = options
 
     // 先尝试同步查找
@@ -484,9 +461,7 @@ class DOMToolkitClass {
 
       // 使用 MutationObserver 加速检测
       const selectors = Array.isArray(selector) ? selector : [selector]
-      const observerHandle = this.observerManager.getSharedObserver(
-        parent as Node
-      )
+      const observerHandle = this.observerManager.getSharedObserver(parent as Node)
 
       const callback = (addedNode: Node) => {
         for (const sel of selectors) {
@@ -527,7 +502,7 @@ class DOMToolkitClass {
   each(
     selector: string,
     callback: (el: Element, isNew: boolean) => void | false,
-    options: EachOptions = {}
+    options: EachOptions = {},
   ): () => void {
     const { parent = this.doc, shadow = true } = options
 
@@ -557,14 +532,12 @@ class DOMToolkitClass {
     const existing = this.query(selector, {
       parent,
       all: true,
-      shadow
+      shadow,
     }) as Element[]
     existing.forEach((node) => processNode(node, false))
 
     // 监听新元素
-    const observerHandle = this.observerManager.getSharedObserver(
-      parent as Node
-    )
+    const observerHandle = this.observerManager.getSharedObserver(parent as Node)
 
     const observerCallback = (addedNode: Node) => {
       if (!active) return
@@ -601,7 +574,7 @@ class DOMToolkitClass {
   watch(
     element: Element,
     callback: (mutations: MutationRecord[], observer: MutationObserver) => void,
-    options: WatchOptions = {}
+    options: WatchOptions = {},
   ): () => void {
     const {
       debounce = 0,
@@ -609,7 +582,7 @@ class DOMToolkitClass {
       attributes = true,
       characterData = false,
       subtree = false,
-      attributeFilter
+      attributeFilter,
     } = options
 
     if (!Utils.isValidContext(element)) {
@@ -618,10 +591,7 @@ class DOMToolkitClass {
     }
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null
-    const handler = (
-      mutations: MutationRecord[],
-      observer: MutationObserver
-    ) => {
+    const handler = (mutations: MutationRecord[], observer: MutationObserver) => {
       if (debounce > 0) {
         if (timeoutId) clearTimeout(timeoutId)
         timeoutId = setTimeout(() => {
@@ -646,7 +616,7 @@ class DOMToolkitClass {
       attributes,
       characterData,
       subtree,
-      attributeFilter
+      attributeFilter,
     })
 
     return () => {
@@ -659,12 +629,7 @@ class DOMToolkitClass {
    * 共享监听多个子元素的变化
    */
   watchMultiple(container: Node, options: WatchMultipleOptions = {}) {
-    const {
-      debounce = 0,
-      characterData = true,
-      childList = true,
-      attributes = false
-    } = options
+    const { debounce = 0, characterData = true, childList = true, attributes = false } = options
 
     if (!Utils.isValidContext(container)) {
       console.error("[DOMToolkit] watchMultiple: invalid container")
@@ -715,18 +680,17 @@ class DOMToolkitClass {
       characterData,
       childList,
       attributes,
-      subtree: true
+      subtree: true,
     })
 
     return {
-      add: (element: Node, callback: (el: Node) => void) =>
-        targets.set(element, callback),
+      add: (element: Node, callback: (el: Node) => void) => targets.set(element, callback),
       remove: (element: Node) => targets.delete(element),
       stop: () => {
         if (timeoutId) clearTimeout(timeoutId)
         observer.disconnect()
         targets.clear()
-      }
+      },
     }
   }
 
@@ -739,15 +703,13 @@ class DOMToolkitClass {
     eventName: string,
     selector: string,
     callback: (event: Event, target: Element) => void,
-    options: EventOptions = {}
+    options: EventOptions = {},
   ): () => void {
     const { parent = this.doc, capture = false } = options
 
     const handler = (event: Event) => {
       // 使用 composedPath 处理 Shadow DOM 中的事件
-      const path = event.composedPath
-        ? event.composedPath()
-        : [event.target as Node]
+      const path = event.composedPath ? event.composedPath() : [event.target as Node]
 
       for (const target of path) {
         if (target === parent || target === window) break
@@ -779,11 +741,7 @@ class DOMToolkitClass {
   /**
    * 创建 DOM 元素
    */
-  create(
-    tag: string,
-    attributes: Record<string, any> = {},
-    textContent = ""
-  ): HTMLElement {
+  create(tag: string, attributes: Record<string, any> = {}, textContent = ""): HTMLElement {
     const element = this.doc.createElement(tag)
 
     for (const [key, value] of Object.entries(attributes)) {
@@ -812,7 +770,7 @@ class DOMToolkitClass {
    */
   createFromHTML(
     htmlString: string,
-    options: CreateOptions = {}
+    options: CreateOptions = {},
   ): Element | Record<string, Element> | null {
     const { parent = null, mapIds = false } = options
 
@@ -876,7 +834,7 @@ class DOMToolkitClass {
   cssToShadow(
     shadowRoot: ShadowRoot,
     cssText: string,
-    id: string | null = null
+    id: string | null = null,
   ): HTMLStyleElement | null {
     if (!shadowRoot) return null
 
@@ -908,7 +866,7 @@ class DOMToolkitClass {
   cssToAllShadows(
     cssText: string,
     id: string | null,
-    options: { root?: Node; filter?: (el: Element) => boolean } = {}
+    options: { root?: Node; filter?: (el: Element) => boolean } = {},
   ): number {
     const { root = this.doc.body, filter = null } = options
 
@@ -954,7 +912,7 @@ class DOMToolkitClass {
    */
   walkShadowRoots(
     callback: (shadowRoot: ShadowRoot, host: Element) => void,
-    options: { root?: Node; maxDepth?: number } = {}
+    options: { root?: Node; maxDepth?: number } = {},
   ) {
     const { root = this.doc.body, maxDepth = CONFIG.MAX_DEPTH } = options
 
@@ -1032,10 +990,7 @@ class DOMToolkitClass {
     if (fromShadow) return fromShadow
 
     // 3. 回退到 documentElement 或 body
-    if (
-      this.doc.documentElement.scrollHeight >
-      this.doc.documentElement.clientHeight
-    ) {
+    if (this.doc.documentElement.scrollHeight > this.doc.documentElement.clientHeight) {
       return this.doc.documentElement
     }
 

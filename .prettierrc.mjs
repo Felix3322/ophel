@@ -13,7 +13,6 @@ export default {
   bracketSpacing: true,
   bracketSameLine: true,
   proseWrap: "preserve",
-  plugins: ["@trivago/prettier-plugin-sort-imports"],
   overrides: [
     {
       files: "*.md",
@@ -21,17 +20,5 @@ export default {
         plugins: [],
       },
     },
-  ],
-  importOrder: [
-    "<BUILTIN_MODULES>", // Node.js built-in modules
-    "<THIRD_PARTY_MODULES>", // Imports not matched by other special words or groups.
-    "", // Empty line
-    "^@plasmo/(.*)$",
-    "",
-    "^@plasmohq/(.*)$",
-    "",
-    "^~(.*)$",
-    "",
-    "^[./]",
   ],
 }
