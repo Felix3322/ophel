@@ -1,0 +1,38 @@
+name: "🛡️ CI / Automated Audit"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  audit:
+    name: "Audit Code Quality"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🎨 Check Code Style (Prettier)
+        run: pnpm lint
+
+      - name: 📐 Type Check (TypeScript)
+        run: pnpm typecheck
+
+      - name: 🏗️ Verify Build
+        run: pnpm build

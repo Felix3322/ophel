@@ -16,6 +16,8 @@
   },
   "scripts": {
     "dev": "plasmo dev",
+    "lint": "prettier --check .",
+    "typecheck": "tsc --noEmit",
     "build": "plasmo build",
     "build:firefox": "plasmo build --target=firefox-mv3",
     "build:all": "plasmo build && plasmo build --target=firefox-mv3",
