@@ -1,0 +1,141 @@
+name: 🐛 Bug Report / Bug 反馈
+description: Report a bug to help us improve Ophel / 报告脚本中的问题或异常行为
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! / 感谢您花时间填写此 Bug 报告！
+        Please provide as much detail as possible. / 请尽可能详细地描述问题，这将帮助我们更快地定位和修复。
+
+  - type: dropdown
+    id: installation_type
+    attributes:
+      label: Installation Type / 安装方式
+      description: How did you install Ophel? / 您是如何安装 Ophel 的？
+      options:
+        - Browser Extension (浏览器扩展)
+        - Userscript (油猴脚本)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Ophel Version / 防止版本
+      description: Check in extension manager or script manager / 请在扩展管理或脚本管理器中查看
+      placeholder: e.g. v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ai_platform
+    attributes:
+      label: AI Platform / AI 平台
+      description: Which platform is having issues? / 出问题的平台是哪个？
+      options:
+        - Gemini (gemini.google.com)
+        - ChatGPT (chatgpt.com)
+        - Claude (claude.ai)
+        - Grok (grok.com)
+        - AI Studio (aistudio.google.com)
+        - DeepSeek (deepseek.com)
+        - All Platforms / 所有平台
+        - Other / 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser / 浏览器
+      options:
+        - Google Chrome
+        - Microsoft Edge
+        - Mozilla Firefox
+        - Safari
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser_version
+    attributes:
+      label: Browser Version / 浏览器版本
+      placeholder: e.g. 120.0.6099.130
+    validations:
+      required: false
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System / 操作系统
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Bug Description / 问题描述
+      description: A clear and concise description of what the bug is. / 请清晰、简洁地描述遇到的问题。
+      placeholder: Describe the bug... / 描述你遇到的 Bug 是什么...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce / 复现步骤
+      description: Steps to reproduce the behavior. / 请提供详细的复现步骤。
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs Actual Behavior / 预期与实际行为
+      description: What did you expect vs what happened? / 您期望发生什么 vs 实际发生了什么？
+      placeholder: |
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / 截图
+      description: Drop images here. / 拖拽或粘贴图片到这里。
+    validations:
+      required: false
+
+  - type: textarea
+    id: console_errors
+    attributes:
+      label: Console Errors / 控制台报错
+      description: Paste any errors from DevTools Console (F12). / 粘贴控制台(F12)中的红色报错信息。
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist / 检查清单
+      options:
+        - label: I have searched for existing issues / 我已搜索过现有 Issues
+          required: true
+        - label: I am using the latest version / 我使用的是最新版本
+          required: true

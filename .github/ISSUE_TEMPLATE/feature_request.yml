@@ -1,0 +1,79 @@
+name: ✨ Feature Request / 功能请求
+description: Suggest a new feature or improvement / 提出新功能或改进建议
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your suggestion! / 感谢您的建议！
+        Your feedback helps us make Ophel better. / 您的想法对项目发展非常重要。
+
+  - type: dropdown
+    id: installation_type
+    attributes:
+      label: Target Environment / 适用环境
+      options:
+        - All Environments (所有环境)
+        - Browser Extension (浏览器扩展)
+        - Userscript (油猴脚本)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ai_platform
+    attributes:
+      label: Target AI Platform / 适用 AI 平台
+      options:
+        - All Platforms (所有平台)
+        - Gemini
+        - ChatGPT
+        - Claude
+        - Grok
+        - AI Studio
+        - DeepSeek
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary / 功能简述
+      description: One sentence summary. / 一句话描述该功能。
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case / 问题背景或使用场景
+      description: What problem are you trying to solve? / 您希望解决什么问题或痛点？
+      placeholder: |
+        I'm always frustrated when... / 我在使用...功能时，经常遇到...的问题
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / 期望的解决方案
+      description: How should it work? / 请清晰地描述您希望实现的功能。
+      placeholder: |
+        I want to be able to... / 我希望能够...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered / 备选方案
+      description: Any other ways? / 您是否考虑过其他替代方案？
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context / 其他信息
+      description: Mockups, screenshots, or extra details. / 设计草图、截图或其他补充信息。
