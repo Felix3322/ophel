@@ -180,7 +180,7 @@ flowchart TB
 <details>
 <summary>展开查看构建步骤</summary>
 
-**环境要求**：Node.js >= 20.x, pnpm >= 10.x
+**环境要求**：Node.js >= 20.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git

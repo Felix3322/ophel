@@ -174,7 +174,7 @@ flowchart TB
 <details>
 <summary>點擊展開構建步驟</summary>
 
-**環境要求**：Node.js >= 20.x, pnpm >= 10.x
+**環境要求**：Node.js >= 20.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git
