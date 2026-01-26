@@ -30,9 +30,9 @@ function loadLocalizedMetadata(): {
   name: Record<string, string>
   description: Record<string, string>
 } {
-  const name: Record<string, string> = { "": "Ophel" } // Default fallback
+  const name: Record<string, string> = { "": "Ophel - AI Chat Page Enhancer" } // Default fallback
   const description: Record<string, string> = {
-    "": "AI conversation enhancement tool for Gemini/ChatGPT/Claude/Grok/AI Studio",
+    "": "Ophel is an AI chat page enhancer that supports Gemini, ChatGPT, Claude, Grok, and AI Studio. Features: Smart Outline, Conversation Manager (Folders, Tags, Search), Prompt Library (Variables, Markdown), Theme Customization (20+ themes), UI Optimization (Widescreen, Layout Control), Reading Experience (Scroll Lock, History Restore), Productivity (Shortcuts, Model Lock, Tab Auto-rename), and Privacy First (Local Storage, WebDAV Sync).",
   }
 
   const localesDir = path.resolve(__dirname, "locales")
