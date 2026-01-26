@@ -1,5 +1,6 @@
 {
 	// TypeScript：使用项目本地版本
+	"files.eol": "\n",
 	"typescript.tsdk": "node_modules/typescript/lib",
 	// 格式化：保存时自动格式化
 	"editor.formatOnSave": true,
