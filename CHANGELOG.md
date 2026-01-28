@@ -15,7 +15,7 @@
 
 ### 🐛 问题修复
 
-## [1.0.2] - 2026-01-29
+## [1.0.3] - 2026-01-29
 
 ### 🚀 新增功能
 
@@ -127,6 +127,6 @@
 
 ---
 
-[1.0.2]: https://github.com/urzeye/ophel/releases/tag/v1.0.2
+[1.0.3]: https://github.com/urzeye/ophel/releases/tag/v1.0.3
 [1.0.1]: https://github.com/urzeye/ophel/releases/tag/v1.0.1
 [1.0.0]: https://github.com/urzeye/ophel/releases/tag/v1.0.0
