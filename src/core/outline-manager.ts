@@ -1,6 +1,8 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
-import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
+import { useBookmarkStore } from "~stores/bookmarks-store"
+import { showToast } from "~utils/toast"
+import { t } from "~utils/i18n"
 
 export interface OutlineNode extends OutlineItem {
   children: OutlineNode[]
@@ -67,6 +69,9 @@ export class OutlineManager {
   // Tab 激活状态（只有激活时才监听）
   private isActive: boolean = false
 
+  // Bookmark store subscription
+  private unsubscribeBookmarks: (() => void) | null = null
+
   // 设置变更回调
   private onExpandLevelChange?: (level: number) => void
   private onShowUserQueriesChange?: (show: boolean) => void
@@ -87,6 +92,14 @@ export class OutlineManager {
 
     // Listen to monitor messages
     window.addEventListener("message", this.handleMessage.bind(this))
+
+    // 订阅 bookmarks-store，当书签变化时刷新大纲
+    this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
+      // 只有在激活状态下才刷新，避免不必要的计算
+      if (this.isActive) {
+        this.refresh()
+      }
+    })
 
     // 不在构造函数中启动 auto-update，由 setActive 控制
   }
@@ -243,6 +256,22 @@ export class OutlineManager {
 
   getTree(): OutlineNode[] {
     return this.tree
+  }
+
+  /**
+   * 获取扁平化的大纲项列表
+   * 供 InlineBookmarkManager 使用
+   */
+  getFlatItems(): OutlineItem[] {
+    return this.flatItems
+  }
+
+  /**
+   * 获取大纲项的签名（用于书签标识）
+   * 供 InlineBookmarkManager 使用
+   */
+  getSignature(item: OutlineItem, index: number): string {
+    return this.generateSignature(item, index)
   }
 
   getSearchQuery() {
@@ -407,21 +436,18 @@ export class OutlineManager {
 
   // --- Bookmark Logic ---
 
-  private generateSignature(item: OutlineItem): string {
-    if (!item.element) return item.text
-    // Signature: Title + First 50 chars of next sibling text content
+  private generateSignature(item: OutlineItem, index: number): string {
     let context = ""
+
     try {
-      if (item.element.nextElementSibling) {
+      if (item.element?.nextElementSibling) {
         context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
-      } else if (item.element instanceof HTMLElement) {
-        // Fallback: try parent's next sibling if current is effectively a wrapper
-        // context = item.element.parentElement?.nextElementSibling?...
       }
     } catch (e) {
       // Ignore
     }
-    return `${item.text}::${context}`
+
+    return `${item.text}::${index}::${context}`
   }
 
   // Helper public method for UI
@@ -429,7 +455,7 @@ export class OutlineManager {
     const sessionId = this.siteAdapter.getSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
-    const signature = this.generateSignature(node)
+    const signature = this.generateSignature(node, node.index)
     // Use node.element.offsetTop if available, or current scroll position?
     // Best is element.offsetTop usually.
     let scrollTop = 0
@@ -479,8 +505,8 @@ export class OutlineManager {
 
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
 
-      outlineData.forEach((item) => {
-        const signature = this.generateSignature(item)
+      outlineData.forEach((item, idx) => {
+        const signature = this.generateSignature(item, idx)
         // Find matching bookmark
         const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
 
@@ -496,11 +522,15 @@ export class OutlineManager {
       unmatchedBookmarkIds.forEach((bid) => {
         const bookmark = bookmarks.find((b) => b.id === bid)
         if (bookmark) {
+          // 过滤：如果是 0 级节点（用户提问）且不展示用户提问，跳过
+          if (bookmark.level === 0 && !this.settings.showUserQueries) {
+            return
+          }
           ghosts.push({
             level: bookmark.level,
             text: bookmark.title,
             element: null, // Ghost nodes have no element
-            isUserQuery: false, // Assume false for now, or store type in bookmark
+            isUserQuery: bookmark.level === 0, // 0 级节点即用户提问
             // Custom props
             isBookmarked: true,
             isGhost: true,
@@ -555,6 +585,8 @@ export class OutlineManager {
     if (this.treeKey !== outlineKey || this.tree.length === 0 || overrideLevel !== undefined) {
       this.tree = this.buildTree(outlineData, this.minLevel)
       this.treeKey = outlineKey
+      // 保存扁平化数据供 InlineBookmarkManager 使用
+      this.flatItems = outlineData
     } else {
       return
     }
@@ -724,6 +756,12 @@ export class OutlineManager {
 
   // 设置展开层级 (Legacy: setLevel 完全复刻)
   setLevel(level: number) {
+    // 收藏模式下禁用层级调整
+    if (this.bookmarkMode) {
+      showToast(t("bookmarkModeDisableLevel"))
+      return
+    }
+
     this.expandLevel = level
 
     // Legacy: clearForceExpandedState 已经正确设置了 collapsed 状态

@@ -11,6 +11,7 @@ import { SHORTCUT_ACTIONS, type ShortcutActionId } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import { getShortcutManager } from "~core/shortcut-manager"
+import { anchorStore } from "~stores/anchor-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import {
@@ -95,21 +96,13 @@ export function useShortcuts({
 }: UseShortcutsOptions) {
   const shortcutManager = useMemo(() => getShortcutManager(), [])
 
-  // 锚点状态（用于返回锚点功能）
-  const anchorPositionRef = useRef<number | null>(null)
-
   // 去顶部
   const scrollToTop = useCallback(async () => {
     if (!adapter) return
 
-    // 保存锚点
+    // 保存锚点到全局存储
     const scrollInfo = await getScrollInfo(adapter)
-    anchorPositionRef.current = scrollInfo.scrollTop
-
-    // 通知 MainPanel 更新锚点状态
-    window.dispatchEvent(
-      new CustomEvent("ophel:anchorSet", { detail: { position: scrollInfo.scrollTop } }),
-    )
+    anchorStore.set(scrollInfo.scrollTop)
 
     await loadHistoryUntil({
       adapter,
@@ -125,23 +118,20 @@ export function useShortcuts({
   const scrollToBottom = useCallback(async () => {
     if (!adapter) return
 
-    // 保存锚点
+    // 保存锚点到全局存储
     const scrollInfo = await getScrollInfo(adapter)
-    anchorPositionRef.current = scrollInfo.scrollTop
-
-    // 通知 MainPanel 更新锚点状态
-    window.dispatchEvent(
-      new CustomEvent("ophel:anchorSet", { detail: { position: scrollInfo.scrollTop } }),
-    )
+    anchorStore.set(scrollInfo.scrollTop)
 
     await smartScrollToBottom(adapter)
+
     showToast(t("scrolledToBottom") || "已滚动到底部")
   }, [adapter])
 
   // 返回锚点
   const goToAnchor = useCallback(async () => {
     if (!adapter) return
-    if (anchorPositionRef.current === null) {
+    const savedAnchor = anchorStore.get()
+    if (savedAnchor === null) {
       showToast(t("noAnchor") || "无可用锚点")
       return
     }
@@ -151,10 +141,10 @@ export function useShortcuts({
     const currentPos = scrollInfo.scrollTop
 
     // 跳转到锚点
-    await smartScrollTo(adapter, anchorPositionRef.current)
+    await smartScrollTo(adapter, savedAnchor)
 
     // 交换位置（双向跳转）
-    anchorPositionRef.current = currentPos
+    anchorStore.set(currentPos)
   }, [adapter])
 
   // 刷新大纲
@@ -188,7 +178,20 @@ export function useShortcuts({
     outlineManager?.toggleGroupMode()
   }, [outlineManager])
 
+  // 切换显示用户收藏
+  const toggleBookmarks = useCallback(() => {
+    outlineManager?.toggleBookmarkMode()
+  }, [outlineManager])
+
+  // 只显示用户问题
+  const onlyUserQueries = useCallback(() => {
+    outlineManager?.setShowUserQueries(true)
+    outlineManager?.setLevel(0)
+  }, [outlineManager])
+
   // 上一个/下一个标题
+  // 追踪上次导航的目标索引，避免重复依赖视口判定
+  const lastNavigatedIndexRef = useRef<number | null>(null)
   const navigateHeading = useCallback(
     (direction: "prev" | "next") => {
       if (!outlineManager) return
@@ -212,18 +215,52 @@ export function useShortcuts({
       const flatItems = flattenTree(tree)
       if (flatItems.length === 0) return
 
-      // 尝试找到当前可见项的索引
+      // 确定当前起始位置：
+      // 1. 优先使用上次导航的目标（如果它还在视口附近）
+      // 2. 如果上次目标不存在或离视口太远，从视口判断
       let currentFlatIndex = -1
-      const scrollContainer = outlineManager.getScrollContainer()
 
-      if (scrollContainer) {
-        const rect = scrollContainer.getBoundingClientRect()
-        // 使用 OutlineManager 的逻辑查找当前可见项
-        const visibleItemIndex = outlineManager.findVisibleItemIndex(rect.top, rect.bottom)
+      // 尝试使用上次导航的目标
+      if (lastNavigatedIndexRef.current !== null) {
+        const idx = flatItems.findIndex((item) => item.index === lastNavigatedIndexRef.current)
+        if (idx !== -1) {
+          // 检查该项的元素是否在视口附近（±2屏以内）
+          const targetItem = flatItems[idx]
+          let element = targetItem.element
+          if (!element || !element.isConnected) {
+            // 尝试重新查找元素
+            if (targetItem.isUserQuery && targetItem.level === 0) {
+              element = outlineManager.findUserQueryElement(
+                targetItem.queryIndex!,
+                targetItem.text,
+              ) as HTMLElement
+            } else {
+              element = outlineManager.findElementByHeading(
+                targetItem.level,
+                targetItem.text,
+              ) as HTMLElement
+            }
+          }
+          if (element && element.isConnected) {
+            const rect = element.getBoundingClientRect()
+            const viewportHeight = window.innerHeight
+            // 如果距离视口中心超过 2 屏，认为用户手动滚动了
+            if (Math.abs(rect.top - viewportHeight / 2) < viewportHeight * 2) {
+              currentFlatIndex = idx
+            }
+          }
+        }
+      }
 
-        if (visibleItemIndex !== null) {
-          // 在扁平列表中找到对应项
-          currentFlatIndex = flatItems.findIndex((item) => item.index === visibleItemIndex)
+      // 回退到视口判断
+      if (currentFlatIndex === -1) {
+        const scrollContainer = outlineManager.getScrollContainer()
+        if (scrollContainer) {
+          const rect = scrollContainer.getBoundingClientRect()
+          const visibleItemIndex = outlineManager.findVisibleItemIndex(rect.top, rect.bottom)
+          if (visibleItemIndex !== null) {
+            currentFlatIndex = flatItems.findIndex((item) => item.index === visibleItemIndex)
+          }
         }
       }
 
@@ -242,6 +279,9 @@ export function useShortcuts({
 
       const targetItem = flatItems[targetFlatIndex]
       if (targetItem) {
+        // 更新追踪的索引
+        lastNavigatedIndexRef.current = targetItem.index
+
         // 1. 在大纲中揭示并高亮
         outlineManager.revealNode(targetItem.index)
 
@@ -650,7 +690,12 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.EXPAND_LEVEL_1]: () => expandToLevel(1),
       [SHORTCUT_ACTIONS.EXPAND_LEVEL_2]: () => expandToLevel(2),
       [SHORTCUT_ACTIONS.EXPAND_LEVEL_3]: () => expandToLevel(3),
+      [SHORTCUT_ACTIONS.EXPAND_LEVEL_4]: () => expandToLevel(4),
+      [SHORTCUT_ACTIONS.EXPAND_LEVEL_5]: () => expandToLevel(5),
+      [SHORTCUT_ACTIONS.EXPAND_LEVEL_6]: () => expandToLevel(6),
       [SHORTCUT_ACTIONS.TOGGLE_USER_QUERIES]: toggleUserQueries,
+      [SHORTCUT_ACTIONS.TOGGLE_BOOKMARKS]: toggleBookmarks,
+      [SHORTCUT_ACTIONS.ONLY_USER_QUERIES]: onlyUserQueries,
       [SHORTCUT_ACTIONS.PREV_HEADING]: prevHeading,
       [SHORTCUT_ACTIONS.NEXT_HEADING]: nextHeading,
       [SHORTCUT_ACTIONS.LOCATE_OUTLINE]: locateOutline,
@@ -699,6 +744,8 @@ export function useShortcuts({
     toggleOutlineExpand,
     expandToLevel,
     toggleUserQueries,
+    toggleBookmarks,
+    onlyUserQueries,
     prevHeading,
     nextHeading,
     locateOutline,

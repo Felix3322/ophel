@@ -76,9 +76,8 @@ const OutlineNodeView: React.FC<{
   let shouldShow: boolean
 
   if (bookmarkMode) {
-    // 收藏模式逻辑
+    // shouldShow 计算：收藏模式下统一使用 !parentCollapsed
     if (isBookmarkRelevant) {
-      // shouldShow 计算：收藏模式下统一使用 !parentCollapsed
       // 叠加搜索过滤：如果有搜索词，必须匹配搜索
       const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
       shouldShow = !parentCollapsed && isSearchMatch
@@ -264,24 +263,26 @@ const OutlineNodeView: React.FC<{
           </span>
 
           {/* Bookmark Button (Hover or Bookmarked) */}
-          <Tooltip
-            content={
-              node.isBookmarked
-                ? t("removeBookmark") || "Remove Bookmark"
-                : t("addBookmark") || "Add Bookmark"
-            }>
-            <span
-              className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
-              onClick={(e) => onToggleBookmark(e, node)}
-              onMouseEnter={() => setIsHoveringAction(true)}
-              onMouseLeave={() => setIsHoveringAction(false)}>
-              <StarIcon
-                size={14}
-                filled={node.isBookmarked}
-                color={node.isBookmarked ? "#f59e0b" : "currentColor"}
-              />
-            </span>
-          </Tooltip>
+          <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
+            <Tooltip
+              content={
+                node.isBookmarked
+                  ? t("removeBookmark") || "Remove Bookmark"
+                  : t("addBookmark") || "Add Bookmark"
+              }>
+              <span
+                className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+                onClick={(e) => onToggleBookmark(e, node)}
+                onMouseEnter={() => setIsHoveringAction(true)}
+                onMouseLeave={() => setIsHoveringAction(false)}>
+                <StarIcon
+                  size={14}
+                  filled={node.isBookmarked}
+                  color={node.isBookmarked ? "#f59e0b" : "currentColor"}
+                />
+              </span>
+            </Tooltip>
+          </span>
 
           {/* 复制按钮 (所有节点显示) */}
           {true && (
@@ -1144,7 +1145,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       {/* 大纲树 */}
       <div
         ref={listRef}
-        className="gh-outline-tree-container"
+        className={`gh-outline-tree-container gh-panel-bookmark-mode-${settings?.features?.outline?.panelBookmarkMode || "always"}`}
         style={{
           flex: 1,
           overflowY: "auto",

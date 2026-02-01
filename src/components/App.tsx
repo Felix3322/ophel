@@ -9,6 +9,7 @@ import React, {
 
 import { getAdapter } from "~adapters/index"
 import { ConversationManager } from "~core/conversation-manager"
+import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager } from "~core/outline-manager"
 import { PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
@@ -317,6 +318,18 @@ export const App = () => {
       }
     }
   }, [promptManager, conversationManager, outlineManager])
+
+  // 初始化页面内收藏图标
+  useEffect(() => {
+    if (!outlineManager || !adapter || !settings) return
+
+    const mode = settings.features?.outline?.inlineBookmarkMode || "always"
+    const inlineBookmarkManager = new InlineBookmarkManager(outlineManager, adapter, mode)
+
+    return () => {
+      inlineBookmarkManager.cleanup()
+    }
+  }, [outlineManager, adapter, settings?.features?.outline?.inlineBookmarkMode])
 
   // 滚动锁定切换
   const handleToggleScrollLock = useCallback(() => {
