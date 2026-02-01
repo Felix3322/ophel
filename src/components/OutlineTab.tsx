@@ -6,12 +6,14 @@ import {
   LocateIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
+  StarIcon,
 } from "~components/icons"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
-import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 interface OutlineTabProps {
   manager: OutlineManager
@@ -19,12 +21,13 @@ interface OutlineTabProps {
 }
 
 // 递归渲染大纲树节点
-// 关键差异: 使用 outline-hidden 类而非条件渲染
+// 使用 outline-hidden 类而非条件渲染
 const OutlineNodeView: React.FC<{
   node: OutlineNode
   onToggle: (node: OutlineNode) => void
   onClick: (node: OutlineNode) => void
   onCopy: (e: React.MouseEvent, node: OutlineNode) => void
+  onToggleBookmark: (e: React.MouseEvent, node: OutlineNode) => void
   activeIndex: number | null
   searchQuery: string
   displayLevel: number
@@ -33,11 +36,14 @@ const OutlineNodeView: React.FC<{
   parentForceExpanded: boolean
   searchLevelManual: boolean
   extractUserQueryText?: (element: Element) => string // 用于提取完整文本
+  bookmarkMode?: boolean // 收藏过滤模式
+  ancestorHasBookmark?: boolean // 祖先节点中是否有收藏（用于收藏模式下显示子内容）
 }> = ({
   node,
   onToggle,
   onClick,
   onCopy,
+  onToggleBookmark,
   activeIndex,
   searchQuery,
   displayLevel,
@@ -46,6 +52,8 @@ const OutlineNodeView: React.FC<{
   parentForceExpanded,
   searchLevelManual,
   extractUserQueryText,
+  bookmarkMode = false,
+  ancestorHasBookmark = false,
 }) => {
   const isActive = node.index === activeIndex
   const hasChildren = node.children && node.children.length > 0
@@ -53,36 +61,62 @@ const OutlineNodeView: React.FC<{
   // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
   const isExpanded = hasChildren && !node.collapsed
 
-  // ===== Legacy shouldShow calculation =====
-  const isRootNode = node.relativeLevel === minRelativeLevel
-  const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
+  // ===== 收藏模式：计算节点是否与收藏相关 =====
+  // 核心逻辑：区分“路径收藏”（用于导航到深层收藏）和“叶子收藏”（用户可能想看上下文）
+  const hasBookmarkDescendant = (n: OutlineNode): boolean => {
+    if (n.isBookmarked) return true
+    return n.children?.some(hasBookmarkDescendant) || false
+  }
+  const nodeHasBookmark = node.isBookmarked || hasBookmarkDescendant(node)
+  // 收藏相关性：节点本身是收藏 OR 有收藏后代 OR 祖先是收藏（显示上下文）
+  const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
 
+  // ===== shouldShow 计算 =====
   let shouldShow: boolean
-  if (isRootNode) {
-    // 顶层节点
-    if (searchQuery) {
-      shouldShow = node.isMatch || node.hasMatchedDescendant
+
+  if (bookmarkMode) {
+    // 收藏模式逻辑
+    if (isBookmarkRelevant) {
+      // shouldShow 计算：收藏模式下统一使用 !parentCollapsed
+      // 叠加搜索过滤：如果有搜索词，必须匹配搜索
+      const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
+      shouldShow = !parentCollapsed && isSearchMatch
     } else {
-      shouldShow = true
+      shouldShow = false
     }
   } else {
-    // 非顶层节点
-    const isRelevant =
-      !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
+    // 普通模式：原有逻辑
+    const isRootNode = node.relativeLevel === minRelativeLevel
+    const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
 
-    if (searchQuery && !searchLevelManual) {
-      // 纯搜索模式
-      shouldShow = isRelevant && !parentCollapsed
-    } else if (searchQuery && searchLevelManual) {
-      // 搜索+层级限制
-      shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
+    if (isRootNode) {
+      // 顶层节点
+      if (searchQuery) {
+        shouldShow = node.isMatch || node.hasMatchedDescendant
+      } else {
+        shouldShow = true
+      }
     } else {
-      // 普通模式
-      shouldShow = isLevelAllowed && !parentCollapsed
+      // 非顶层节点
+      const isRelevant =
+        !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
+
+      if (searchQuery && !searchLevelManual) {
+        // 纯搜索模式
+        shouldShow = isRelevant && !parentCollapsed
+      } else if (searchQuery && searchLevelManual) {
+        // 搜索+层级限制
+        shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
+      } else {
+        // 普通模式
+        shouldShow = isLevelAllowed && !parentCollapsed
+      }
+    }
+    // 父级折叠则隐藏
+    if (parentCollapsed) {
+      shouldShow = false
     }
   }
-  // 父级折叠则隐藏
-  if (parentCollapsed) shouldShow = false
 
   // 强制可见覆盖：定位时标记的节点始终显示
   if (node.forceVisible) {
@@ -94,6 +128,7 @@ const OutlineNodeView: React.FC<{
     "outline-item",
     `outline-level-${node.relativeLevel}`,
     node.isUserQuery ? "user-query-node" : "",
+    node.isGhost ? "ghost-node" : "", // Add ghost styling class
     isActive ? "sync-highlight" : "",
     !shouldShow ? "outline-hidden" : "",
   ]
@@ -141,12 +176,19 @@ const OutlineNodeView: React.FC<{
     e.stopPropagation()
     e.preventDefault()
 
-    // 智能获取文本：短文本直接用缓存，长文本（被截断）从 DOM 重新提取
+    // 智能获取文本
     let textToCopy = node.text
-    if (node.isTruncated && node.element && node.element.isConnected && extractUserQueryText) {
-      const fullText = extractUserQueryText(node.element)
-      if (fullText) {
-        textToCopy = fullText
+
+    // 尝试从 DOM 获取完整文本
+    if (node.element && node.element.isConnected) {
+      if (node.isUserQuery && extractUserQueryText) {
+        // 用户提问：使用专门提取逻辑 (处理 <br> 等)
+        const fullText = extractUserQueryText(node.element)
+        if (fullText) textToCopy = fullText
+      } else {
+        // 普通标题：直接取 textContent
+        const fullText = node.element.textContent
+        if (fullText) textToCopy = fullText.trim()
       }
     }
 
@@ -208,10 +250,28 @@ const OutlineNodeView: React.FC<{
         )}
 
         {/* 文字 (带搜索高亮) */}
-        <span className="outline-item-text">{renderTextWithHighlight()}</span>
+        <span className={`outline-item-text ${node.isGhost ? "ghost-text" : ""}`}>
+          {renderTextWithHighlight()}
+        </span>
 
-        {/* 复制按钮 (用户提问显示) */}
-        {node.isUserQuery && (
+        {/* Bookmark Button (Hover or Bookmarked) */}
+        <span
+          className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+          onClick={(e) => onToggleBookmark(e, node)}
+          title={
+            node.isBookmarked
+              ? t("removeBookmark") || "Remove Bookmark"
+              : t("addBookmark") || "Add Bookmark"
+          }>
+          <StarIcon
+            size={14}
+            filled={node.isBookmarked}
+            color={node.isBookmarked ? "#f59e0b" : "currentColor"}
+          />
+        </span>
+
+        {/* 复制按钮 (所有节点显示) */}
+        {true && (
           <span className="outline-item-copy-btn" onClick={handleCopy} title={t("copy") || "复制"}>
             {copySuccess ? (
               // 成功对号图标
@@ -250,6 +310,7 @@ const OutlineNodeView: React.FC<{
             onToggle={onToggle}
             onClick={onClick}
             onCopy={onCopy}
+            onToggleBookmark={onToggleBookmark}
             activeIndex={activeIndex}
             searchQuery={searchQuery}
             displayLevel={displayLevel}
@@ -258,6 +319,11 @@ const OutlineNodeView: React.FC<{
             parentForceExpanded={childParentForceExpanded}
             searchLevelManual={searchLevelManual}
             extractUserQueryText={extractUserQueryText}
+            bookmarkMode={bookmarkMode}
+            ancestorHasBookmark={
+              ancestorHasBookmark ||
+              (node.isBookmarked && !node.children?.some(hasBookmarkDescendant))
+            }
           />
         ))}
     </>
@@ -284,6 +350,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const [minRelativeLevel, setMinRelativeLevel] = useState(initialState.minRelativeLevel)
   const [searchLevelManual, setSearchLevelManual] = useState(initialState.searchLevelManual)
   const [matchCount, setMatchCount] = useState(initialState.matchCount)
+  const [bookmarkMode, setBookmarkMode] = useState(initialState.bookmarkMode)
+
+  const { bookmarks } = useBookmarkStore()
 
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -372,6 +441,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       setMinRelativeLevel(state.minRelativeLevel)
       setSearchLevelManual(state.searchLevelManual)
       setMatchCount(state.matchCount)
+      setBookmarkMode(state.bookmarkMode)
 
       // 更新 ref 以供下次比较（现在是总节点数）
       prevTreeLengthRef.current = newTotalNodes
@@ -566,8 +636,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         // 高亮效果
         targetElement.classList.add("outline-highlight")
         setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
+      } else if (node.isGhost && node.scrollTop !== undefined) {
+        // Ghost 节点（收藏对应内容不存在）：使用保存的 scrollTop 回退
+        const scrollContainer = manager.getScrollContainer()
+        if (scrollContainer) {
+          scrollContainer.scrollTo({ top: node.scrollTop, behavior: "smooth" })
+          showToast(t("bookmarkContentMissing") || "收藏内容不存在，已跳转到保存位置", 3000)
+        }
       } else {
-        console.warn("[OutlineTab] Element lost and not found:", node.text)
+        showToast(t("bookmarkContentMissing") || "收藏内容已被删除或折叠", 2000)
       }
     },
     [manager, onJumpBefore],
@@ -603,6 +680,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       manager.expandAll()
     }
   }, [manager, isAllExpanded])
+
+  const handleToggleBookmark = useCallback(
+    (e: React.MouseEvent, node: OutlineNode) => {
+      e.stopPropagation()
+      manager.toggleBookmark(node)
+    },
+    [manager],
+  )
+
+  const handleToggleBookmarkMode = useCallback(() => {
+    manager.toggleBookmarkMode()
+  }, [manager])
 
   const handleGroupModeToggle = useCallback(() => {
     manager.toggleGroupMode()
@@ -767,14 +856,29 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   ? t("outlineOnlyUserQueries") || "仅显示提问"
                   : t("outlineShowUserQueries") || "显示所有"
               }
-              className={`outline-toolbar-btn ${showUserQueries ? "active" : ""}`}>
+              className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
               🙋
+            </button>
+
+            {/* Bookmark Mode Toggle */}
+            <button
+              onClick={handleToggleBookmarkMode}
+              title={t("bookmarkMode") || "收藏"}
+              className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
+              <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
             </button>
 
             {/* Expand/Collapse */}
             <button
-              onClick={handleExpandAll}
-              title={isAllExpanded ? t("outlineCollapseAll") : t("outlineExpandAll")}
+              onClick={bookmarkMode ? undefined : handleExpandAll}
+              title={
+                bookmarkMode
+                  ? t("bookmarkModeDisabled") || "收藏模式下不可用"
+                  : isAllExpanded
+                    ? t("outlineCollapseAll")
+                    : t("outlineExpandAll")
+              }
+              disabled={bookmarkMode}
               style={{
                 width: "26px",
                 height: "26px",
@@ -782,8 +886,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 border: "1px solid var(--gh-input-border, #d1d5db)",
                 borderRadius: "4px",
                 backgroundColor: "var(--gh-bg, #fff)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
+                color: bookmarkMode
+                  ? "var(--gh-text-disabled, #9ca3af)"
+                  : "var(--gh-text, #374151)",
+                cursor: bookmarkMode ? "not-allowed" : "pointer",
+                opacity: bookmarkMode ? 0.5 : 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -894,6 +1001,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
 
         {/* Row 2: Level Slider */}
         <div className="outline-level-slider-container" style={{ padding: "0 4px" }}>
+          {/* Level Dots */}
           <div
             className="outline-level-dots"
             style={{
@@ -925,7 +1033,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 top: "50%",
                 left: "4px",
                 height: "4px",
-                background: "var(--gh-primary, #3b82f6)",
+                background: bookmarkMode
+                  ? "var(--gh-text-disabled, #9ca3af)"
+                  : "var(--gh-primary, #3b82f6)",
                 zIndex: 0,
                 transform: "translateY(-50%)",
                 borderRadius: "2px",
@@ -937,7 +1047,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
             {[0, 1, 2, 3, 4, 5, 6].map((lvl) => {
               // Tooltip Text
               let title = ""
-              if (lvl === 0) {
+              if (bookmarkMode) {
+                title = t("bookmarkModeDisabled") || "收藏模式下不可用"
+              } else if (lvl === 0) {
                 title = showUserQueries
                   ? t("outlineOnlyUserQueries") || "仅显示提问"
                   : t("outlineCollapseAll") || "折叠全部"
@@ -949,24 +1061,31 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               return (
                 <div
                   key={lvl}
-                  className={`outline-level-dot ${isActive ? "active" : ""}`}
+                  className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
                   data-level={lvl}
-                  onClick={() => handleLevelClick(lvl)}
+                  onClick={bookmarkMode ? undefined : () => handleLevelClick(lvl)}
                   title={title}
                   style={{
                     width: "14px",
                     height: "14px",
                     borderRadius: "50%",
                     backgroundColor: isActive
-                      ? "var(--gh-primary, #3b82f6)"
+                      ? bookmarkMode
+                        ? "var(--gh-text-disabled, #9ca3af)"
+                        : "var(--gh-primary, #3b82f6)"
                       : "var(--gh-slider-dot-bg, #d1d5db)",
                     border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
                     zIndex: 1,
-                    cursor: "pointer",
+                    cursor: bookmarkMode ? "not-allowed" : "pointer",
                     position: "relative",
                     transition: "all 0.2s ease",
                     boxSizing: "border-box",
-                    boxShadow: isActive ? "0 0 0 1px var(--gh-primary, #3b82f6)" : "none",
+                    boxShadow: isActive
+                      ? bookmarkMode
+                        ? "0 0 0 1px var(--gh-text-disabled, #9ca3af)"
+                        : "0 0 0 1px var(--gh-primary, #3b82f6)"
+                      : "none",
+                    opacity: bookmarkMode ? 0.5 : 1,
                   }}
                 />
               )
@@ -975,27 +1094,36 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         </div>
       </div>
 
+      {/* 搜索结果条 (Sticky) */}
+      {searchQuery && (
+        <div
+          className="outline-result-bar"
+          style={{
+            textAlign: "center",
+            padding: "6px 8px", //稍微增加横向padding
+            margin: "0 8px 0 8px", // 去除底部外边距，由下方容器 padding 控制
+            color: "var(--gh-border-active)",
+            fontSize: "13px",
+            background: matchCount > 0 ? "var(--gh-folder-bg-default)" : "transparent",
+            borderRadius: "4px",
+            border: matchCount === 0 ? "1px dashed var(--gh-border, #e5e7eb)" : "none",
+            flexShrink: 0, // 防止被压缩
+          }}>
+          {matchCount} {t("outlineSearchResult") || "个结果"}
+        </div>
+      )}
+
       {/* 大纲树 */}
       <div
         ref={listRef}
         className="gh-outline-tree-container"
-        style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: searchQuery ? "0 8px 8px 8px" : "8px", // 搜索时顶部 padding 为 0 (依赖 ResultBar 的视觉分隔或紧凑布局)
+        }}>
         {/* 搜索结果条 */}
-        {searchQuery && matchCount > 0 && (
-          <div
-            className="outline-result-bar"
-            style={{
-              textAlign: "center",
-              padding: "6px",
-              color: "var(--gh-border-active)",
-              fontSize: "13px",
-              background: "var(--gh-folder-bg-default)",
-              borderRadius: "4px",
-              marginBottom: "8px",
-            }}>
-            {matchCount} {t("outlineSearchResult") || "个结果"}
-          </div>
-        )}
+        {/* 搜索结果条 */}
 
         {tree.length === 0 ? (
           <div
@@ -1007,6 +1135,38 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
             }}>
             {t("outlineEmpty") || "暂无大纲内容"}
           </div>
+        ) : bookmarkMode && bookmarks.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              color: "var(--gh-text-tertiary, #9ca3af)",
+              marginTop: "40px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "8px",
+            }}>
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: "rgba(245, 158, 11, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#f59e0b",
+                marginBottom: "8px",
+              }}>
+              <StarIcon size={20} filled={true} color="#f59e0b" />
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--gh-text, #374151)" }}>
+              {t("outlineNoBookmarks") || "暂无收藏"}
+            </div>
+            <div style={{ fontSize: "12px", opacity: 0.7 }}>
+              {t("outlineAddBookmarkHint") || "点击条目右侧的星号添加收藏"}
+            </div>
+          </div>
         ) : (
           <div className="outline-list">
             {tree.map((node, idx) => (
@@ -1016,6 +1176,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 onToggle={handleToggle}
                 onClick={handleClick}
                 onCopy={handleCopy}
+                onToggleBookmark={handleToggleBookmark}
                 activeIndex={activeIndex}
                 searchQuery={searchQuery}
                 displayLevel={displayLevel}
@@ -1024,6 +1185,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 parentForceExpanded={false}
                 searchLevelManual={searchLevelManual}
                 extractUserQueryText={extractUserQueryText}
+                bookmarkMode={bookmarkMode}
+                ancestorHasBookmark={false}
               />
             ))}
           </div>
