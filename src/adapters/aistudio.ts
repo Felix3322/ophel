@@ -966,7 +966,7 @@ export class AIStudioAdapter extends SiteAdapter {
           return modelPath.replace(/^models\//, "")
         }
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 

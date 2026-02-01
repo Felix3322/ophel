@@ -240,7 +240,7 @@ export abstract class SiteAdapter {
    * @param targetMode 目标主题模式
    * @returns 是否成功切换
    */
-  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+  async toggleTheme(_targetMode: "light" | "dark"): Promise<boolean> {
     // 基类默认不处理，交给 ThemeManager 直接操作 DOM
     return false
   }
@@ -565,7 +565,7 @@ export abstract class SiteAdapter {
    * 子类可重写以处理特殊的 DOM 结构
    * @returns 是否成功替换
    */
-  replaceUserQueryContent(element: Element, html: string): boolean {
+  replaceUserQueryContent(_element: Element, _html: string): boolean {
     // 默认实现：不支持替换
     return false
   }
@@ -595,7 +595,7 @@ export abstract class SiteAdapter {
   }
 
   /** 从页面提取大纲 */
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(_maxLevel = 6, _includeUserQueries = false): OutlineItem[] {
     return []
   }
 
@@ -718,7 +718,7 @@ export abstract class SiteAdapter {
   }
 
   /** 获取模型锁定配置 */
-  getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
+  getModelSwitcherConfig(_keyword: string): ModelSwitcherConfig | null {
     return null
   }
 
@@ -827,7 +827,7 @@ export abstract class SiteAdapter {
     subMenuSelector: string | undefined,
     onSuccess?: () => void,
   ): void {
-    const normalize = (str: string) => (str || "").toLowerCase().trim()
+    const _normalize = (str: string) => (str || "").toLowerCase().trim()
 
     // 打开菜单
     this.simulateClick(selectorBtn)
@@ -1037,7 +1037,7 @@ export abstract class SiteAdapter {
   }
 
   /** 判断是否应该将样式注入到指定的 Shadow Host 中 */
-  shouldInjectIntoShadow(host: Element): boolean {
+  shouldInjectIntoShadow(_host: Element): boolean {
     return true
   }
 }

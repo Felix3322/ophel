@@ -2,7 +2,6 @@
  * ChatGPT 适配器 (chatgpt.com)
  */
 import { SITE_IDS } from "~constants"
-import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
   SiteAdapter,
@@ -55,7 +54,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         // localStorage 存储的值带双引号（如 "personal"），需要 JSON.parse
         return JSON.parse(account)
       }
-    } catch (e) {
+    } catch {
       // 静默处理解析错误
     }
     return null
@@ -275,7 +274,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       document.execCommand("selectAll", false, undefined)
       const success = document.execCommand("insertText", false, content)
       if (!success) throw new Error("execCommand returned false")
-    } catch (e) {
+    } catch {
       // 回退：直接设置内容
       if (editor.tagName === "TEXTAREA") {
         ;(editor as HTMLTextAreaElement).value = content
