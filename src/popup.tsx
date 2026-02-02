@@ -9,9 +9,14 @@ import { useEffect, useState } from "react"
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { Tooltip } from "~components/ui/Tooltip"
+import { getStoreInfo } from "~utils/getStoreInfo"
 import { setLanguage, t } from "~utils/i18n"
+import { version } from "../package.json"
 
 import "./popup.css"
+
+// Inject platform type
+declare const __PLATFORM__: "extension" | "userscript" | undefined
 
 // Supported AI platforms
 const SUPPORTED_SITES = [
@@ -136,6 +141,9 @@ function IndexPopup() {
     window.close()
   }
 
+  // Fetch store info
+  const storeInfo = getStoreInfo()
+
   // Wait for language to be loaded before rendering
   if (!languageReady) {
     return (
@@ -186,7 +194,11 @@ function IndexPopup() {
           <div className="popup-section-title">{t("popupQuickAccess")}</div>
           <div className="popup-sites-grid">
             {SUPPORTED_SITES.slice(0, 6).map((site) => (
-              <Tooltip key={site.name} content={site.name}>
+              <Tooltip
+                key={site.name}
+                content={site.name}
+                triggerStyle={{ width: "100%", display: "flex" }}
+                triggerClassName="popup-tooltip-trigger">
                 <button className="popup-site-link" onClick={() => openUrl(site.url)}>
                   <span>{site.icon}</span>
                   <span>{site.name}</span>
@@ -219,15 +231,30 @@ function IndexPopup() {
 
       {/* Footer */}
       <div className="popup-footer">
-        <span>v1.0.0</span>
-        <button
-          className="popup-star-btn"
-          onClick={() => openUrl("https://github.com/urzeye/ophel")}>
-          <StarIcon size={14} />
-          <span>Star</span>
-        </button>
-        <a href="https://github.com/urzeye/ophel/issues" target="_blank" rel="noopener noreferrer">
-          {t("popupFeedback")}
+        <span className="popup-version">v{version}</span>
+        <div className="popup-footer-actions">
+          <Tooltip content={t("rateAndReview") || "Love Ophel?"}>
+            <button className="popup-action-pill review-btn" onClick={() => openUrl(storeInfo.url)}>
+              {storeInfo.icon}
+              <span>{storeInfo.label}</span>
+            </button>
+          </Tooltip>
+
+          <Tooltip content={t("giveStar") || "Star on GitHub"}>
+            <button
+              className="popup-action-pill star-btn"
+              onClick={() => openUrl("https://github.com/urzeye/ophel")}>
+              <StarIcon size={14} />
+              <span>{t("starBtn") || "Star"}</span>
+            </button>
+          </Tooltip>
+        </div>
+        <a
+          href="https://github.com/urzeye/ophel/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="popup-feedback-link">
+          {t("popupFeedback") || "反馈"}
         </a>
       </div>
 

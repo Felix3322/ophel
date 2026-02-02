@@ -7,5 +7,6 @@
       "~*": ["./src/*"],
     },
     "baseUrl": ".",
+    "resolveJsonModule": true,
   },
 }

@@ -86,8 +86,15 @@ export const zhTW = {
   projectWebsite: "專案官網",
   websiteDesc: "檢視詳細文件、使用指南和更多資訊",
   visitWebsite: "前往官網",
-  techStack: "技術堆疊",
+  rateAndReview: "好評鼓勵",
+  rateDesc: "如果您喜歡 Ophel，請在應用商店給我們一個五星好評，這是我們更新的最大動力！",
+  chromeStore: "Chrome 商店",
+  firefoxAddons: "Firefox 擴充功能",
+  greasyFork: "Greasy Fork",
+  reviewBtn: "評分",
+  starBtn: "Star",
   credits: "版權與致謝",
+
   devAndMaintain: "開發與維護",
   creditsDesc:
     "感謝所有為開源社群做出貢獻的開發者們，本擴充功能的開發得益於這些優秀的開源專案和工具。",
