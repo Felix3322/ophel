@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      metadata: read
     steps:
       - name: Welcome & Star Reminder
         uses: actions/github-script@v7
