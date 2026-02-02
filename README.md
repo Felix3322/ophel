@@ -20,6 +20,7 @@
   </p>
   
   <sub>👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</sub>
+  
   ![Ophel Demo](./assets/demo/outline.gif)
   
   <p>
