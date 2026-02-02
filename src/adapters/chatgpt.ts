@@ -466,7 +466,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
@@ -492,44 +492,97 @@ export class ChatGPTAdapter extends SiteAdapter {
       const key = `${tagName}-${text}`
       const count = messageHeaderCounts[msgId][key] || 0
       messageHeaderCounts[msgId][key] = count + 1
-
       return `${msgId}::${key}::${count}`
     }
 
-    if (!includeUserQueries) {
-      const headingSelectors: string[] = []
-      for (let i = 1; i <= maxLevel; i++) {
-        headingSelectors.push(`h${i}`)
-      }
+    // container 参数用于处理最后一个元素（没有 nextEl 时）
+    // isUserQuery 参数用于用户提问的特殊处理（直接获取 AI 回复内容，跳过标签）
+    const calculateWordCount = (
+      startEl: Element,
+      nextEl: Element | null,
+      isUserQueryItem: boolean,
+    ): number => {
+      if (!startEl) return 0
+      try {
+        // 对于用户提问，直接获取后续 AI 回复的 markdown 内容
+        // 这样可以跳过 "ChatGPT 说：" 等标签
+        if (isUserQueryItem) {
+          // 查找 startEl 与 nextEl 之间的所有 AI 回复内容容器
+          const allAssistants = container.querySelectorAll('[data-message-author-role="assistant"]')
+          let totalText = ""
 
-      const headings = container.querySelectorAll(headingSelectors.join(", "))
-      headings.forEach((heading) => {
-        // 跳过 .sr-only 元素
-        if (this.shouldSkipElement(heading)) return
-        if (this.isInRenderedMarkdownContainer(heading)) return
-        const level = parseInt(heading.tagName.charAt(1), 10)
+          for (const assistant of Array.from(allAssistants)) {
+            // 检查这个 AI 回复是否在 startEl 之后
+            const positionToStart = startEl.compareDocumentPosition(assistant)
+            const isAfterStart = positionToStart & Node.DOCUMENT_POSITION_FOLLOWING
 
-        if (level <= maxLevel) {
-          const item: OutlineItem = {
-            level,
-            text: heading.textContent?.trim() || "",
-            element: heading,
+            if (!isAfterStart) continue
+
+            // 检查是否在 nextEl 之前（如果有 nextEl）
+            if (nextEl) {
+              const positionToEnd = nextEl.compareDocumentPosition(assistant)
+              const isBeforeEnd = positionToEnd & Node.DOCUMENT_POSITION_PRECEDING
+              if (!isBeforeEnd) continue
+            }
+
+            // 获取 markdown 内容容器
+            const markdownContent = assistant.querySelector(".markdown, .prose, [class*='prose']")
+            if (markdownContent) {
+              totalText += markdownContent.textContent || ""
+            } else {
+              // 回退：获取整个 assistant 的文本，但排除可能的标题
+              const clone = assistant.cloneNode(true) as Element
+              // 移除可能的发言人标签
+              const srOnly = clone.querySelectorAll(".sr-only, [class*='sr-only']")
+              srOnly.forEach((el) => el.remove())
+              totalText += clone.textContent || ""
+            }
           }
 
-          // 尝试生成稳定 ID
-          const msgId = getMessageId(heading)
-          if (msgId) {
-            const tagName = heading.tagName.toLowerCase()
-            item.id = generateHeaderId(msgId, tagName, item.text)
-          }
-
-          outline.push(item)
+          const text = totalText.trim()
+          return text.length
         }
-      })
-      return outline
+
+        // 对于标题（Heading），使用 Range 方式
+        // 当 nextEl 存在时，直接使用基类方法
+        if (nextEl) {
+          return this.calculateRangeWordCount(startEl, nextEl, container)
+        }
+
+        // 如果没有下一个边界元素，需要找到正确的终点
+        // 策略：从 startEl 在 DOM 中向后遍历，找到下一个用户提问元素
+        const allUserQueries = container.querySelectorAll(userQuerySelector)
+        let foundCurrent = false
+        let nextUserQuery: Element | null = null
+
+        for (const uq of Array.from(allUserQueries)) {
+          if (foundCurrent) {
+            nextUserQuery = uq
+            break
+          }
+          if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
+            foundCurrent = true
+          }
+        }
+
+        if (nextUserQuery) {
+          // 找到了下一个用户提问，使用它作为边界
+          return this.calculateRangeWordCount(startEl, nextUserQuery, container)
+        }
+
+        // 真正的最后一个用户提问，找对应的 AI 回复容器末尾
+        const allAssistants = container.querySelectorAll('[data-message-author-role="assistant"]')
+        if (allAssistants.length > 0) {
+          const lastAssistant = allAssistants[allAssistants.length - 1]
+          return this.calculateRangeWordCount(startEl, null, lastAssistant)
+        }
+        return this.calculateRangeWordCount(startEl, null, container)
+      } catch {
+        return 0
+      }
     }
 
-    // 包含用户提问的模式
+    // 统一处理逻辑：按照文档顺序收集所有相关元素（UserQuery 和 Headings）
     const userQuerySelector = this.getUserQuerySelector()
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
@@ -537,55 +590,95 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
-    const allElements = container.querySelectorAll(combinedSelector)
+    // 获取所有潜在的节点（按文档顺序）
+    const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-    allElements.forEach((element) => {
+    allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
       const isUserQuery = element.matches(userQuerySelector)
+      const isHeading = /^h[1-6]$/.test(tagName)
 
-      if (isUserQuery) {
-        let queryText = this.extractUserQueryText(element)
-        let isTruncated = false
-        if (queryText.length > 200) {
-          queryText = queryText.substring(0, 200)
-          isTruncated = true
+      // 决定是否收集到大纲中
+      let shouldCollect = false
+      if (includeUserQueries && isUserQuery) shouldCollect = true
+      if (isHeading) {
+        // 过滤不可见/无效 heading
+        if (!this.shouldSkipElement(element) && !this.isInRenderedMarkdownContainer(element)) {
+          const level = parseInt(tagName.charAt(1), 10)
+          if (level <= maxLevel) shouldCollect = true
         }
+      }
 
-        const item: OutlineItem = {
-          level: 0,
-          text: queryText,
-          element,
-          isUserQuery: true,
-          isTruncated,
-        }
+      if (shouldCollect) {
+        let item: OutlineItem
 
-        // 用户提问直接使用 message-id
-        const msgId = getMessageId(element)
-        if (msgId) {
-          item.id = msgId
-        }
-
-        outline.push(item)
-      } else if (/^h[1-6]$/.test(tagName)) {
-        // 跳过 .sr-only 元素
-        if (this.shouldSkipElement(element)) return
-        if (this.isInRenderedMarkdownContainer(element)) return
-        const level = parseInt(tagName.charAt(1), 10)
-        if (level <= maxLevel) {
-          const item: OutlineItem = {
+        if (isUserQuery) {
+          let queryText = this.extractUserQueryText(element)
+          let isTruncated = false
+          if (queryText.length > 200) {
+            queryText = queryText.substring(0, 200)
+            isTruncated = true
+          }
+          item = {
+            level: 0,
+            text: queryText,
+            element,
+            isUserQuery: true,
+            isTruncated,
+          }
+        } else {
+          // Heading
+          const level = parseInt(tagName.charAt(1), 10)
+          item = {
             level,
             text: element.textContent?.trim() || "",
             element,
+            isUserQuery: false,
           }
+        }
 
-          // 尝试生成稳定 ID
-          const msgId = getMessageId(element)
-          if (msgId) {
+        // 添加 ID
+        const msgId = getMessageId(element)
+        if (msgId) {
+          if (isUserQuery) {
+            item.id = msgId
+          } else {
             item.id = generateHeaderId(msgId, tagName, item.text)
           }
-
-          outline.push(item)
         }
+
+        // --- 字数统计逻辑 ---
+        if (showWordCount) {
+          // 重新寻找结束节点 (End Node)
+          let nextBoundaryEl: Element | null = null
+
+          // 从当前位置向后找
+          for (let i = index + 1; i < allElements.length; i++) {
+            const candidate = allElements[i]
+            const candidateIsUserQuery = candidate.matches(userQuerySelector)
+
+            if (candidateIsUserQuery) {
+              // 遇到用户提问，绝对边界（对话结束）
+              nextBoundaryEl = candidate
+              break
+            }
+
+            const candidateTagName = candidate.tagName.toLowerCase()
+            if (/^h[1-6]$/.test(candidateTagName)) {
+              const candidateLevel = parseInt(candidateTagName.charAt(1), 10)
+              // 如果是同级或更高级 (Level 数值更小或相等)，则是边界
+              if (candidateLevel <= item.level) {
+                nextBoundaryEl = candidate
+                break
+              }
+            }
+          }
+
+          // 计算
+          item.wordCount = calculateWordCount(element, nextBoundaryEl, isUserQuery)
+        }
+
+        outline.push(item)
       }
     })
 

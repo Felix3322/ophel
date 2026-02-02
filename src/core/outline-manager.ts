@@ -1,8 +1,16 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
 import { useBookmarkStore } from "~stores/bookmarks-store"
+import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
+
+type ExtendedOutlineItem = OutlineItem & {
+  isBookmarked?: boolean
+  isGhost?: boolean
+  bookmarkId?: string
+  scrollTop?: number
+}
 
 export interface OutlineNode extends OutlineItem {
   children: OutlineNode[]
@@ -457,7 +465,7 @@ export class OutlineManager {
         if (item.element?.nextElementSibling) {
           context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
         }
-      } catch (e) {
+      } catch {
         // Ignore
       }
     }
@@ -513,9 +521,14 @@ export class OutlineManager {
   }
 
   private _doRefresh(overrideLevel?: number) {
+    // Read showWordCount from live settings store to pick up changes without page refresh
+    const liveSettings = useSettingsStore.getState().settings
+    const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
+
     let outlineData = this.siteAdapter.extractOutline(
       this.settings.maxLevel,
       this.settings.showUserQueries,
+      showWordCount,
     )
 
     // --- Merge Bookmarks ---
@@ -529,7 +542,7 @@ export class OutlineManager {
 
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
 
-      outlineData.forEach((item, idx) => {
+      outlineData.forEach((item) => {
         const signature = this.generateSignature(item)
         // Find matching bookmark
         const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
@@ -617,14 +630,13 @@ export class OutlineManager {
             bookmarkId: bookmark.id,
             // Helper for sorting
             scrollTop: bookmark.scrollTop,
-          } as any)
+          } as ExtendedOutlineItem)
         }
       })
 
       if (ghosts.length > 0) {
         // Calculate offsets for real items to sort
-        const container = this.siteAdapter.getScrollContainer()
-        const getTop = (item: any) => {
+        const getTop = (item: ExtendedOutlineItem) => {
           if (item.isGhost) return item.scrollTop
           if (item.element instanceof HTMLElement) return item.element.offsetTop
           return 0
@@ -655,7 +667,11 @@ export class OutlineManager {
     this.minLevel = headingLevels.length > 0 ? Math.min(...headingLevels) : 1
 
     // Check if tree changed
-    const outlineKey = outlineData.map((i) => `${i.text}:${(i as any).isBookmarked}`).join("|")
+    const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
+    const outlineKey =
+      showWordCountFlag +
+      "|" +
+      outlineData.map((i) => `${i.text}:${(i as ExtendedOutlineItem).isBookmarked}`).join("|")
     const currentStateMap: Record<string, TreeState> = {}
     if (this.tree.length > 0) {
       this.captureTreeState(this.tree, currentStateMap)
@@ -733,9 +749,11 @@ export class OutlineManager {
         collapsed: false,
       }
       // Inherit bookmark props from merged item
-      if ((item as any).isBookmarked) node.isBookmarked = true
-      if ((item as any).isGhost) node.isGhost = true
-      if ((item as any).bookmarkId) node.bookmarkId = (item as any).bookmarkId
+      // Inherit bookmark props from merged item
+      const extItem = item as ExtendedOutlineItem
+      if (extItem.isBookmarked) node.isBookmarked = true
+      if (extItem.isGhost) node.isGhost = true
+      if (extItem.bookmarkId) node.bookmarkId = extItem.bookmarkId
 
       while (stack.length > 0 && stack[stack.length - 1].relativeLevel >= relativeLevel) {
         stack.pop()

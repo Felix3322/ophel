@@ -17,6 +17,7 @@ export interface OutlineItem {
   isTruncated?: boolean
   id?: string
   context?: string
+  wordCount?: number
 }
 
 export interface ConversationInfo {
@@ -548,6 +549,36 @@ export abstract class SiteAdapter {
       .trim()
   }
 
+  /**
+   * 使用 Range API 计算两个 DOM 节点之间的文本长度
+   * 通用于 Heading 类型的 OutlineItem 字数统计
+   * @param startEl 起始元素（不包含其内容，从其之后开始）
+   * @param endEl 结束元素（不包含，在其之前结束）；若为 null 则使用 fallbackContainer
+   * @param fallbackContainer 当 endEl 为 null 时使用的容器末尾
+   * @returns 文本字符数
+   */
+  protected calculateRangeWordCount(
+    startEl: Element,
+    endEl: Element | null,
+    fallbackContainer?: Element | null,
+  ): number {
+    if (!startEl) return 0
+    try {
+      const range = document.createRange()
+      range.setStartAfter(startEl)
+      if (endEl) {
+        range.setEndBefore(endEl)
+      } else if (fallbackContainer?.lastChild) {
+        range.setEndAfter(fallbackContainer.lastChild)
+      } else {
+        return 0
+      }
+      return range.toString().trim().length
+    } catch {
+      return 0
+    }
+  }
+
   /** 从用户提问元素中提取文本（保留换行） */
   extractUserQueryText(element: Element): string {
     return this.extractTextWithLineBreaks(element)
@@ -597,7 +628,11 @@ export abstract class SiteAdapter {
   }
 
   /** 从页面提取大纲 */
-  extractOutline(_maxLevel = 6, _includeUserQueries = false): OutlineItem[] {
+  extractOutline(
+    _maxLevel = 6,
+    _includeUserQueries = false,
+    _showWordCount = false,
+  ): OutlineItem[] {
     return []
   }
 

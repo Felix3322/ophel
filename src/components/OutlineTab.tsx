@@ -12,7 +12,8 @@ import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 // import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
-import { t } from "~utils/i18n"
+import { t, getCurrentLang } from "~utils/i18n"
+import { formatWordCount } from "~utils/format" // New import
 import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
 import { showToast } from "~utils/toast"
 
@@ -227,7 +228,18 @@ const OutlineNodeView: React.FC<{
   return (
     <>
       <Tooltip
-        content={node.text}
+        content={
+          node.wordCount && node.wordCount > 0 ? (
+            <div>
+              {node.text}
+              <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "2px" }}>
+                ({formatWordCount(node.wordCount, getCurrentLang())} {t("words") || "words"})
+              </div>
+            </div>
+          ) : (
+            node.text
+          )
+        }
         disabled={isHoveringAction}
         triggerStyle={{ width: "100%", display: "block" }}
         triggerClassName={!shouldShow ? "outline-hidden" : ""}
@@ -414,14 +426,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   // 订阅 Manager 更新
   useEffect(() => {
     const update = () => {
-      const listEl = listRef.current
-
       // 智能滚动：检测用户是否已在底部附近（更新前）
+      /*
       let wasAtBottom = false
-      if (listEl) {
-        const { scrollTop, scrollHeight, clientHeight } = listEl
+      if (listRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = listRef.current
         wasAtBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px 容差
       }
+      */
 
       const state = manager.getState()
 
