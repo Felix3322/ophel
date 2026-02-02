@@ -69,6 +69,9 @@ export class OutlineManager {
   // Tab 激活状态（只有激活时才监听）
   private isActive: boolean = false
 
+  // 防止 refresh 期间书签更新触发循环调用
+  private isRefreshing: boolean = false
+
   // Bookmark store subscription
   private unsubscribeBookmarks: (() => void) | null = null
 
@@ -270,8 +273,8 @@ export class OutlineManager {
    * 获取大纲项的签名（用于书签标识）
    * 供 InlineBookmarkManager 使用
    */
-  getSignature(item: OutlineItem, index: number): string {
-    return this.generateSignature(item, index)
+  getSignature(item: OutlineItem): string {
+    return this.generateSignature(item)
   }
 
   getSearchQuery() {
@@ -436,18 +439,30 @@ export class OutlineManager {
 
   // --- Bookmark Logic ---
 
-  private generateSignature(item: OutlineItem, index: number): string {
-    let context = ""
-
-    try {
-      if (item.element?.nextElementSibling) {
-        context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
-      }
-    } catch (e) {
-      // Ignore
+  private generateSignature(item: OutlineItem): string {
+    // 1. 优先使用稳定 ID (message-id)
+    if (item.id) {
+      return item.id
     }
 
-    return `${item.text}::${index}::${context}`
+    // 2. 回退方案 (text::context)
+    let context = ""
+
+    // 优先使用 Adapter 显式提供的上下文 (例如 AI Studio 的 Next Turn Preview)
+    if (item.context) {
+      context = item.context
+    } else {
+      // 否则尝试从 DOM 获取下一个兄弟节点的文本
+      try {
+        if (item.element?.nextElementSibling) {
+          context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    return `${item.text}::${context}`
   }
 
   // Helper public method for UI
@@ -455,7 +470,7 @@ export class OutlineManager {
     const sessionId = this.siteAdapter.getSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
-    const signature = this.generateSignature(node, node.index)
+    const signature = this.generateSignature(node)
     // Use node.element.offsetTop if available, or current scroll position?
     // Best is element.offsetTop usually.
     let scrollTop = 0
@@ -487,8 +502,17 @@ export class OutlineManager {
 
   // Adjusted refresh signature
   refresh(overrideLevel?: number) {
-    if (!this.settings.enabled) return
+    if (!this.settings.enabled || this.isRefreshing) return
 
+    this.isRefreshing = true
+    try {
+      this._doRefresh(overrideLevel)
+    } finally {
+      this.isRefreshing = false
+    }
+  }
+
+  private _doRefresh(overrideLevel?: number) {
     let outlineData = this.siteAdapter.extractOutline(
       this.settings.maxLevel,
       this.settings.showUserQueries,
@@ -506,7 +530,7 @@ export class OutlineManager {
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
 
       outlineData.forEach((item, idx) => {
-        const signature = this.generateSignature(item, idx)
+        const signature = this.generateSignature(item)
         // Find matching bookmark
         const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
 
@@ -516,6 +540,62 @@ export class OutlineManager {
           unmatchedBookmarkIds.delete(bookmark.id)
         }
       })
+
+      // --- Ghost Reclamation (保守修复策略) ---
+      // 尝试将无法匹配的幽灵书签（unmatchedBookmarkIds）自动“过继”给当前未收藏的新条目
+      // 仅当满足 "Unique-to-Unique" 条件时执行：
+      // 即：该文本在幽灵列表中只有 1 个，且在当前未收藏列表中也只有 1 个
+
+      // 1. 收集候选者
+      const ghostCandidates: Record<string, string[]> = {} // text -> [bookmarkId]
+      const targetCandidates: Record<string, OutlineItem[]> = {} // text -> [Item]
+
+      // 收集幽灵
+      unmatchedBookmarkIds.forEach((bid) => {
+        const bookmark = bookmarks.find((b) => b.id === bid)
+        if (bookmark) {
+          if (!ghostCandidates[bookmark.title]) ghostCandidates[bookmark.title] = []
+          ghostCandidates[bookmark.title].push(bookmark.id)
+        }
+      })
+
+      // 收集目标（未被收藏的条目）
+      outlineData.forEach((item) => {
+        if (!(item as OutlineNode).isBookmarked) {
+          if (!targetCandidates[item.text]) targetCandidates[item.text] = []
+          targetCandidates[item.text].push(item)
+        }
+      })
+
+      // 2. 执行匹配与修复
+      const store = useBookmarkStore.getState()
+
+      Object.keys(ghostCandidates).forEach((text) => {
+        const ghosts = ghostCandidates[text]
+        const targets = targetCandidates[text]
+
+        // 仅当 1 对 1 时才进行修复
+        if (ghosts && targets && ghosts.length === 1 && targets.length === 1) {
+          const bookmarkId = ghosts[0]
+          const targetItem = targets[0]
+
+          // 计算新的签名（这是它现在的“合法身份”）
+          const newSignature = this.generateSignature(targetItem)
+
+          // 更新数据库：把旧书签的签名改为新的
+          // 注意：这里需要确保 updateBookmark 存在且支持只更新 signature
+          // 假设 store.updateBookmark(id, { signature: ... })
+          store.updateBookmark(bookmarkId, { signature: newSignature })
+
+          // 标记当前条目为已收藏
+          ;(targetItem as OutlineNode).isBookmarked = true
+          ;(targetItem as OutlineNode).bookmarkId = bookmarkId
+
+          // 从幽灵名单中剔除
+          unmatchedBookmarkIds.delete(bookmarkId)
+        }
+      })
+      // -----------------------------------
 
       // 2. Insert Ghost Nodes
       const ghosts: OutlineItem[] = []
@@ -609,6 +689,15 @@ export class OutlineManager {
     // Re-apply search if needed
     if (this.searchQuery) {
       this.performSearch(this.searchQuery)
+    }
+
+    // 收藏模式逻辑：如果当前处于收藏模式，需要确保树的折叠状态符合收藏模式的要求
+    // 折叠所有非路径节点，展开收藏路径
+    if (this.bookmarkMode) {
+      // this.collapseAllExpandedState(this.tree)
+
+      // 再展开收藏路径 (Re-apply traversal)
+      this.expandBookmarkPaths(this.tree)
     }
 
     // 收藏模式不再强制显示，由 UI 层根据 bookmarkMode 状态过滤

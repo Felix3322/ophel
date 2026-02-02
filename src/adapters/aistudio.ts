@@ -135,7 +135,27 @@ export class AIStudioAdapter extends SiteAdapter {
         return id
       }
     }
+
     return ""
+  }
+
+  /**
+   * 从侧边栏 (ms-prompt-scrollbar) 获取文本
+   * 利用 aria-controls="turn-ID" 关联
+   */
+  private getTextFromScrollbar(turnId: string): string | null {
+    // 查找侧边栏中控制该 turn 的按钮
+    // Selector: ms-prompt-scrollbar button[aria-controls="turn-ID"]
+    const selector = `ms-prompt-scrollbar button[aria-controls="${turnId}"]`
+    const btn = document.querySelector(selector)
+
+    if (btn) {
+      const label = btn.getAttribute("aria-label")
+      if (label) {
+        return label.trim()
+      }
+    }
+    return null
   }
 
   getSessionName(): string | null {
@@ -788,6 +808,16 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
+    // --- Side-Channel Hydration (Using Scrollbar) ---
+    // 如果 DOM 提取文本失败（懒加载/Shadow DOM/渲染延迟），尝试从侧边栏获取
+    // 侧边栏按钮通常包含 aria-control="turn-ID" 和 aria-label="Full Text"
+    if (!extractedText && turnId) {
+      const scrollbarText = this.getTextFromScrollbar(turnId)
+      if (scrollbarText) {
+        extractedText = scrollbarText
+      }
+    }
+
     // 缓存逻辑
     if (extractedText) {
       // 如果成功提取到了文本，更新缓存
@@ -817,10 +847,37 @@ export class AIStudioAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
     const outline: OutlineItem[] = []
-    const container = document.querySelector(this.getResponseContainerSelector())
+
+    // AI Studio 整个 main 区域都可能是滚动容器，或者 .chat-container
+    const container = document.querySelector(".chat-container") || document.querySelector("main")
     if (!container) return outline
 
-    // 不包含用户提问时，只提取标题
+    // 辅助函数：提取 ms-chat-turn 的 ID
+    // 格式: turn-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    // 返回 UUID 部分
+    const getTurnId = (el: Element): string | null => {
+      const turn = el.closest("ms-chat-turn")
+      if (turn && turn.id) {
+        // 移除 "turn-" 前缀
+        return turn.id.replace(/^turn-/, "")
+      }
+      return null
+    }
+
+    // 辅助函数：生成标题的稳定 ID
+    const turnHeaderCounts: Record<string, Record<string, number>> = {}
+    const generateHeaderId = (turnId: string, tagName: string, text: string): string => {
+      if (!turnHeaderCounts[turnId]) {
+        turnHeaderCounts[turnId] = {}
+      }
+
+      const key = `${tagName}-${text}`
+      const count = turnHeaderCounts[turnId][key] || 0
+      turnHeaderCounts[turnId][key] = count + 1
+
+      return `${turnId}::${key}::${count}`
+    }
+
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
       for (let i = 1; i <= maxLevel; i++) {
@@ -829,21 +886,33 @@ export class AIStudioAdapter extends SiteAdapter {
 
       const headings = container.querySelectorAll(headingSelectors.join(", "))
       headings.forEach((heading) => {
+        // AI Studio 可能把 input 内的 h1 也选出来，需要过滤
+        if (heading.closest("textarea") || heading.closest(".user-prompt-container")) return
         if (this.isInRenderedMarkdownContainer(heading)) return
+
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: heading.textContent?.trim() || "",
             element: heading,
-          })
+          }
+
+          // 稳定 ID 生成
+          const turnId = getTurnId(heading)
+          if (turnId) {
+            const tagName = heading.tagName.toLowerCase()
+            item.id = generateHeaderId(turnId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       })
       return outline
     }
 
     // 包含用户提问的模式
-    const userQuerySelector = this.getUserQuerySelector()
+    const userQuerySelector = this.getUserQuerySelector() // .chat-turn-container.user
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
       headingSelectors.push(`h${i}`)
@@ -854,7 +923,10 @@ export class AIStudioAdapter extends SiteAdapter {
 
     allElements.forEach((element) => {
       const tagName = element.tagName.toLowerCase()
-      const isUserQuery = element.matches(userQuerySelector)
+      // 注意：.chat-turn-container.user 是个 div
+      // 所以我们通过 class 来判断是否是 User Query
+      const isUserQuery =
+        element.classList.contains("user") && element.classList.contains("chat-turn-container")
 
       if (isUserQuery) {
         let queryText = this.extractUserQueryText(element)
@@ -864,22 +936,41 @@ export class AIStudioAdapter extends SiteAdapter {
           isTruncated = true
         }
 
-        outline.push({
+        const item: OutlineItem = {
           level: 0,
           text: queryText,
           element,
           isUserQuery: true,
           isTruncated,
-        })
+        }
+
+        // Context Injection: 预取下一个 AI 回复作为上下文 (解决重复提问无法区分的问题)
+        // 查找下一个 ms-chat-turn
+        const currentTurn = element.closest("ms-chat-turn")
+        const nextTurn = currentTurn?.nextElementSibling
+        if (nextTurn && nextTurn.tagName.toLowerCase() === "ms-chat-turn") {
+          // 尝试提取 AI 回复文本预览 (前50字符)
+          const responseText = this.extractTextWithLineBreaks(nextTurn).trim().substring(0, 50)
+          if (responseText) {
+            item.context = responseText
+          }
+        }
+
+        outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
+        // 过滤：避免提取到用户提问里的标题（虽然上面已经针对 .user 容器做了处理，但双重保险）
+        if (element.closest(".user-prompt-container") || element.closest("textarea")) return
         if (this.isInRenderedMarkdownContainer(element)) return
+
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: element.textContent?.trim() || "",
             element,
-          })
+          }
+
+          outline.push(item)
         }
       }
     })
