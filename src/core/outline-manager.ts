@@ -27,6 +27,7 @@ export interface OutlineNode extends OutlineItem {
   isGhost?: boolean
   bookmarkId?: string
   scrollTop?: number
+  scrollHeight?: number
 }
 
 interface TreeState {
@@ -41,6 +42,11 @@ export class OutlineManager {
 
   private tree: OutlineNode[] = []
   private flatItems: OutlineItem[] = []
+  private flatNodes: OutlineNode[] = []
+  private scrollNodes: OutlineNode[] = []
+  private scrollPositions: number[] = []
+  private scrollHeights: number[] = []
+  private scrollPositionsStale: boolean = true
 
   // State
   private minLevel: number = 1
@@ -291,6 +297,10 @@ export class OutlineManager {
 
   getScrollContainer(): HTMLElement | null {
     return this.siteAdapter.getScrollContainer()
+  }
+
+  markScrollPositionsStale() {
+    this.scrollPositionsStale = true
   }
 
   // 收藏模式
@@ -651,6 +661,11 @@ export class OutlineManager {
       // ... existing clear logic
       if (this.tree.length > 0) {
         this.tree = []
+        this.flatNodes = []
+        this.scrollNodes = []
+        this.scrollPositions = []
+        this.scrollHeights = []
+        this.scrollPositionsStale = true
         this.notify()
       }
       return
@@ -683,7 +698,10 @@ export class OutlineManager {
       this.treeKey = outlineKey
       // 保存扁平化数据供 InlineBookmarkManager 使用
       this.flatItems = outlineData
+      this.flatNodes = this.flattenTree(this.tree)
+      this.updateScrollPositions()
     } else {
+      this.scrollPositionsStale = true
       return
     }
 
@@ -768,6 +786,95 @@ export class OutlineManager {
     })
 
     return tree
+  }
+
+  // Flatten tree in pre-order to match outline order
+  private flattenTree(nodes: OutlineNode[]): OutlineNode[] {
+    const res: OutlineNode[] = []
+    const traverse = (list: OutlineNode[]) => {
+      list.forEach((n) => {
+        res.push(n)
+        if (n.children.length > 0) {
+          traverse(n.children)
+        }
+      })
+    }
+    traverse(nodes)
+    return res
+  }
+
+  // Update cached scroll positions for fast highlight lookup
+  updateScrollPositions() {
+    this.scrollNodes = []
+    this.scrollPositions = []
+    this.scrollHeights = []
+
+    const container = this.getScrollContainer()
+    if (!container || this.flatNodes.length === 0) return
+
+    const containerRect = container.getBoundingClientRect()
+    const containerTop = containerRect.top
+    const containerScrollTop = container.scrollTop
+    const entries: Array<{ node: OutlineNode; top: number; height: number; order: number }> = []
+    let order = 0
+
+    this.flatNodes.forEach((node) => {
+      if (node.isGhost) return
+
+      let element = node.element
+      if (!element || !element.isConnected) {
+        if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
+          element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
+        } else {
+          element = this.findElementByHeading(node.level, node.text) as HTMLElement
+        }
+        if (element) {
+          node.element = element
+        }
+      }
+
+      if (!element || !element.isConnected) return
+
+      const clientRects = element.getClientRects()
+      if (clientRects.length === 0) return
+
+      const rect = element.getBoundingClientRect()
+      const top = rect.top - containerTop + containerScrollTop
+      const height = rect.height || clientRects[0]?.height || 0
+      node.scrollTop = top
+      node.scrollHeight = height
+
+      entries.push({ node, top, height, order })
+      order += 1
+    })
+
+    if (entries.length === 0) {
+      this.scrollPositionsStale = false
+      return
+    }
+
+    let isSorted = true
+    for (let i = 1; i < entries.length; i += 1) {
+      if (entries[i].top < entries[i - 1].top) {
+        isSorted = false
+        break
+      }
+    }
+
+    if (!isSorted) {
+      entries.sort((a, b) => {
+        if (a.top === b.top) return a.order - b.order
+        return a.top - b.top
+      })
+    }
+
+    entries.forEach((entry) => {
+      this.scrollNodes.push(entry.node)
+      this.scrollPositions.push(entry.top)
+      this.scrollHeights.push(entry.height)
+    })
+
+    this.scrollPositionsStale = false
   }
 
   // State Management
@@ -1114,73 +1221,51 @@ export class OutlineManager {
 
   // Sync Scroll Helper
   // Returns index of the item that should be highlighted
-  findVisibleItemIndex(viewportTop: number, viewportBottom: number): number | null {
-    // 只有 followMode === 'current' 时才启用同步高亮
+
+  findVisibleItemIndex(scrollTop: number, viewportHeight: number): number | null {
+    // Only active when followMode === "current"
     if (this.settings.followMode !== "current") return null
 
-    // 使用内部方法进行搜索，支持重试
-    const doSearch = (): { currentItem: OutlineNode | null; invalidCount: number } => {
-      // Flatten tree first (in order)
-      const flatten = (nodes: OutlineNode[]): OutlineNode[] => {
-        const res: OutlineNode[] = []
-        nodes.forEach((n) => {
-          res.push(n)
-          if (n.children.length > 0) {
-            res.push(...flatten(n.children))
-          }
-        })
-        return res
-      }
-
-      const allItems = flatten(this.tree)
-
-      let currentItem: OutlineNode | null = null
-      let invalidCount = 0
-
-      for (const item of allItems) {
-        // Skip ghost nodes for scroll tracking
-        if (item.isGhost) continue
-
-        let element = item.element
-
-        // 元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
-        if (!element || !element.isConnected) {
-          const found = this.siteAdapter.findElementByHeading(item.level, item.text)
-          if (found) {
-            element = found as HTMLElement
-            item.element = element // 更新引用
-          }
-        }
-
-        if (!element || !element.isConnected) {
-          invalidCount++
-          continue
-        }
-
-        // We need direct DOM access here. Since this runs in content script, it's allowed.
-        const rect = element.getBoundingClientRect()
-
-        if (rect.top >= viewportTop && rect.top < viewportBottom) {
-          currentItem = item
-          break
-        }
-        if (rect.top < viewportTop && rect.bottom > viewportTop) {
-          currentItem = item
-          break
-        }
-      }
-
-      return { currentItem, invalidCount }
+    if (this.scrollPositionsStale) {
+      this.updateScrollPositions()
     }
 
-    let result = doSearch()
+    const count = this.scrollNodes.length
+    if (count === 0) return null
 
-    // 如果有失效元素且没找到匹配项，立即刷新并重试一次
-    if (result.invalidCount > 0 && !result.currentItem) {
-      this.refresh() // 立即同步刷新
-      result = doSearch() // 重试搜索
+    const top = scrollTop
+    const bottom = scrollTop + viewportHeight
+
+    // Binary search: last item with top <= viewportTop
+    let lo = 0
+    let hi = count - 1
+    let idx = -1
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (this.scrollPositions[mid] <= top) {
+        idx = mid
+        lo = mid + 1
+      } else {
+        hi = mid - 1
+      }
     }
 
-    return result.currentItem ? result.currentItem.index : null
+    if (idx >= 0) {
+      const itemTop = this.scrollPositions[idx]
+      const itemHeight = this.scrollHeights[idx] || 0
+      if (itemTop < bottom && (itemHeight === 0 || itemTop + itemHeight > top)) {
+        return this.scrollNodes[idx].index
+      }
+      if (idx + 1 < count && this.scrollPositions[idx + 1] < bottom) {
+        return this.scrollNodes[idx + 1].index
+      }
+      return null
+    }
+
+    if (this.scrollPositions[0] < bottom) {
+      return this.scrollNodes[0].index
+    }
+
+    return null
   }
 }
