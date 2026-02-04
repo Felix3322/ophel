@@ -120,8 +120,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Ophel Atlas ${{ steps.get_version.outputs.VERSION }}
           body: |
-            ## Ophel Atlas ${{ steps.get_version.outputs.VERSION }}
-
             ${{ steps.extract_changelog.outputs.notes }}
 
             ---
