@@ -171,7 +171,8 @@ export const en = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Tab Behavior",
-  notificationSettings: "Completion Alerts",
+  notificationSettings: "Post-Completion Actions",
+  enablePrerequisiteToast: 'Please enable "{setting}" first',
   privacyModeTitle: "Privacy Mode",
   collapsedButtonsOrderTitle: "Quick Buttons",
 
@@ -421,7 +422,7 @@ export const en = {
   notificationVolumeLabel: "Sound Volume",
   notifyWhenFocusedLabel: "Notify When Focused",
   notifyWhenFocusedDesc: "Send notifications even when the current page is visible",
-  autoFocusLabel: "Auto Focus Window",
+  autoFocusLabel: "Auto Focus the Window",
   autoFocusDesc: "Bring window to front when generation completes",
   privacyModeLabel: "Privacy Mode",
   privacyModeDesc:

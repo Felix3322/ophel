@@ -165,7 +165,8 @@ export const es = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Comportamiento",
-  notificationSettings: "Avisos al Finalizar",
+  notificationSettings: "Acciones al Finalizar",
+  enablePrerequisiteToast: 'Activa primero "{setting}"',
   privacyModeTitle: "Modo Privado",
   collapsedButtonsOrderTitle: "Botones Rápidos",
 
@@ -401,7 +402,7 @@ export const es = {
   notificationVolumeLabel: "Volumen",
   notifyWhenFocusedLabel: "Avisar Aun Con Foco",
   notifyWhenFocusedDesc: "Enviar aviso aunque estés viendo la página",
-  autoFocusLabel: "Auto Foco a Ventana",
+  autoFocusLabel: "Auto Poner la Ventana al Frente",
   autoFocusDesc: "Traer al frente al terminar",
   privacyModeLabel: "Modo Privado",
   privacyModeDesc: "Título falso (doble clic arriba)",
