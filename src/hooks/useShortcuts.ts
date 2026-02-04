@@ -468,8 +468,8 @@ export function useShortcuts({
       // 默认导出为 Markdown 文件
       await conversationManager.exportConversation(sessionId, "markdown")
       showToast(t("exportSuccess") || "导出成功")
-    } catch (e) {
-      console.error("Export failed:", e)
+    } catch (error) {
+      console.error("Export failed:", error)
       showToast(t("exportFailed") || "导出失败")
     }
   }, [conversationManager, adapter])
@@ -487,7 +487,7 @@ export function useShortcuts({
     try {
       await navigator.clipboard.writeText(text)
       showToast(t("replyCopied") || "已复制最新回复")
-    } catch (e) {
+    } catch {
       showToast(t("copyFailed") || "复制失败")
     }
   }, [adapter])
@@ -565,7 +565,7 @@ export function useShortcuts({
     try {
       await navigator.clipboard.writeText(code)
       showToast(t("codeBlockCopied") || "代码块已复制")
-    } catch (e) {
+    } catch {
       showToast(t("copyFailed") || "复制失败")
     }
   }, [])
@@ -665,8 +665,8 @@ export function useShortcuts({
           )
         }
       }
-    } catch (e) {
-      showToast("切换失败: " + (e as Error).message, 2000)
+    } catch (error) {
+      showToast("切换失败: " + (error as Error).message, 2000)
     }
   }, [])
 
