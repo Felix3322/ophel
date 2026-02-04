@@ -547,7 +547,7 @@ export const fr = {
   conversationsLocateNewChat: "Nouveau chat (non enregistré)",
   conversationsLocateSyncFailed: "Toujours non trouvé",
   justNow: "À l'instant",
-  minutesAgo: "m",
+  minutesAgo: "min",
   hoursAgo: "h",
   daysAgo: "j",
   conversationsSelectFolder: "Destination",

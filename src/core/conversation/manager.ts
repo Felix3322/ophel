@@ -574,10 +574,10 @@ export class ConversationManager {
     const now = new Date()
     const diff = now.getTime() - date.getTime()
 
-    if (diff < 60000) return "刚刚"
-    if (diff < 3600000) return Math.floor(diff / 60000) + "分钟前"
-    if (diff < 86400000) return Math.floor(diff / 3600000) + "小时前"
-    if (diff < 604800000) return Math.floor(diff / 86400000) + "天前"
+    if (diff < 60000) return t("justNow")
+    if (diff < 3600000) return Math.floor(diff / 60000) + t("minutesAgo")
+    if (diff < 86400000) return Math.floor(diff / 3600000) + t("hoursAgo")
+    if (diff < 604800000) return Math.floor(diff / 86400000) + t("daysAgo")
 
     return date.toLocaleDateString()
   }
