@@ -843,6 +843,7 @@ export abstract class SiteAdapter {
           subMenuTriggers,
           subMenuSelector,
           onSuccess,
+          maxAttempts,
         )
       } else if (buttonWaitAttempts >= maxButtonWait) {
         clearInterval(waitForButton)
@@ -863,48 +864,42 @@ export abstract class SiteAdapter {
     subMenuTriggers: string[],
     subMenuSelector: string | undefined,
     onSuccess?: () => void,
+    maxMenuAttempts = 10,
   ): void {
-    const _normalize = (str: string) => (str || "").toLowerCase().trim()
-
-    // 打开菜单
+    // Open menu
     this.simulateClick(selectorBtn)
 
-    setTimeout(() => {
-      const menuItems = this.findAllElementsBySelector(menuItemSelector)
+    const maxWaitAttempts = Math.max(3, maxMenuAttempts)
+    let menuAttempts = 0
 
-      if (menuItems.length === 0) {
-        // 菜单可能还没加载，短暂等待再试一次
-        setTimeout(() => {
-          const retryItems = this.findAllElementsBySelector(menuItemSelector)
-          if (retryItems.length === 0) {
-            document.body.click()
-            console.warn(`Ophel: Menu items not found.`)
-            this.showModelLockFailure(target, "menu_empty")
-            return
-          }
-          this.searchAndSelectModel(
-            retryItems,
-            target,
-            menuItemSelector,
-            menuRenderDelay,
-            subMenuTriggers,
-            subMenuSelector,
-            onSuccess,
-          )
-        }, menuRenderDelay)
+    const tryFindMenuItems = () => {
+      menuAttempts++
+      const menuItems = this.getVisibleMenuItems(menuItemSelector, selectorBtn)
+
+      if (menuItems.length > 0) {
+        this.searchAndSelectModel(
+          menuItems,
+          target,
+          menuItemSelector,
+          menuRenderDelay,
+          subMenuTriggers,
+          subMenuSelector,
+          onSuccess,
+        )
         return
       }
 
-      this.searchAndSelectModel(
-        menuItems,
-        target,
-        menuItemSelector,
-        menuRenderDelay,
-        subMenuTriggers,
-        subMenuSelector,
-        onSuccess,
-      )
-    }, menuRenderDelay)
+      if (menuAttempts >= maxWaitAttempts) {
+        document.body.click()
+        console.warn(`Ophel: Menu items not found.`)
+        this.showModelLockFailure(target, "menu_empty")
+        return
+      }
+
+      setTimeout(tryFindMenuItems, menuRenderDelay)
+    }
+
+    setTimeout(tryFindMenuItems, menuRenderDelay)
   }
 
   /**
@@ -953,7 +948,7 @@ export abstract class SiteAdapter {
       this.simulateClick(subMenuItem as HTMLElement)
 
       setTimeout(() => {
-        const subItems = this.findAllElementsBySelector(menuItemSelector)
+        const subItems = this.getVisibleMenuItems(menuItemSelector, subMenuItem as HTMLElement)
         const matchedSubItem = this.findBestMatchingItem(subItems, target)
         if (matchedSubItem) {
           this.simulateClick(matchedSubItem as HTMLElement)
@@ -976,6 +971,125 @@ export abstract class SiteAdapter {
     document.body.click()
     console.warn(`Ophel: Model "${target}" not found in menu.`)
     this.showModelLockFailure(target, "not_found")
+  }
+
+  private getVisibleMenuItems(menuItemSelector: string, anchor?: HTMLElement): Element[] {
+    const items = this.getVisibleElementsBySelector(menuItemSelector)
+    if (!anchor || items.length === 0) return items
+
+    const ariaContainer = this.getMenuContainerByAria(anchor)
+    if (ariaContainer) {
+      const scoped = items.filter((item) => ariaContainer.contains(item))
+      if (scoped.length > 0) return scoped
+    }
+
+    const containerSelector = this.getMenuContainerSelector()
+    const containerMap = new Map<Element, Element[]>()
+
+    for (const item of items) {
+      const container = item.closest(containerSelector)
+      if (!container || !this.isElementVisible(container)) continue
+      const list = containerMap.get(container)
+      if (list) list.push(item)
+      else containerMap.set(container, [item])
+    }
+
+    if (containerMap.size > 0) {
+      const bestContainer = this.pickBestMenuContainer(anchor, containerMap)
+      if (bestContainer) {
+        return containerMap.get(bestContainer) || items
+      }
+    }
+
+    return items
+  }
+
+  private getVisibleElementsBySelector(selector: string): Element[] {
+    return (
+      (DOMToolkit.query(selector, {
+        all: true,
+        shadow: true,
+        filter: (el) => this.isElementVisible(el),
+      }) as Element[]) || []
+    )
+  }
+
+  private getMenuContainerByAria(anchor: HTMLElement): Element | null {
+    const menuId = anchor.getAttribute("aria-controls") || anchor.getAttribute("aria-owns")
+    if (!menuId) return null
+    const selector = `#${this.escapeSelector(menuId)}`
+    const container = DOMToolkit.query(selector, { shadow: true }) as Element | null
+    if (container && this.isElementVisible(container)) return container
+    return null
+  }
+
+  private getMenuContainerSelector(): string {
+    return [
+      '[role="menu"]',
+      '[role="listbox"]',
+      "md-menu-surface",
+      ".mdc-menu-surface",
+      ".mat-menu-panel",
+      ".menu[popover]",
+      "[data-radix-popper-content-wrapper]",
+      ".cdk-overlay-pane",
+    ].join(", ")
+  }
+
+  private pickBestMenuContainer(
+    anchor: HTMLElement,
+    containerMap: Map<Element, Element[]>,
+  ): Element | null {
+    const anchorRect = anchor.getBoundingClientRect()
+    let best: {
+      container: Element
+      distance: number
+      count: number
+    } | null = null
+
+    containerMap.forEach((items, container) => {
+      if (items.length === 0) return
+      const rect = (container as HTMLElement).getBoundingClientRect()
+      const distance = this.getRectDistance(anchorRect, rect)
+      if (
+        !best ||
+        distance < best.distance - 1 ||
+        (Math.abs(distance - best.distance) <= 1 && items.length > best.count)
+      ) {
+        best = { container, distance, count: items.length }
+      }
+    })
+
+    return best ? best.container : null
+  }
+
+  private getRectDistance(a: DOMRect, b: DOMRect): number {
+    const dx = Math.max(a.left - b.right, b.left - a.right, 0)
+    const dy = Math.max(a.top - b.bottom, b.top - a.bottom, 0)
+    return Math.sqrt(dx * dx + dy * dy)
+  }
+
+  private isElementVisible(element: Element | null): boolean {
+    if (!element) return false
+    const htmlEl = element as HTMLElement
+    if (!htmlEl.isConnected) return false
+    const style = window.getComputedStyle(htmlEl)
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      parseFloat(style.opacity) === 0
+    ) {
+      return false
+    }
+    const rect = htmlEl.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private escapeSelector(value: string): string {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+      return CSS.escape(value)
+    }
+    return value.replace(/[^a-zA-Z0-9_-]/g, "\\$&")
   }
 
   /**

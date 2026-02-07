@@ -2,7 +2,7 @@
  * 基本设置页面
  * 包含：面板 | 界面排版 | 快捷按钮 | 工具箱菜单
  */
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 import { DragIcon, GeneralIcon } from "~components/icons"
 import { NumberInput, Switch } from "~components/ui"
@@ -88,6 +88,12 @@ const SortableItem: React.FC<{
 const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || "panel")
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
 
   const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
   const showPrerequisiteToast = (label: string) =>
