@@ -11,6 +11,7 @@ import {
   PromptIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
+  ToolsIcon,
 } from "~components/icons"
 
 // ==================== Tab ID 常量 ====================
@@ -43,6 +44,7 @@ export const FEATURES_TAB_IDS = {
   TAB_SETTINGS: "tab",
   CONTENT: "content",
   READING_HISTORY: "readingHistory",
+  TOOLBOX: "toolbox",
 } as const
 
 // ==================== Site Settings Page Tab IDs ====================
@@ -94,6 +96,13 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     IconComponent: ScrollTopIcon,
   },
   panel: { icon: "✨", labelKey: "panelTitle", canToggle: false, isPanelOnly: true },
+  floatingToolbar: {
+    icon: "🧰",
+    labelKey: "tools", // Changed from floatingToolbarLabel
+    canToggle: true, // This toggle will now open the menu
+    isPanelOnly: false,
+    IconComponent: ToolsIcon,
+  },
   anchor: {
     icon: "⚓",
     canToggle: true,

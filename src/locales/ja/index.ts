@@ -201,7 +201,7 @@ export const ja = {
   close: "閉じる",
   add: "追加",
   confirm: "確定",
-  export: "出力",
+  export: "Markdown出力",
   browse: "参照...",
   clearAllData: "すべてのデータを消去",
   clearAllDataDesc: "注意：すべてのローカル設定、プロンプト、会話データが削除されます。",
@@ -497,6 +497,13 @@ export const ja = {
   showCollapsedAnchorLabel: "アンカー",
   showCollapsedAnchorDesc: "パネルを閉じたとき、サイドバーにアンカーボタンを表示",
   showCollapsedThemeLabel: "テーマ",
+  floatingToolbarLabel: "フローティングツールバー",
+  tools: "ツールボックス",
+  cleanup: "無効なブックマークを削除",
+  floatingToolbarMore: "その他",
+  floatingToolbarClearGhost: "無効なブックマークを削除",
+  floatingToolbarClearGhostConfirm: "このセッションの無効なブックマーク {count} 件を削除しますか？",
+  floatingToolbarClearGhostEmpty: "削除する無効なブックマークはありません。",
   showCollapsedThemeDesc: "パネルを閉じたとき、サイドバーにテーマ切り替えを表示",
   collapsedButtonsOrderDesc: "サイドバーに表示されるボタンの順序を調整",
   preventAutoScrollLabel: "自動スクロールを防止",
@@ -558,7 +565,8 @@ export const ja = {
   hoursAgo: "時間前",
   daysAgo: "日前",
   conversationsSelectFolder: "同期先フォルダを選択",
-  conversationsMoveTo: "移動...",
+  conversationsMoveTo: "会話を移動",
+  shortcutToggleScrollLock: "AI生成時の自動スクロールを防止",
   conversationsMoved: "移動しました: ",
   conversationsSyncDeleteTitle: "同期削除",
   conversationsSyncDeleteMsg:
@@ -848,7 +856,7 @@ export const ja = {
   shortcutExportConversation: "会話を出力",
   shortcutCopyLatestReply: "最新の回答をコピー",
   shortcutCopyLastCodeBlock: "最後のコードブロックをコピー",
-  shortcutToggleScrollLock: "スクロールロック",
+
   shortcutFocusInput: "入力欄にフォーカス",
   shortcutStopGeneration: "生成を停止",
   shortcutShowShortcuts: "ショートカット一覧を表示",
@@ -1009,4 +1017,11 @@ export const ja = {
   retryCountSuffix: "回 (同じ質問)",
   policyRetryActive: "ポリシーによる遮断、再試行中 ({current}/{max})",
   policyRetryLimitReached: "再試行回数の上限に達しました",
+  preventAutoScrollEnabled: "スクロールロックが有効になりました",
+  preventAutoScrollDisabled: "スクロールロックが無効になりました",
+
+  // ツールボックスメニュー
+  toolboxMenu: "ツールボックス",
+  toolboxMenuTitle: "ツールボックスメニュー",
+  toolboxMenuDesc: "ツールボックスのポップアップメニューに表示する機能を設定",
 }

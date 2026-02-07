@@ -4,7 +4,8 @@ import { getAdapter } from "~adapters/index"
 import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
-import { COLLAPSED_BUTTON_DEFS } from "~constants"
+import { COLLAPSED_BUTTON_DEFS, TOOLS_MENU_IDS, TOOLS_MENU_ITEMS } from "~constants"
+import { anchorStore } from "~stores/anchor-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
@@ -16,20 +17,41 @@ import {
 } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS } from "~utils/storage"
 import { showToast } from "~utils/toast"
-import { anchorStore } from "~stores/anchor-store"
 
 interface QuickButtonsProps {
   isPanelOpen: boolean
   onPanelToggle: () => void
   onThemeToggle?: () => void
   themeMode?: "light" | "dark"
+  // 工具栏功能
+  onExport?: () => void
+  onMove?: () => void
+  onSetTag?: () => void
+  onScrollLock?: (locked: boolean) => void
+  onSettings?: () => void
+  onCleanup?: () => void
+  scrollLocked?: boolean
+  // 新增功能
+  onCopyMarkdown?: () => void
+  onModelLockToggle?: () => void
+  isModelLocked?: boolean
 }
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelOpen,
   onPanelToggle,
   onThemeToggle,
-  themeMode = "light",
+  themeMode,
+  onExport,
+  onMove,
+  onSetTag,
+  onScrollLock,
+  onSettings,
+  onCleanup,
+  scrollLocked,
+  onCopyMarkdown,
+  onModelLockToggle,
+  isModelLocked,
 }) => {
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
@@ -42,6 +64,23 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const DRAG_LONG_PRESS_MS = 150
   const DRAG_THRESHOLD_PX = 6
   const DRAG_PADDING_PX = 8
+
+  // 工具菜单状态
+  const groupRef = useRef<HTMLDivElement>(null)
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false)
+
+  // 点击外部关闭菜单
+  useEffect(() => {
+    if (!isToolsMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (groupRef.current && !groupRef.current.contains(target)) {
+        setIsToolsMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isToolsMenuOpen])
 
   const [groupPosition, setGroupPosition] = useState<{ x: number; y: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -60,7 +99,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
-  const groupRef = useRef<HTMLDivElement>(null)
+  // groupRef moved to top
 
   // 获取适配器
   const adapter = getAdapter()
@@ -204,6 +243,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       e?.stopPropagation()
       onThemeToggle?.()
     },
+    floatingToolbar: (e) => {
+      e?.stopPropagation()
+      // Toggle local menu state instead of settings
+      setIsToolsMenuOpen((prev) => !prev)
+    },
   }
 
   // 渲染单个按钮
@@ -214,6 +258,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   ) => {
     const isPanelOnly = def.isPanelOnly
     const isDisabled = !enabled
+    const isFloatingToolbarBtn = id === "floatingToolbar"
+    // Animation: Active state for floatingToolbar button is controlled by isToolsMenuOpen
+    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : false
 
     // panel-only 按钮：面板展开时隐藏
     // 禁用的按钮：永远隐藏
@@ -243,7 +290,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,
@@ -329,6 +376,72 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       }
 
       index = nextIndex
+    }
+
+    return elements
+  }
+
+  // 工具菜单按钮点击处理器映射
+  const toolsMenuActions: Record<string, () => void> = {
+    [TOOLS_MENU_IDS.EXPORT]: () => onExport?.(),
+    [TOOLS_MENU_IDS.COPY_MARKDOWN]: () => onCopyMarkdown?.(),
+    [TOOLS_MENU_IDS.MOVE]: () => onMove?.(),
+    [TOOLS_MENU_IDS.SET_TAG]: () => onSetTag?.(),
+    [TOOLS_MENU_IDS.SCROLL_LOCK]: () => onScrollLock?.(!scrollLocked),
+    [TOOLS_MENU_IDS.MODEL_LOCK]: () => onModelLockToggle?.(),
+    [TOOLS_MENU_IDS.CLEANUP]: () => onCleanup?.(),
+    [TOOLS_MENU_IDS.SETTINGS]: () => onSettings?.(),
+  }
+
+  // 获取开关类按钮的激活状态
+  const getToggleState = (id: string): boolean => {
+    if (id === TOOLS_MENU_IDS.SCROLL_LOCK) return scrollLocked || false
+    if (id === TOOLS_MENU_IDS.MODEL_LOCK) return isModelLocked || false
+    return false
+  }
+
+  // 渲染工具菜单项
+  const renderToolsMenuItems = () => {
+    const elements: React.ReactNode[] = []
+    let lastWasDanger = false
+    let lastWasSystem = false
+
+    // 从设置中获取启用的菜单项，如果没有则使用默认全部显示
+    const enabledIds = currentSettings.toolsMenu ?? TOOLS_MENU_ITEMS.map((item) => item.id)
+    const enabledSet = new Set(enabledIds)
+
+    for (const item of TOOLS_MENU_ITEMS) {
+      // Settings 按钮始终显示
+      const isVisible = item.isSystem || enabledSet.has(item.id)
+      if (!isVisible) continue
+
+      // 分隔线逻辑：danger 区域前加分隔线
+      if (item.isDanger && !lastWasDanger) {
+        elements.push(<div key={`divider-before-${item.id}`} className="menu-divider" />)
+        lastWasDanger = true
+      }
+      // system 区域前加分隔线
+      if (item.isSystem && !lastWasSystem) {
+        elements.push(<div key={`divider-before-${item.id}`} className="menu-divider" />)
+        lastWasSystem = true
+      }
+
+      const IconComponent = item.IconComponent
+      const isActive = item.isToggle ? getToggleState(item.id) : false
+      const buttonClass = `quick-menu-btn ${isActive ? "active" : ""} ${item.isDanger ? "danger" : ""}`
+
+      elements.push(
+        <Tooltip key={item.id} content={t(item.labelKey) || item.defaultLabel}>
+          <button
+            className={buttonClass}
+            onClick={() => {
+              toolsMenuActions[item.id]?.()
+              setIsToolsMenuOpen(false)
+            }}>
+            <IconComponent size={18} />
+          </button>
+        </Tooltip>,
+      )
     }
 
     return elements
@@ -492,6 +605,17 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           aria-hidden="true"
         />
         {renderButtonGroup()}
+
+        {/* 工具菜单 Popover */}
+        {isToolsMenuOpen && (
+          <div
+            className={`quick-menu-popover ${quickButtonsSide === "left" ? "side-right" : "side-left"}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}>
+            {renderToolsMenuItems()}
+          </div>
+        )}
       </div>
     </>
   )

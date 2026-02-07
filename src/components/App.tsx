@@ -15,15 +15,18 @@ import { PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
-import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
+import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
 import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
+import { t } from "~utils/i18n"
 
+import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
+import { useTagsStore } from "~stores/tags-store"
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
@@ -65,11 +68,45 @@ export const App = () => {
     }
   }, [isSettingsHydrated, settings])
 
+  useEffect(() => {
+    if (!isSettingsHydrated || !settings) return
+
+    let needsUpdate = false
+    const nextSettings: Partial<Settings> = {}
+    const buttons = settings.collapsedButtons || []
+
+    if (!buttons.some((btn) => btn.id === "floatingToolbar")) {
+      const nextButtons = [...buttons]
+      const panelIndex = nextButtons.findIndex((btn) => btn.id === "panel")
+      const insertIndex = panelIndex >= 0 ? panelIndex + 1 : nextButtons.length
+      nextButtons.splice(insertIndex, 0, { id: "floatingToolbar", enabled: true })
+      nextSettings.collapsedButtons = nextButtons
+      needsUpdate = true
+    }
+
+    if (!settings.floatingToolbar) {
+      nextSettings.floatingToolbar = { open: true }
+      needsUpdate = true
+    }
+
+    if (needsUpdate) {
+      setSettings(nextSettings)
+    }
+  }, [isSettingsHydrated, settings, setSettings])
+
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
 
   // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  // 浮动工具栏
+
+  const [floatingToolbarMoveState, setFloatingToolbarMoveState] = useState<{
+    convId: string
+    activeFolderId?: string
+  } | null>(null)
+  const [isFloatingToolbarClearOpen, setIsFloatingToolbarClearOpen] = useState(false)
 
   // 边缘吸附状态
   const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
@@ -252,6 +289,19 @@ export const App = () => {
   const syncUnpin = settings?.features?.conversations?.syncUnpin
   const inlineBookmarkMode = settings?.features?.outline?.inlineBookmarkMode
   const hasSettings = Boolean(settings)
+  const collapsedButtons = settings?.collapsedButtons || DEFAULT_SETTINGS.collapsedButtons
+  const floatingToolbarEnabled =
+    collapsedButtons.find((btn) => btn.id === "floatingToolbar")?.enabled ?? true
+  const floatingToolbarOpen = settings?.floatingToolbar?.open ?? true
+  const isScrollLockActive = settings?.panel?.preventAutoScroll ?? false
+  const ghostBookmarkCount = outlineManager?.getGhostBookmarkIds().length ?? 0
+
+  useEffect(() => {
+    if (!floatingToolbarEnabled || !floatingToolbarOpen) {
+      setFloatingToolbarMoveState(null)
+      setIsFloatingToolbarClearOpen(false)
+    }
+  }, [floatingToolbarEnabled, floatingToolbarOpen])
 
   // 监听主题预置变化，动态更新 ThemeManager
   // Zustand 不存在 Plasmo useStorage 的缓存问题，无需启动保护期
@@ -369,10 +419,136 @@ export const App = () => {
       },
     })
 
-    // 简单的提示，实际文案建议放在 useShortcuts 或统一管理
+    // 简单的提示，实际文案建议放在 useShortcuts或统一管理
     // 这里暂时使用硬编码中文，后续可优化
-    showToast(newState ? "滚动锁定已开启" : "滚动锁定已关闭")
+    showToast(newState ? t("preventAutoScrollEnabled") : t("preventAutoScrollDisabled"))
   }, [setSettings])
+
+  const handleFloatingToolbarExport = useCallback(async () => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
+      return
+    }
+    showToast(t("exportStarted") || "开始导出...")
+    const success = await conversationManager.exportConversation(sessionId, "markdown")
+    if (!success) {
+      showToast(t("exportFailed") || "导出失败")
+    }
+  }, [conversationManager, adapter])
+
+  const handleFloatingToolbarMoveToFolder = useCallback(() => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("noConversationToLocate") || "未找到会话")
+      return
+    }
+    const conv = conversationManager.getConversation(sessionId)
+    setFloatingToolbarMoveState({
+      convId: sessionId,
+      activeFolderId: conv?.folderId,
+    })
+  }, [conversationManager, adapter])
+
+  const handleFloatingToolbarClearGhost = useCallback(() => {
+    if (!outlineManager) return
+    const cleared = outlineManager.clearGhostBookmarks()
+    if (cleared === 0) {
+      showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
+      return
+    }
+    showToast(`${t("cleared") || "已清理"} (${cleared})`)
+  }, [outlineManager])
+
+  // 复制为 Markdown 处理器
+  const handleCopyMarkdown = useCallback(async () => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
+      return
+    }
+    showToast(t("exportLoading") || "正在加载...")
+    const success = await conversationManager.exportConversation(sessionId, "clipboard")
+    if (!success) {
+      showToast(t("exportFailed") || "导出失败")
+    }
+  }, [conversationManager, adapter])
+
+  // 模型锁定切换处理器 (按站点)
+  const handleModelLockToggle = useCallback(() => {
+    if (!adapter) return
+    const siteId = adapter.getSiteId()
+    const current = settingsRef.current
+    if (!current) return
+
+    const modelLockConfig = current.modelLock?.[siteId] || { enabled: false, keyword: "" }
+
+    // 如果没有配置关键词
+    if (!modelLockConfig.keyword) {
+      if (modelLockConfig.enabled) {
+        // 用户意图是关闭 → 直接关闭，不跳转设置
+        setSettings({
+          modelLock: {
+            ...current.modelLock,
+            [siteId]: {
+              ...modelLockConfig,
+              enabled: false,
+            },
+          },
+        })
+        showToast(t("modelLockDisabled") || "模型锁定已关闭")
+      } else {
+        // 用户意图是开启 → 自动开启开关 + 跳转设置让用户配置
+        showToast(t("modelLockNoKeyword") || "请先在设置中配置模型关键词")
+        setSettings({
+          modelLock: {
+            ...current.modelLock,
+            [siteId]: {
+              ...modelLockConfig,
+              enabled: true,
+            },
+          },
+        })
+        setIsSettingsOpen(true)
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("ophel:navigateSettingsPage", {
+              detail: { page: "siteSettings", subTab: "modelLock" },
+            }),
+          )
+        }, 100)
+      }
+      return
+    }
+
+    const newEnabled = !modelLockConfig.enabled
+
+    setSettings({
+      modelLock: {
+        ...current.modelLock,
+        [siteId]: {
+          ...modelLockConfig,
+          enabled: newEnabled,
+        },
+      },
+    })
+
+    showToast(
+      newEnabled
+        ? t("modelLockEnabled") || "模型锁定已开启"
+        : t("modelLockDisabled") || "模型锁定已关闭",
+    )
+  }, [adapter, setSettings])
+
+  // 获取当前站点的模型锁定状态
+  const isModelLocked = useMemo(() => {
+    if (!adapter || !settings) return false
+    const siteId = adapter.getSiteId()
+    return settings.modelLock?.[siteId]?.enabled || false
+  }, [adapter, settings])
 
   // 快捷键管理
   useShortcuts({
@@ -751,6 +927,25 @@ export const App = () => {
     }
   }, [selectedPrompt, adapter])
 
+  // 浮动工具栏设置标签状态
+  const [floatingToolbarTagState, setFloatingToolbarTagState] = useState<{
+    convId: string
+  } | null>(null)
+
+  const handleFloatingToolbarSetTag = useCallback(() => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("noConversationToLocate") || "未找到当前会话")
+      return
+    }
+    setFloatingToolbarTagState({
+      convId: sessionId,
+    })
+  }, [conversationManager, adapter])
+
+  const { tags, addTag, updateTag, deleteTag } = useTagsStore()
+
   if (!adapter || !promptManager || !conversationManager || !outlineManager) {
     return null
   }
@@ -804,7 +999,7 @@ export const App = () => {
           if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
 
           hideTimerRef.current = setTimeout(() => {
-            // 优先检查设置模态框状态（使用 ref 确保读取最新值）
+            // 优先检查设置模态框状态（使用 ref 确保读取到最新的值）
             if (isSettingsOpenRef.current) return
 
             // 检查是否有输入框正在聚焦（防止 IME 输入法弹出时隐藏）
@@ -827,6 +1022,7 @@ export const App = () => {
           }, 200)
         }}
       />
+
       <QuickButtons
         isPanelOpen={isPanelOpen}
         onPanelToggle={() => {
@@ -843,6 +1039,34 @@ export const App = () => {
         }}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
+        onExport={handleFloatingToolbarExport}
+        onMove={handleFloatingToolbarMoveToFolder}
+        onSetTag={handleFloatingToolbarSetTag}
+        onScrollLock={() => handleToggleScrollLock()}
+        onSettings={() => {
+          // 打开 SettingsModal 并跳转到工具箱设置 Tab
+          isSettingsOpenRef.current = true
+          setIsSettingsOpen(true)
+          // 延迟发送导航事件，确保 Modal 已挂载
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent("ophel:navigateSettingsPage", {
+                detail: { page: "general", subTab: "toolsMenu" },
+              }),
+            )
+          }, 50)
+        }}
+        scrollLocked={isScrollLockActive}
+        onCleanup={() => {
+          if (ghostBookmarkCount === 0) {
+            showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
+            return
+          }
+          setIsFloatingToolbarClearOpen(true)
+        }}
+        onCopyMarkdown={handleCopyMarkdown}
+        onModelLockToggle={handleModelLockToggle}
+        isModelLocked={isModelLocked}
       />
       {/* 选中提示词悬浮条 */}
       {selectedPrompt && (
@@ -896,6 +1120,56 @@ export const App = () => {
         }}
         siteId={adapter.getSiteId()}
       />
+      {floatingToolbarMoveState && (
+        <FolderSelectDialog
+          folders={conversationManager.getFolders()}
+          excludeFolderId={
+            conversationManager.getConversation(floatingToolbarMoveState.convId)?.folderId
+          }
+          activeFolderId={floatingToolbarMoveState.activeFolderId}
+          onSelect={async (folderId) => {
+            await conversationManager.moveConversation(floatingToolbarMoveState.convId, folderId)
+            setFloatingToolbarMoveState(null)
+          }}
+          onCancel={() => setFloatingToolbarMoveState(null)}
+        />
+      )}
+      {floatingToolbarTagState && (
+        <TagManagerDialog
+          tags={tags}
+          conv={conversationManager.getConversation(floatingToolbarTagState.convId)}
+          onCancel={() => setFloatingToolbarTagState(null)}
+          onCreateTag={async (name, color) => {
+            return addTag(name, color)
+          }}
+          onUpdateTag={async (tagId, name, color) => {
+            return updateTag(tagId, name, color)
+          }}
+          onDeleteTag={async (tagId) => {
+            deleteTag(tagId)
+          }}
+          onSetConversationTags={async (convId, tagIds) => {
+            await conversationManager.updateConversation(convId, { tagIds })
+          }}
+          onRefresh={() => {
+            // 强制刷新会话列表 ? conversationManager 会触发 onChange
+          }}
+        />
+      )}
+      {isFloatingToolbarClearOpen && (
+        <ConfirmDialog
+          title={t("floatingToolbarClearGhost") || "清除幽灵收藏"}
+          message={(
+            t("floatingToolbarClearGhostConfirm") || "是否清除本会话中的 {count} 个幽灵收藏？"
+          ).replace("{count}", String(ghostBookmarkCount))}
+          danger
+          onConfirm={() => {
+            setIsFloatingToolbarClearOpen(false)
+            handleFloatingToolbarClearGhost()
+          }}
+          onCancel={() => setIsFloatingToolbarClearOpen(false)}
+        />
+      )}
       <DisclaimerModal />
     </div>
   )

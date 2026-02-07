@@ -210,6 +210,13 @@ export interface Settings {
   collapsedButtons: Array<{ id: string; enabled: boolean }>
   quickButtonsOpacity: number
 
+  // 工具箱菜单配置 (启用的菜单项 ID 列表，undefined 表示全部显示)
+  toolsMenu?: string[]
+
+  floatingToolbar: {
+    open: boolean
+  }
+
   // Claude 专属设置
   claude?: {
     currentKeyId: string // 当前选中的SessionKey ID,空字符串表示使用默认cookie
@@ -378,12 +385,16 @@ export const DEFAULT_SETTINGS: Settings = {
   collapsedButtons: [
     { id: "scrollTop", enabled: true },
     { id: "panel", enabled: true },
+    { id: "floatingToolbar", enabled: true },
     { id: "anchor", enabled: true },
     { id: "theme", enabled: true },
     { id: "manualAnchor", enabled: false },
     { id: "scrollBottom", enabled: true },
   ],
   quickButtonsOpacity: 1,
+  floatingToolbar: {
+    open: true,
+  },
 
   claude: {
     currentKeyId: "", // 空字符串表示使用浏览器默认cookie
