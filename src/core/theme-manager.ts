@@ -6,6 +6,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
+import { DOMToolkit } from "~utils/dom-toolkit"
 import type { CustomStyle } from "~utils/storage"
 import {
   getPreset,
@@ -15,6 +16,7 @@ import {
 } from "~utils/themes"
 
 export type ThemeMode = "light" | "dark"
+export type ThemePreference = "light" | "dark" | "system"
 
 // Extend Document interface for View Transitions API
 declare global {
@@ -24,13 +26,14 @@ declare global {
 }
 
 // 主题变化回调类型
-export type ThemeModeChangeCallback = (mode: ThemeMode) => void
+export type ThemeModeChangeCallback = (mode: ThemeMode, preference: ThemePreference) => void
 
 // 订阅者类型
 type Listener = () => void
 
 export class ThemeManager {
   private mode: ThemeMode
+  private preference: ThemePreference
   private lightPresetId: string
   private darkPresetId: string
   private cleanPresetId: string // Purely for debugging or tracking
@@ -40,15 +43,30 @@ export class ThemeManager {
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
   private skipNextDetection = false // 标志：跳过下一次主题检测（用于 toggle 后避免被 monitorTheme 反悔）
   private listeners: Set<Listener> = new Set() // 订阅者集合
+  private systemMediaQuery: MediaQueryList | null = null
+  private handleSystemChange = (event: MediaQueryListEvent) => {
+    if (this.preference !== "system") return
+    const nextMode: ThemeMode = event.matches ? "dark" : "light"
+    if (this.mode === nextMode) return
+    this.mode = nextMode
+    this.emitChange()
+    this.syncPageTheme(nextMode, "system")
+    if (this.onModeChange) {
+      this.onModeChange(nextMode, this.preference)
+    }
+  }
 
   constructor(
-    mode: ThemeMode | string,
+    mode: ThemePreference | string,
     onModeChange?: ThemeModeChangeCallback,
     adapter?: SiteAdapter | null,
     lightPresetId: string = "google-gradient",
     darkPresetId: string = "classic-dark",
   ) {
-    this.mode = mode === "dark" ? "dark" : "light"
+    const normalizedPreference: ThemePreference =
+      mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
+    this.preference = normalizedPreference
+    this.mode = this.resolveMode(normalizedPreference)
     this.lightPresetId = lightPresetId
     this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
@@ -56,6 +74,168 @@ export class ThemeManager {
 
     // 注入全局动画样式 (View Transitions 需要在主文档生效)
     this.injectGlobalStyles()
+    this.ensureSystemListener()
+  }
+
+  private ensureSystemListener() {
+    if (this.systemMediaQuery || typeof window === "undefined" || !window.matchMedia) {
+      return
+    }
+    this.systemMediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    if (typeof this.systemMediaQuery.addEventListener === "function") {
+      this.systemMediaQuery.addEventListener("change", this.handleSystemChange)
+    } else if (typeof this.systemMediaQuery.addListener === "function") {
+      this.systemMediaQuery.addListener(this.handleSystemChange)
+    }
+  }
+
+  private getSystemMode(): ThemeMode {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return "light"
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }
+
+  private resolveMode(preference: ThemePreference): ThemeMode {
+    if (preference === "system") {
+      return this.getSystemMode()
+    }
+    return preference
+  }
+
+  private syncPageTheme(targetMode: ThemeMode, preference: ThemePreference = targetMode) {
+    if (preference === "system") {
+      const handled = this.applySystemPreference(targetMode)
+      if (!handled && this.adapter && typeof this.adapter.toggleTheme === "function") {
+        this.adapter.toggleTheme(targetMode).catch(() => {})
+      }
+    } else if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+      this.adapter.toggleTheme(preference).catch(() => {})
+    }
+    this.apply(targetMode)
+  }
+
+  private applySystemPreference(targetMode: ThemeMode): boolean {
+    if (!this.adapter) return false
+    const siteId = this.adapter.getSiteId()
+    try {
+      switch (siteId) {
+        case SITE_IDS.CHATGPT: {
+          localStorage.setItem("theme", "system")
+          document.documentElement.className = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "theme",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.GROK: {
+          localStorage.setItem("theme", "system")
+          document.documentElement.classList.remove("light", "dark")
+          document.documentElement.classList.add(targetMode)
+          document.documentElement.style.colorScheme = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "theme",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.AISTUDIO: {
+          const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"
+          let pref: Record<string, unknown> = {}
+          try {
+            pref = JSON.parse(prefStr)
+          } catch {
+            pref = {}
+          }
+          pref.theme = "system"
+          const nextValue = JSON.stringify(pref)
+          localStorage.setItem("aiStudioUserPreference", nextValue)
+
+          const body = document.body
+          if (targetMode === "dark") {
+            body.classList.add("dark-theme")
+            body.classList.remove("light-theme")
+          } else {
+            body.classList.remove("dark-theme")
+            body.classList.add("light-theme")
+          }
+          body.style.colorScheme = targetMode
+
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "aiStudioUserPreference",
+              newValue: nextValue,
+              storageArea: localStorage,
+            }),
+          )
+
+          const appRoot = document.querySelector("app-root, ms-app, body")
+          if (appRoot) {
+            appRoot.dispatchEvent(new CustomEvent("themechange", { detail: { theme: targetMode } }))
+          }
+          return true
+        }
+        case SITE_IDS.GEMINI: {
+          localStorage.removeItem("Bard-Color-Theme")
+          if (targetMode === "dark") {
+            document.body.classList.add("dark-theme")
+            document.body.classList.remove("light-theme")
+          } else {
+            document.body.classList.remove("dark-theme")
+            document.body.classList.add("light-theme")
+          }
+          document.body.style.colorScheme = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "Bard-Color-Theme",
+              newValue: null,
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.CLAUDE: {
+          const themeData = {
+            value: "auto",
+            tabId: crypto.randomUUID(),
+            timestamp: Date.now(),
+          }
+          const nextValue = JSON.stringify(themeData)
+          localStorage.setItem("LSS-userThemeMode", nextValue)
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "LSS-userThemeMode",
+              newValue: nextValue,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.GEMINI_ENTERPRISE: {
+          if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+            ;(
+              this.adapter as SiteAdapter & {
+                toggleTheme: (targetMode: "light" | "dark" | "system") => Promise<boolean>
+              }
+            )
+              .toggleTheme("system")
+              .catch(() => {})
+            return true
+          }
+          return false
+        }
+        default:
+          return false
+      }
+    } catch {
+      return false
+    }
   }
 
   /**
@@ -99,10 +279,17 @@ export class ThemeManager {
   /**
    * 更新模式并应用
    */
-  updateMode(mode: ThemeMode | string) {
-    this.mode = mode === "dark" ? "dark" : "light"
+  updateMode(mode: ThemePreference | string) {
+    const normalizedPreference: ThemePreference =
+      mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
+    this.preference = normalizedPreference
+    this.mode = this.resolveMode(normalizedPreference)
     this.emitChange()
-    this.apply()
+    if (this.preference === "system") {
+      this.syncPageTheme(this.mode, "system")
+      return
+    }
+    this.apply(this.mode)
   }
 
   /**
@@ -140,6 +327,89 @@ export class ThemeManager {
     }
 
     return "light"
+  }
+
+  private detectThemePreference(): ThemePreference | null {
+    if (!this.adapter) return null
+    const siteId = this.adapter.getSiteId()
+    try {
+      switch (siteId) {
+        case SITE_IDS.CHATGPT:
+        case SITE_IDS.GROK: {
+          const storedTheme = localStorage.getItem("theme")
+          if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+            return storedTheme
+          }
+          return null
+        }
+        case SITE_IDS.AISTUDIO: {
+          const prefStr = localStorage.getItem("aiStudioUserPreference")
+          if (!prefStr) return null
+          let pref: Record<string, unknown> = {}
+          try {
+            pref = JSON.parse(prefStr)
+          } catch {
+            pref = {}
+          }
+          const theme = pref.theme
+          if (theme === "light" || theme === "dark" || theme === "system") {
+            return theme
+          }
+          return null
+        }
+        case SITE_IDS.GEMINI: {
+          const storedTheme = localStorage.getItem("Bard-Color-Theme")
+          if (!storedTheme) return "system"
+          if (/dark/i.test(storedTheme)) return "dark"
+          if (/light/i.test(storedTheme)) return "light"
+          return null
+        }
+        case SITE_IDS.CLAUDE: {
+          const raw = localStorage.getItem("LSS-userThemeMode")
+          if (!raw) return null
+          let data: Record<string, unknown> = {}
+          try {
+            data = JSON.parse(raw)
+          } catch {
+            data = {}
+          }
+          const value = data.value
+          if (value === "auto" || value === "system") return "system"
+          if (value === "dark" || value === "light") return value
+          return null
+        }
+        case SITE_IDS.GEMINI_ENTERPRISE: {
+          const tabs = DOMToolkit.query("md-primary-tab", { all: true, shadow: true }) as Element[]
+          if (!tabs || tabs.length === 0) return null
+          type Candidate = { icon: "computer" | "light_mode" | "dark_mode"; selected: boolean }
+          const candidates: Candidate[] = []
+          for (const tab of tabs) {
+            let iconEl = tab.querySelector("md-icon")
+            if (!iconEl) {
+              iconEl = DOMToolkit.query("md-icon", { parent: tab, shadow: true }) as Element | null
+            }
+            const icon = iconEl?.textContent?.trim()
+            if (icon !== "computer" && icon !== "light_mode" && icon !== "dark_mode") {
+              continue
+            }
+            const tabElement = tab as HTMLElement & { selected?: boolean; active?: boolean }
+            const selected = Boolean(
+              tabElement.selected || tabElement.active || tabElement.tabIndex === 0,
+            )
+            candidates.push({ icon, selected } as Candidate)
+          }
+          const selected = candidates.find((item) => item.selected)
+          if (!selected) return null
+          if (selected.icon === "computer") return "system"
+          if (selected.icon === "dark_mode") return "dark"
+          return "light"
+        }
+        default:
+          return null
+      }
+    } catch {
+      return null
+    }
   }
 
   /**
@@ -321,17 +591,30 @@ ${cssVars}
       }
 
       const detectedMode = this.detectCurrentTheme()
+      const detectedPreference = this.detectThemePreference()
+      const nextPreference: ThemePreference = detectedPreference ?? detectedMode
+      const nextMode: ThemeMode =
+        nextPreference === "system" ? this.getSystemMode() : nextPreference
 
-      // 同步到插件 UI (ghMode)
-      this.syncPluginUITheme(detectedMode)
+      if (nextPreference === "system") {
+        this.ensureSystemListener()
+        if (detectedMode !== nextMode) {
+          this.syncPageTheme(nextMode, "system")
+        } else {
+          this.syncPluginUITheme(nextMode)
+        }
+      } else {
+        // 同步到插件 UI (ghMode)
+        this.syncPluginUITheme(nextMode)
+      }
 
-      // 如果检测到的模式与当前模式不同，更新并触发回调
-      if (this.mode !== detectedMode) {
-        this.mode = detectedMode
+      // 如果检测到的模式或偏好发生变化，更新并触发回调
+      if (this.mode !== nextMode || this.preference !== nextPreference) {
+        this.mode = nextMode
+        this.preference = nextPreference
         this.emitChange()
-        // 触发变化回调，通知 React 组件更新
         if (this.onModeChange) {
-          this.onModeChange(detectedMode)
+          this.onModeChange(nextMode, nextPreference)
         }
       }
     }
@@ -369,14 +652,94 @@ ${cssVars}
     }
   }
 
+  private getTransitionOrigin(event?: MouseEvent) {
+    let x = 95
+    let y = 5
+    if (event && event.clientX !== undefined) {
+      x = (event.clientX / window.innerWidth) * 100
+      y = (event.clientY / window.innerHeight) * 100
+      return { x, y }
+    }
+
+    const themeBtn =
+      document.getElementById("theme-toggle-btn") || document.getElementById("quick-theme-btn")
+    if (themeBtn) {
+      const rect = themeBtn.getBoundingClientRect()
+      x = ((rect.left + rect.width / 2) / window.innerWidth) * 100
+      y = ((rect.top + rect.height / 2) / window.innerHeight) * 100
+    }
+    return { x, y }
+  }
+
+  private async applyWithTransition(action: () => void, event?: MouseEvent): Promise<boolean> {
+    const { x, y } = this.getTransitionOrigin(event)
+
+    document.documentElement.style.setProperty("--theme-x", `${x}%`)
+    document.documentElement.style.setProperty("--theme-y", `${y}%`)
+
+    this.stopMonitoring()
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (!document.startViewTransition || prefersReducedMotion) {
+      try {
+        action()
+      } finally {
+        this.monitorTheme()
+      }
+      return false
+    }
+
+    try {
+      const transition = document.startViewTransition(() => {
+        action()
+      })
+
+      transition.ready.then(() => {
+        const right = window.innerWidth - (x / 100) * window.innerWidth
+        const bottom = window.innerHeight - (y / 100) * window.innerHeight
+        const maxRadius = Math.hypot(
+          Math.max((x / 100) * window.innerWidth, right),
+          Math.max((y / 100) * window.innerHeight, bottom),
+        )
+
+        const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
+
+        document.documentElement.animate(
+          {
+            clipPath: clipPath,
+          },
+          {
+            duration: 500,
+            easing: "ease-in",
+            pseudoElement: "::view-transition-new(root)",
+            fill: "forwards",
+          },
+        )
+      })
+
+      await transition.finished.catch(() => {
+        // 忽略动画错误
+      })
+    } catch {
+      action()
+      this.monitorTheme()
+      return false
+    }
+
+    this.skipNextDetection = true
+    this.monitorTheme()
+    return true
+  }
+
   /**
    * 切换主题（User Action）- 带圆形扩散动画
    * @param event 可选的鼠标事件，用于确定动画中心
    */
   async toggle(event?: MouseEvent): Promise<ThemeMode> {
     // 使用 detectCurrentTheme 统一检测当前主题
-    const currentMode = this.detectCurrentTheme()
+    const currentMode = this.preference === "system" ? this.mode : this.detectCurrentTheme()
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
+    this.preference = nextMode
 
     // 计算动画起点坐标（从点击位置或默认右上角）
     let x = 95
@@ -468,7 +831,7 @@ ${cssVars}
     this.skipNextDetection = true
     // 触发回调通知 React 更新状态（动画完成后）
     if (this.onModeChange) {
-      this.onModeChange(nextMode)
+      this.onModeChange(nextMode, this.preference)
     }
     // 无条件启动监听（确保网页主题变化能被检测）
     this.monitorTheme()
@@ -488,16 +851,46 @@ ${cssVars}
    * @returns 包含最终模式和是否触发了动画
    */
   async setMode(
-    targetMode: ThemeMode,
+    targetMode: ThemePreference,
     event?: MouseEvent,
   ): Promise<{ mode: ThemeMode; animated: boolean }> {
+    const normalizedPreference: ThemePreference =
+      targetMode === "system" ? "system" : targetMode === "dark" ? "dark" : "light"
+
+    if (normalizedPreference === "system") {
+      this.preference = "system"
+      this.ensureSystemListener()
+      const resolved = this.getSystemMode()
+      const modeChanged = this.mode !== resolved
+      const shouldAnimate = Boolean(event) && modeChanged
+      let animated = false
+      if (shouldAnimate) {
+        animated = await this.applyWithTransition(() => {
+          this.syncPageTheme(resolved, "system")
+        }, event)
+      } else {
+        this.syncPageTheme(resolved, "system")
+      }
+      if (modeChanged) {
+        this.mode = resolved
+        this.emitChange()
+      }
+      if (this.onModeChange) {
+        this.onModeChange(resolved, this.preference)
+      }
+      return { mode: resolved, animated }
+    }
+
     const currentMode = this.detectCurrentTheme()
 
-    // 如果已经是目标模式，不做任何操作
-    if (currentMode === targetMode) {
-      // 仍然需要同步插件 UI 主题（确保样式变量正确应用）
-      this.syncPluginUITheme(targetMode)
-      return { mode: targetMode, animated: false }
+    // 如果已经是目标模式，仅更新偏好
+    if (currentMode === normalizedPreference) {
+      this.preference = normalizedPreference
+      this.syncPageTheme(normalizedPreference, normalizedPreference)
+      if (this.onModeChange) {
+        this.onModeChange(normalizedPreference, this.preference)
+      }
+      return { mode: normalizedPreference, animated: false }
     }
 
     // 否则执行切换动画

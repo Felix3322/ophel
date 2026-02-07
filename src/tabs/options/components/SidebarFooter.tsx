@@ -8,7 +8,7 @@ import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
 
 import { LanguageMenu } from "./LanguageMenu"
 
-export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: string }) => {
+export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
 
   // 检测是否在独立 Options 页面（非 content script 环境）
@@ -21,41 +21,38 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
     themeManager?.subscribe ?? (() => () => {}),
     themeManager?.getSnapshot ?? (() => "light" as const),
   )
+  const themeSites = settings?.theme?.sites
+  const siteTheme =
+    themeSites && siteId in themeSites
+      ? themeSites[siteId as keyof typeof themeSites]
+      : themeSites?._default
+  const currentThemePreference = siteTheme?.mode || "light"
 
   // 切换主题模式
-  const handleThemeModeToggle = async (mode: "light" | "dark") => {
-    if (currentThemeMode === mode) return
+  const handleThemeModeToggle = async (
+    mode: "light" | "dark" | "system",
+    event?: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    if (currentThemePreference === mode) return
 
     const themeManager = (window as any).__ophelThemeManager
-    if (themeManager) {
-      await themeManager.toggle()
+    if (themeManager?.setMode) {
+      await themeManager.setMode(mode, event?.nativeEvent)
     } else {
-      // Fallback if themeManager is not available (e.g. in standalone options page without content script logic)
-      // options page 应该也有 themeManager，因为我们在 options.tsx 里没有看到 ThemeManager 初始化
-      // 实际上 options 页面可能没有 __ophelThemeManager，只有 content script 有
-      // 我们之前的 options.tsx 里只是 setSettings，依靠 storage listener 更新？
-      // 不，SettingsModal 是在 content script 环境下的，有 themeManager
-      // OptionsPage 是独立页面，可能没有。
-      // 我们先保留之前的逻辑：如果是 standalone，直接 setSettings；如果是 modal，用 toggle
-      // 实际上之前的 options.tsx 里的 handleThemeModeToggle 只是 setSettings
-      // 而 SettingsModal 里用了 themeManager.toggle()
-      // 这里我们需要兼容两种情况
-
       // 尝试调用 themeManager，如果失败则手动更新 settings
-      const newMode = mode
       const sites = settings?.theme?.sites || {}
-      const currentSite = sites._default || {}
+      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
 
       setSettings({
         theme: {
           ...settings?.theme,
           sites: {
             ...sites,
-            _default: {
+            [siteId]: {
               lightStyleId: "google-gradient",
               darkStyleId: "classic-dark",
               ...currentSite,
-              mode: newMode,
+              mode,
             },
           },
         },
@@ -75,6 +72,11 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const moreBtnRef = React.useRef<HTMLButtonElement>(null)
+  const themeSegmentRef = React.useRef<HTMLDivElement>(null)
+  const [themeSegmentState, setThemeSegmentState] = React.useState<"normal" | "compact" | "icon">(
+    "normal",
+  )
+  const themeSegmentStateRef = React.useRef<"normal" | "compact" | "icon">("normal")
 
   const SHORT_LANG_MAP: Record<string, string> = {
     en: "EN",
@@ -99,15 +101,71 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
   // 去重（虽然逻辑上 dynamicSlot 应该不会和 fixed 重复，除非有效语言列表只有2个）
   const visibleSlots = Array.from(new Set([...fixedSlots, dynamicSlot]))
 
+  React.useEffect(() => {
+    themeSegmentStateRef.current = themeSegmentState
+  }, [themeSegmentState])
+
+  React.useEffect(() => {
+    const container = themeSegmentRef.current
+    if (!container) return
+
+    const applyStateClass = (state: "normal" | "compact" | "icon") => {
+      container.classList.toggle("is-compact", state === "compact")
+      container.classList.toggle("is-icon", state === "icon")
+    }
+
+    const fitsContainer = (state: "normal" | "compact" | "icon") => {
+      applyStateClass(state)
+      return container.scrollWidth <= container.clientWidth + 1
+    }
+
+    const measureState = () => {
+      const prevState = themeSegmentStateRef.current
+
+      const normalFits = fitsContainer("normal")
+      let nextState: "normal" | "compact" | "icon" = "normal"
+      if (!normalFits) {
+        const compactFits = fitsContainer("compact")
+        nextState = compactFits ? "compact" : "icon"
+      }
+
+      applyStateClass(prevState)
+      if (nextState !== themeSegmentStateRef.current) {
+        setThemeSegmentState(nextState)
+      }
+    }
+
+    const scheduleMeasure = () => {
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(measureState)
+        return
+      }
+      measureState()
+    }
+
+    scheduleMeasure()
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => scheduleMeasure())
+      observer.observe(container)
+      return () => observer.disconnect()
+    }
+
+    window.addEventListener("resize", scheduleMeasure)
+    return () => window.removeEventListener("resize", scheduleMeasure)
+  }, [effectiveLang])
+
   return (
     <div className="settings-sidebar-footer">
       {/* 主题切换 - 仅在 content script 环境显示（站点内） */}
       {!isStandalonePage && (
-        <div className="settings-theme-segmented">
+        <div
+          ref={themeSegmentRef}
+          className={`settings-theme-segmented ${themeSegmentState === "compact" ? "is-compact" : ""} ${themeSegmentState === "icon" ? "is-icon" : ""}`}>
           <Tooltip content={t("themeLight") || "浅色"} triggerStyle={{ flex: 1 }}>
             <button
-              className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
-              onClick={() => handleThemeModeToggle("light")}>
+              className={`settings-theme-segment ${currentThemePreference === "light" ? "active" : ""}`}
+              onClick={(event) => handleThemeModeToggle("light", event)}>
               <span className="segment-icon">
                 <ThemeLightIcon size={16} />
               </span>
@@ -116,12 +174,20 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
           </Tooltip>
           <Tooltip content={t("themeDark") || "深色"} triggerStyle={{ flex: 1 }}>
             <button
-              className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
-              onClick={() => handleThemeModeToggle("dark")}>
+              className={`settings-theme-segment ${currentThemePreference === "dark" ? "active" : ""}`}
+              onClick={(event) => handleThemeModeToggle("dark", event)}>
               <span className="segment-icon">
                 <ThemeDarkIcon size={16} />
               </span>
               <span className="segment-label">{t("themeDark") || "深色"}</span>
+            </button>
+          </Tooltip>
+          <Tooltip content={t("themeSystem") || "系统"} triggerStyle={{ flex: 1 }}>
+            <button
+              className={`settings-theme-segment ${currentThemePreference === "system" ? "active" : ""}`}
+              onClick={(event) => handleThemeModeToggle("system", event)}>
+              <span className="segment-icon">A</span>
+              <span className="segment-label">{t("themeSystem") || "系统"}</span>
             </button>
           </Tooltip>
         </div>
