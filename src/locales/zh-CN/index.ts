@@ -483,10 +483,11 @@ export const zhCN = {
   // 阅读导航设置
   readingNavigationSettings: "阅读导航",
   readingHistorySettings: "阅读历史",
-  readingHistoryPersistence: "启用阅读历史",
+  readingHistoryTitle: "阅读历史",
+  readingHistoryPersistenceLabel: "启用阅读历史",
   readingHistoryPersistenceDesc: "自动记录阅读位置，下次打开时恢复",
-  autoRestore: "自动跳转",
-  autoRestoreDesc: "打开页面时自动跳转到上次位置",
+  readingHistoryAutoRestoreLabel: "自动跳转",
+  readingHistoryAutoRestoreDesc: "打开页面时自动跳转到上次位置",
   readingHistoryCleanup: "历史保留时间",
   readingHistoryCleanupDesc: "只保留最近几天的阅读进度 (-1 为永久)",
   daysSuffix: "天",
@@ -513,6 +514,8 @@ export const zhCN = {
   exportCustomUserNameDesc: "导出时使用的用户显示名称 (默认: User)",
   exportCustomModelName: "自定义 AI 名称",
   exportCustomModelNameDesc: "导出时使用的 AI 显示名称 (默认: 站点名称)",
+  exportFilenameTimestamp: "导出文件名包含时间戳",
+  exportFilenameTimestampDesc: "在导出文件名末尾添加时间戳",
   // 大纲高级设置
   outlineAutoUpdateLabel: "对话期间自动更新大纲",
   outlineAutoUpdateDesc: "AI 生成内容时自动刷新目录结构",

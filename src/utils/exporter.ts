@@ -186,8 +186,8 @@ export function htmlToMarkdown(el: Element): string {
         return `\n${children}`
       default:
         // 处理 Shadow DOM
-        if ((element as any).shadowRoot) {
-          return Array.from((element as any).shadowRoot.childNodes)
+        if ((element as HTMLElement).shadowRoot) {
+          return Array.from((element as HTMLElement).shadowRoot!.childNodes)
             .map(processNode)
             .join("")
         }
@@ -215,8 +215,10 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   const lines: string[] = []
 
   // 元数据头
+  lines.push(`# ${metadata.title}`)
+  lines.push("")
   lines.push("---")
-  lines.push(`# ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
+  lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
   lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
   lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
   lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
@@ -319,9 +321,10 @@ export async function downloadFile(
     a.click()
     URL.revokeObjectURL(url)
     return true
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[Exporter] Download failed:", err)
-    showToast("下载失败: " + err.message)
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    showToast("下载失败: " + errorMessage)
     return false
   }
 }
