@@ -1543,10 +1543,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           style={{
             width: "100%",
             padding: "10px",
-            background:
-              "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
-            color: "white",
-            border: "1px solid var(--gh-brand-border, transparent)",
+            background: "var(--gh-header-bg)",
+            color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
+            border: "none",
             borderRadius: "8px",
             fontSize: "14px",
             fontWeight: 500,
@@ -1555,6 +1554,16 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             alignItems: "center",
             justifyContent: "center",
             gap: "6px",
+            boxShadow: "var(--gh-btn-shadow)",
+            transition: "transform 0.2s, box-shadow 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)"
+            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)"
+            e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
           <span>+</span>
           <span>{t("addPrompt")}</span>
