@@ -377,6 +377,7 @@
 }
 
 /* ============= 状态覆盖：同步高亮 (Sync) ============= */
+/* ============= 状态覆盖：同步高亮 (Sync) ============= */
 /* 必须使用 !important 覆盖通用的 .outline-item.sync-highlight 样式 */
 .outline-item.user-query-node.sync-highlight,
 .outline-item.user-query-node.sync-highlight-visible {
@@ -392,6 +393,21 @@
 
   /* 背景稍微加深，混合同步色 */
   background: color-mix(in srgb, var(--gh-outline-sync-bg) 40%, var(--gh-bg)) !important;
+}
+
+/* 同步高亮时，视觉锚点变色 */
+.outline-item.user-query-node.sync-highlight::before,
+.outline-item.user-query-node.sync-highlight-visible::before {
+  background-color: var(--gh-outline-sync-border) !important;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--gh-outline-sync-border) 60%, transparent) !important;
+}
+
+/* 同步高亮时，徽章变色 */
+.outline-item.user-query-node.sync-highlight .user-query-badge-number,
+.outline-item.user-query-node.sync-highlight-visible .user-query-badge-number {
+  color: var(--gh-outline-sync-border) !important;
+  border-color: var(--gh-outline-sync-border) !important;
+  background: var(--gh-bg) !important;
 }
 
 /* ============= 状态覆盖：定位高亮 (Locate) ============= */
@@ -411,6 +427,19 @@
 
   /* 保持动画 */
   animation: outlineLocatePulse 0.6s ease-in-out 2;
+}
+
+/* 定位高亮时，视觉锚点变色 */
+.outline-item.user-query-node.highlight::before {
+  background-color: var(--gh-outline-locate-border) !important;
+  box-shadow: 0 0 8px var(--gh-outline-locate-shadow) !important;
+}
+
+/* 定位高亮时，徽章变色 */
+.outline-item.user-query-node.highlight .user-query-badge-number {
+  color: var(--gh-bg) !important;
+  background: var(--gh-outline-locate-border) !important;
+  border-color: var(--gh-outline-locate-border) !important;
 }
 
 /* 用户问题徽章 */
