@@ -316,8 +316,8 @@ const OutlineNodeView: React.FC<{
           {/* 用户提问: 徽章 (图标+角标数字) */}
           {node.isUserQuery && (
             <span className="user-query-badge">
-              <span className="user-query-badge-icon">
-                <ConversationIcon size={14} />
+              <span className="user-query-badge-icon" style={{ fontSize: "14px", lineHeight: 1 }}>
+                🙋
               </span>
               <span className="user-query-badge-number">{node.queryIndex}</span>
             </span>
@@ -1052,7 +1052,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               <button
                 onClick={handleGroupModeToggle}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
-                <ConversationIcon size={16} />
+                <span style={{ fontSize: "16px", lineHeight: 1 }}>🙋</span>
               </button>
             </Tooltip>
 
