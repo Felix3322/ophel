@@ -155,6 +155,26 @@ export interface CheckClaudeGeneratingMessage {
   type: typeof MSG_CHECK_CLAUDE_GENERATING
 }
 
+export const MSG_SWITCH_NEXT_CLAUDE_KEY = "SWITCH_NEXT_CLAUDE_KEY"
+
+export interface SwitchNextClaudeKeyMessage {
+  type: typeof MSG_SWITCH_NEXT_CLAUDE_KEY
+}
+
+// 获取 AI Studio 模型列表（从 content script 获取）
+export const MSG_GET_AISTUDIO_MODELS = "GET_AISTUDIO_MODELS"
+
+export interface GetAIStudioModelsMessage {
+  type: typeof MSG_GET_AISTUDIO_MODELS
+}
+
+// 计算 Gemini 布局宽度
+export const MSG_CALCULATE_GEMINI_LAYOUT = "CALCULATE_GEMINI_LAYOUT"
+
+export interface CalculateGeminiLayoutMessage {
+  type: typeof MSG_CALCULATE_GEMINI_LAYOUT
+}
+
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
@@ -173,19 +193,7 @@ export type ExtensionMessage =
   | CheckClaudeGeneratingMessage
   | SwitchNextClaudeKeyMessage
   | GetAIStudioModelsMessage
-
-export const MSG_SWITCH_NEXT_CLAUDE_KEY = "SWITCH_NEXT_CLAUDE_KEY"
-
-export interface SwitchNextClaudeKeyMessage {
-  type: typeof MSG_SWITCH_NEXT_CLAUDE_KEY
-}
-
-// 获取 AI Studio 模型列表（从 content script 获取）
-export const MSG_GET_AISTUDIO_MODELS = "GET_AISTUDIO_MODELS"
-
-export interface GetAIStudioModelsMessage {
-  type: typeof MSG_GET_AISTUDIO_MODELS
-}
+  | CalculateGeminiLayoutMessage
 
 export interface AIStudioModelInfo {
   id: string

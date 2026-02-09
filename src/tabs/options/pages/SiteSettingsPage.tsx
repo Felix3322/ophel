@@ -12,6 +12,7 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import {
+  MSG_CALCULATE_GEMINI_LAYOUT,
   MSG_CHECK_PERMISSIONS,
   MSG_GET_AISTUDIO_MODELS,
   MSG_REQUEST_PERMISSIONS,
@@ -483,6 +484,56 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     }
   }
 
+  // 自动计算 Gemini 布局宽度
+  const handleAutoCalculateGeminiLayout = async () => {
+    try {
+      const response = await sendToBackground({
+        type: MSG_CALCULATE_GEMINI_LAYOUT,
+      })
+
+      if (response.success && response.width) {
+        const width = response.width
+        setTempWidth(width.toString())
+        setTempUserQueryWidth(width.toString())
+
+        if (settings) {
+          const newPageWidth = {
+            ...currentPageWidth,
+            unit: "px",
+            value: width.toString(),
+            enabled: true,
+          }
+          const newUserQueryWidth = {
+            ...currentUserQueryWidth,
+            unit: "px",
+            value: width.toString(),
+            enabled: true,
+          }
+
+          setSettings({
+            layout: {
+              ...settings.layout,
+              pageWidth: {
+                ...settings.layout?.pageWidth,
+                [siteId]: newPageWidth,
+              },
+              userQueryWidth: {
+                ...settings.layout?.userQueryWidth,
+                [siteId]: newUserQueryWidth,
+              },
+            },
+          })
+        }
+        showToast(t("geminiLayoutCalculated") || "已自动计算并应用最佳宽度", 2000)
+      } else {
+        showToast(t("geminiLayoutCalculateFailed") || "计算失败，请稍后重试", 3000)
+      }
+    } catch (err) {
+      console.error("Auto calculate Gemini layout failed:", err)
+      showToast(t("geminiLayoutCalculateFailed") || "计算失败，请稍后重试", 3000)
+    }
+  }
+
   if (!settings) return null
 
   const tabs = [
@@ -617,6 +668,19 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               </div>
             </SettingRow>
           </SettingCard>
+
+          {/* Gemini 自动计算布局宽度 */}
+          {siteId === SITE_IDS.GEMINI && (
+            <SettingCard
+              title={t("geminiAutoLayoutTitle") || "Gemini 自动布局"}
+              description={t("geminiAutoLayoutDesc") || "自动检测并计算最合适的面板宽度"}>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="settings-btn" onClick={handleAutoCalculateGeminiLayout}>
+                  {t("geminiAutoLayoutBtn") || "自动计算"}
+                </button>
+              </div>
+            </SettingCard>
+          )}
         </>
       )}
 

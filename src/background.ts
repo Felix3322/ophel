@@ -1,9 +1,10 @@
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
-  MSG_CLEAR_ALL_DATA,
+  MSG_CALCULATE_GEMINI_LAYOUT,
   MSG_CHECK_CLAUDE_GENERATING,
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
+  MSG_CLEAR_ALL_DATA,
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
@@ -794,6 +795,74 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           }
         } catch (err) {
           console.error("Get AI Studio models failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_CALCULATE_GEMINI_LAYOUT:
+      // 计算 Gemini 布局宽度
+      ;(async () => {
+        try {
+          // 查找 Gemini 标签页
+          const geminiTabs = await chrome.tabs.query({
+            url: "*://gemini.google.com/*",
+          })
+
+          if (geminiTabs.length === 0) {
+            sendResponse({
+              success: false,
+              error: "NO_GEMINI_TAB",
+              message: "请先打开 Gemini 页面",
+            })
+            return
+          }
+
+          // 向第一个 Gemini 标签页发送消息
+          const tab = geminiTabs[0]
+          if (!tab.id) {
+            sendResponse({ success: false, error: "INVALID_TAB" })
+            return
+          }
+
+          try {
+            // 执行脚本计算宽度
+            const results = await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: () => {
+                const sidenav = document.querySelector(
+                  "/html/body/chat-app/main/side-navigation-v2/bard-sidenav-container/bard-sidenav-content",
+                )
+                const panel = document.querySelector(
+                  "/html/body/plasmo-csui//div/div/div/div[1]",
+                )
+
+                if (sidenav && panel) {
+                  const sidenavRect = sidenav.getBoundingClientRect()
+                  const panelRect = panel.getBoundingClientRect()
+                  // 简单的计算逻辑，可以根据实际需求调整
+                  const width = window.innerWidth - sidenavRect.width - panelRect.width - 40 // 40px padding
+                  return Math.floor(width)
+                }
+                return null
+              },
+            })
+
+            if (results && results[0] && results[0].result) {
+              sendResponse({ success: true, width: results[0].result })
+            } else {
+              sendResponse({ success: false, error: "ELEMENT_NOT_FOUND" })
+            }
+          } catch (err) {
+            console.error("Execute script failed:", err)
+            sendResponse({
+              success: false,
+              error: "EXECUTE_SCRIPT_FAILED",
+              message: (err as Error).message,
+            })
+          }
+        } catch (err) {
+          console.error("Calculate Gemini layout failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()
