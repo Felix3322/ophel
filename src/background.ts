@@ -833,9 +833,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
                 const sidenav = document.querySelector(
                   "/html/body/chat-app/main/side-navigation-v2/bard-sidenav-container/bard-sidenav-content",
                 )
-                const panel = document.querySelector(
-                  "/html/body/plasmo-csui//div/div/div/div[1]",
-                )
+                const panel = document.querySelector("/html/body/plasmo-csui//div/div/div/div[1]")
 
                 if (sidenav && panel) {
                   const sidenavRect = sidenav.getBoundingClientRect()
