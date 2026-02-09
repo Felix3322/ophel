@@ -127,6 +127,36 @@ if (!window.ophelInitialized) {
           }
         }
 
+        // 计算布局宽度 (Gemini Auto Layout)
+        if (message.type === "CALCULATE_LAYOUT") {
+          try {
+            const settings = useSettingsStore.getState().settings
+            const panelWidth = settings.panel?.width || 320
+
+            // 尝试获取侧边栏宽度 (Gemini)
+            // 兼容多种可能的选择器
+            const sidenav =
+              document.querySelector("side-navigation-v2") ||
+              document.querySelector("bard-sidenav-container") ||
+              document.querySelector(".bard-sidenav-content")
+
+            let sidenavWidth = 280 // 默认值
+            if (sidenav) {
+              const rect = sidenav.getBoundingClientRect()
+              if (rect.width > 0) {
+                sidenavWidth = rect.width
+              }
+            }
+
+            const availableWidth = window.innerWidth - sidenavWidth - panelWidth - 60 // padding + margin
+            sendResponse({ success: true, width: Math.floor(availableWidth) })
+          } catch (err) {
+            console.error("[Ophel] Calculate layout failed:", err)
+            sendResponse({ success: false, error: (err as Error).message })
+          }
+          return true
+        }
+
         return false
       })
     })()

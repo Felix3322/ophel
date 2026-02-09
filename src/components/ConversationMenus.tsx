@@ -240,12 +240,12 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
           onTogglePin()
         }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <PinIcon size={14} filled={conversation.pinned} />
           <span>
             {conversation.pinned
               ? t("conversationsUnpin") || "取消置顶"
               : t("conversationsPin") || "置顶"}
           </span>
+          <PinIcon size={14} filled={conversation.pinned} />
         </div>
       </MenuButton>
       <MenuButton

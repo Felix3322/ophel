@@ -1355,6 +1355,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 selectedCategory === VIRTUAL_CATEGORY.RECENT
                   ? "1px solid var(--gh-primary, #4285f4)"
                   : "1px solid transparent",
+              display: "flex",
+              alignItems: "center",
             }}>
             <TimeIcon size={14} />
           </span>

@@ -826,36 +826,17 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           }
 
           try {
-            // 执行脚本计算宽度
-            const results = await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: () => {
-                const sidenav = document.querySelector(
-                  "/html/body/chat-app/main/side-navigation-v2/bard-sidenav-container/bard-sidenav-content",
-                )
-                const panel = document.querySelector("/html/body/plasmo-csui//div/div/div/div[1]")
-
-                if (sidenav && panel) {
-                  const sidenavRect = sidenav.getBoundingClientRect()
-                  const panelRect = panel.getBoundingClientRect()
-                  // 简单的计算逻辑，可以根据实际需求调整
-                  const width = window.innerWidth - sidenavRect.width - panelRect.width - 40 // 40px padding
-                  return Math.floor(width)
-                }
-                return null
-              },
+            // 使用 sendMessage 通知 Content Script 计算布局
+            // 避免在 background 中直接操作 DOM 导致的复杂性（如 Shadow DOM、XPath 选择器错误等）
+            const response = await chrome.tabs.sendMessage(tab.id, {
+              type: "CALCULATE_LAYOUT",
             })
-
-            if (results && results[0] && results[0].result) {
-              sendResponse({ success: true, width: results[0].result })
-            } else {
-              sendResponse({ success: false, error: "ELEMENT_NOT_FOUND" })
-            }
+            sendResponse(response)
           } catch (err) {
-            console.error("Execute script failed:", err)
+            console.error("Calculate layout via message failed:", err)
             sendResponse({
               success: false,
-              error: "EXECUTE_SCRIPT_FAILED",
+              error: "CALCULATE_LAYOUT_FAILED",
               message: (err as Error).message,
             })
           }
