@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   ClearIcon,
   CollapseAllIcon,
+  ConversationIcon,
   CopyIcon,
   DeleteIcon,
   EditIcon,
